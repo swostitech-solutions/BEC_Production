@@ -1,0 +1,153 @@
+# ======================================
+# Django / Python Project .gitignore
+# ======================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+settings.py
+*.settings.py
+*/settings.py
+
+12-04-25.sqlite3
+17-11-25db.sqlite3
+
+# Environment
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.env
+
+
+# Media Files
+ *.jpg
+ *.jpeg
+ *.png
+ *.pdf
+
+
+
+# Django stuff
+*.log
+*.pot
+*.pyc
+17-11-25db.sqlite3
+*.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+# Uncomment if using collectstatic
+# /static/
+
+# VS Code / PyCharm
+.vscode/
+.idea/
+*.code-workspace
+
+# Migrations (optional — keep if you want version control)
+# */migrations/
+# !*/migrations/__init__.py
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Byte-compiled / optimized / DLL files
+*.pyo
+*.pyd
+*.so
+
+
+
+# Test / Coverage reports
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+*.mo
+*.pot
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# MyPy / Pyre / Pytype
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Build / Distribution
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+docker-compose.override.yml
+.docker/
+*.log
+
+# Logs / temp
+*.log
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# Celery / Redis
+celerybeat-schedule
+celerybeat.pid
+
+# Coverage
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+*.pytest_cache/
+migrations/
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Local settings
+settings_local.py
+local_settings.py
+*.sqlite3
+
+*.out
+# ======================================
+# End of .gitignore
+# ======================================
+.env
+
+*/migrations/*
+!*/migrations/__init__.py

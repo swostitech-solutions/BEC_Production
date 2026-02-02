@@ -1,0 +1,4562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Page not found at /SWOSTITECH_CMS/student_documents/Aadhaar_Card_ZKyr629</title>
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <style>
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font-family: sans-serif; background:#eee; color:#000; }
+    body > :where(header, main, footer) { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; margin-bottom:.4em; }
+    h1 small { font-size:60%; color:#666; font-weight:normal; }
+    table { border:none; border-collapse: collapse; width:100%; }
+    td, th { vertical-align:top; padding:2px 3px; }
+    th { width:12em; text-align:right; color:#666; padding-right:.5em; }
+    #info { background:#f6f6f6; }
+    #info ol { margin: 0.5em 4em; }
+    #info ol li { font-family: monospace; }
+    #summary { background: #ffc; }
+    #explanation { background:#eee; border-bottom: 0px none; }
+    pre.exception_value { font-family: sans-serif; color: #575757; font-size: 1.5em; margin: 10px 0 10px 0; }
+  </style>
+</head>
+<body>
+  <header id="summary">
+    <h1>Page not found <small>(404)</small></h1>
+    <pre class="exception_value">“/usr/local/public/CMS2/SchoolManagementBackend/CollegeManagement/SWOSTITECH_CMS/student_documents/Aadhaar_Card_ZKyr629” does not exist</pre>
+    <table class="meta">
+      <tr>
+        <th scope="row">Request Method:</th>
+        <td>GET</td>
+      </tr>
+      <tr>
+        <th scope="row">Request URL:</th>
+        <td>http://31.97.63.174:9000/SWOSTITECH_CMS/student_documents/Aadhaar_Card_ZKyr629</td>
+      </tr>
+      
+      <tr>
+        <th scope="row">Raised by:</th>
+        <td>django.views.static.serve</td>
+      </tr>
+      
+    </table>
+  </header>
+
+  <main id="info">
+    
+      <p>
+      Using the URLconf defined in <code>Swostitech_Acadix.urls</code>,
+      Django tried these URL patterns, in this order:
+      </p>
+      <ol>
+        
+          <li>
+            
+              <code>
+                admin/
+                
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                swagger/
+                [name='schema-swagger-ui']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/UserType/create/
+                [name='usertypecreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/UserType/GetAllUsertype/
+                [name='usertypelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/UserType/GetSearchUsertype/&lt;int:pk&gt;/
+                [name='usertyperetrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/UserType/updateUsertype/&lt;int:pk&gt;/
+                [name='UserTypeupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/UserType/deleteUsertype/&lt;int:pk&gt;/
+                [name='usertypedelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Employee/create/
+                [name='employeecreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Employee/GetAllEmployeeDetails/
+                [name='employeelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Employee/GetSearchEmployee/&lt;int:pk&gt;/
+                [name='employeeretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Employee/updateEmployee/&lt;int:pk&gt;/
+                [name='employeeupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Employee/deleteEmployee/&lt;int:pk&gt;/
+                [name='employeedelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LoginUserList/GetAllLogin/
+                [name='loginlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LoginUserList/GetSearchLogin/&lt;int:pk&gt;/
+                [name='loginretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/RegisterEmployee/Login/
+                [name='login']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/RegisterEmployee/ChangePassword/
+                [name='changepassword']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EducationDetails/create/
+                [name='educationdetailscreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EducationDetails/GetAllEducationDetails/
+                [name='educationdetailslist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EducationDetails/GetSearchEducationDetails/&lt;int:pk&gt;/
+                [name='educationdetailsretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EducationDetails/UpdateEducationDetails/&lt;int:pk&gt;/
+                [name='educationdetailsupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EducationDetails/DeleteEducationDetails/&lt;int:pk&gt;/
+                [name='academicyeardelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Branch/GetBranch/
+                [name='GetBranch']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Batch/GetBatch/
+                [name='GetBatch']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/GetCourse/
+                [name='GetCourse']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/GetDepartment/
+                [name='GetDepartment']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/GetAcademicYear/
+                [name='GetAcademicYear']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/GetSemester/
+                [name='GetSemester']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/GetSemesterByDepartment/
+                [name='GetSemester']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Section/GetSection/
+                [name='GetSection']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructure/GetFeeStructureDetail/
+                [name='GetFeeStructureDetail']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Organization/create/
+                [name='OrganizationAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Organization/GetAllOrganization/
+                [name='organizationlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Organization/updateOrganization/&lt;int:pk&gt;/
+                [name='OrganizationUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Organization/deleteOrganization/&lt;int:pk&gt;/
+                [name='Organizationdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Batch/create/
+                [name='BatchAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Batch/GetAllBatch/
+                [name='BatchList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Batch/GetAllBatchByBranch/
+                [name='GetAllBatchDetailsByBranch']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/OrganizationBranch/create/
+                [name='BranchAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/OrganizationBranch/GetAllOrganizationBranch/
+                [name='organizationbranchlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/OrganizationBranch/GetAllOrganizationBranchByOrganization/
+                [name='GetAllOrganizationBranchlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/OrganizationBranch/updateOrganizationBranch/&lt;int:pk&gt;/
+                [name='OrganizationBranchUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/OrganizationBranch/deleteOrganizationBranch/&lt;int:pk&gt;/
+                [name='OrganizationBranchdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/create/
+                [name='academiccreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/GetAllAcademicYear/
+                [name='academicsessionyearlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/GetAllAcademicYearByFilter/
+                [name='GetAllAcademicSessionYearDetailByFilterView']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/GetSearchAcademicYear/&lt;int:pk&gt;/
+                [name='academicyearretriveretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/updateAcademicYear/&lt;int:pk&gt;/
+                [name='academicyearupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/deleteAcademicYear/&lt;int:pk&gt;/
+                [name='academicyeardelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/create/
+                [name='coursecreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/GetAllCourse/
+                [name='courselist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/GetSearchCourse/&lt;int:pk&gt;/
+                [name='courseretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/GetAllCourseByFilter/
+                [name='GetAllCourseDetailsByFilter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/UpdateCourse/&lt;int:pk&gt;/
+                [name='courseupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/DeleteCourse/&lt;int:pk&gt;/
+                [name='coursedelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Course/GetAllCourseByBatch/
+                [name='GetAllCourseDetailsByBatch']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/create/
+                [name='departmentcreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/GetAllDepartment/
+                [name='departmentlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/GetSearchDepartment/&lt;int:pk&gt;/
+                [name='departmentretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/UpdateDepartment/&lt;int:pk&gt;/
+                [name='departmentupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/DeleteDepartment/&lt;int:pk&gt;/
+                [name='departmentdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/GetDepartmentListByFilter/
+                [name='GetAllDepartmentDetailsByFilters']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Department/GetDepartmentListByCourse/
+                [name='GetAllDepartmentDetailsByCourse']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/create/
+                [name='semestercreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/GetAllSemester/
+                [name='semesterlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/GetSearchSemester/&lt;int:pk&gt;/
+                [name='semesterretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/UpdateSemester/&lt;int:pk&gt;/
+                [name='semesterupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/DeleteSemester/&lt;int:pk&gt;/
+                [name='semesterdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Semester/GetSemesterListByFilter/
+                [name='semesterdeatilbyfilter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Section/create/
+                [name='sectioncreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Section/GetAllSection/
+                [name='sectionlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Section/GetAllSectionByFilter/
+                [name='sectionlistbyfilter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Section/GetSearchSection/&lt;int:pk&gt;/
+                [name='sectionretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Section/updateSection/&lt;int:pk&gt;/
+                [name='sectionupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Section/deleteSection/&lt;int:pk&gt;/
+                [name='sectiondelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CourseSemesterSectionBind/create/
+                [name='ClassSectionBindcreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CourseSemesterSectionBind/GetAllCourseSemesterSectionBind/
+                [name='ClassSectionBindlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CourseSemesterSectionBind/GetSearchCourseSemesterSectionBind/&lt;int:pk&gt;/
+                [name='ClassSectionBindretrive']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CourseSemesterSectionBind/updateCourseSemesterSectionBind/&lt;int:pk&gt;/
+                [name='ClassSectionBindupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CourseSemesterSectionBind/deleteCourseSemesterSectionBind/&lt;int:pk&gt;/
+                [name='ClassSectionBinddelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CourseSemesterSectionBind/GetAllCourseSemesterSectionBind/&lt;int:pk&gt;/
+                [name='GetsectionlistByClass']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/SiblingDetail/create/
+                [name='sibilingsAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/SiblingDetail/GetAllList/
+                [name='siblinglist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/SiblingDetail/GetAllSiblingsByStudent/&lt;int:student_id&gt;/
+                [name='GetAllsiblinglist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/SiblingDetail/updateSiblingDetails/&lt;int:pk&gt;/
+                [name='Siblingupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/SiblingDetail/deleteSiblingDetails/&lt;int:pk&gt;/
+                [name='Siblingdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EmergencyDetails/create/
+                [name='EmergencyDetailsAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EmergencyDetails/GetAllList/
+                [name='StudentEmergencyDetailslist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EmergencyDetails/GetAllEmergencyContactByStudent/&lt;int:student_id&gt;/
+                [name='GetAllEmergencyContactByStudentlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EmergencyDetails/UpdateEmergencyContact/&lt;int:pk&gt;/
+                [name='EmergencyContactupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EmergencyDetails/DeleteEmergencyContact/&lt;int:pk&gt;/
+                [name='EmergencyContactdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Authorised_Pickup/create/
+                [name='Authorised_PickupAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Authorised_Pickup/GetAllAuthorised_PickupByStudent/&lt;int:student_id&gt;/
+                [name='GetAllAuthorised_PickupStudentlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Authorised_Pickup/updateAuthorisedPickup/&lt;int:pk&gt;/
+                [name='AuthorisedPickupupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Authorised_Pickup/deleteAuthorisedPickup/&lt;int:pk&gt;/
+                [name='AuthorisedPickupdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Document/create/
+                [name='Student_DocumentAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Document/GetAllStudent_DocumentByStudent/&lt;int:student_id&gt;/
+                [name='GetAllStudent_Documentlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Document/UpdateStudent_Document/&lt;int:pk&gt;/
+                [name='Student_DocumentUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Document/DeleteStudent_Document/&lt;int:pk&gt;/
+                [name='Student_Documentdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Previous_Education/create/
+                [name='Previous_EducationAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Previous_Education/GetAllPrevious_EducationByStudent/&lt;int:student_id&gt;/
+                [name='GetAllPrevious_Educationlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Previous_Education/UpdatePrevious_Education/&lt;int:pk&gt;/
+                [name='Prevoius_EducationUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student_Previous_Education/DeletePrevious_Education/&lt;int:pk&gt;/
+                [name='Prevoius_Educationdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCourse/GetAllStudentClassList/
+                [name='studentclasslist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructure/create/
+                [name='feestructureAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructureDetails/create/
+                [name='feestructuredetailsAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructureDetails/GetAllfeeStructure_Details/
+                [name='fee_Structure_Details_Get']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructureDetails/updatefeeStructure_Details/&lt;int:pk&gt;/
+                [name='feestuructuedetailsUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructureDetails/deleteStructure_Details/&lt;int:pk&gt;/
+                [name='feestuructuedetailsdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Period/create/
+                [name='periodsAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Period/GetAllPeriod/
+                [name='periodlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Period/updatePeriod/&lt;int:pk&gt;/
+                [name='periodUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Period/deletePeriod/&lt;int:pk&gt;/
+                [name='periodsdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentAddress/create/
+                [name='addressAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentAddress/GetStudentAddress/&lt;int:pk&gt;/
+                [name='studentaddresslist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentAddress/UpdateStudentAddress/&lt;int:pk&gt;/
+                [name='studentaddressUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentAddress/DeleteStudentAddress/&lt;int:pk&gt;/
+                [name='studentaddressdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentDetails/GetStudentDetails/&lt;int:academic_id&gt;/&lt;int:student_id&gt;
+                [name='studentdetailsGet']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentFeeDetail/GetStudentFeeDetail/&lt;int:academic_id&gt;/&lt;int:student_id&gt;
+                [name='studentfeedetailsGet']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeElementType/GetAllFeeElements/&lt;str:elementType&gt;
+                [name='fee_element_typelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Filter/GetStudentBasedCourseSection/
+                [name='students-by-course-section']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Filter/GetFeeDetailsBasedOnFeeStructureAcademicSession/&lt;int:academic_id&gt;/&lt;int:fee_structure&gt;
+                [name='GetFilterdatabasedonacademic&amp;feestructure']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/ADHOC/StudentFeesCreate/
+                [name='StudentADHOCfeesAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CollegeHouse/GetAllHouse/
+                [name='findhouselist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/RELIGION/GetAllReligion/
+                [name='findreligionlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CATEGORY/GetAllCategory/
+                [name='findcategorylist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/NATIONALITY/GetAllNationality/
+                [name='findnationalitylist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/COUNTRY/GetAllCountry/
+                [name='findcountrylist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STATE/GetAllState/
+                [name='findstatelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CITY/GetAllCity/
+                [name='findcitylist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CITY/GetCityDetails/&lt;int:pk&gt;
+                [name='GetIndividualCityRecord']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PROFESSION/GetAllProfession/
+                [name='findprofessionlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/DOCUMENT/GetAllDocumentList/
+                [name='finddocumentlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructure/GetAllFeeStructureBasedOnCourse/
+                [name='findfeestructuretlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LANGUAGE/GetAllLanguageList/
+                [name='findlanguagelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/BLOODGROUP/GetAllBloodGroupList/
+                [name='findbloodlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Gender/GetAllGenderList/
+                [name='genderlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructure/FeeStructureCreate/
+                [name='feestructureDetailsAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentRegistration/create
+                [name='Student-Registration-create']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentRegistrationApi/GetAllSTUDENTList/
+                [name='StudentRegistrationList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentRegistrationApi/UpdateStudentRecord/
+                [name='studentRegistrationUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentRegistrationApi/GetStudentDetailsBasedOnId/
+                [name='StudentGetBasedOnId']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Filter/GetFilterSTUDENTList/
+                [name='studentGetlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Filter/GetStudentListBasedOnClassAndSectionGroup/
+                [name='studentListBasedOnGroup']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Filter/GetStudentListBasedOnClub/
+                [name='studentListBasedOnGroup']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCourse/StudentCourseRecordFilter/
+                [name='Student-Course-Record-Filter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCourse/UpdateStudentCourse/
+                [name='StudentCourseRecordUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCourseApi/GetAllSTUDENTList/&lt;int:academic_year_id&gt;/
+                [name='studentClassList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCourse/GetStudentDataBasedId/
+                [name='GetStudentDataBasedOnId']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCourse/StudentCourseConfirmRECORDFilter/
+                [name='Student-Course-Confirm-Record-Filter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCourse/GetPreviousYearFees/
+                [name='previousyearamount']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentPromotion/StudentCourseSemesterPromotion/
+                [name='StudentPromotion']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructure/GetFeeStructureListByFilter/
+                [name='feestructureDetailsList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructure/GetFeeStructureBasedOnAcademicYear/&lt;int:academic_year_id&gt;/
+                [name='findfeestructuretlistBasedOnAcademic']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructureDetails/GetFeeStructureBasedOnStudent/
+                [name='studentGetlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentFeeDetails/StudentFeesManagement/
+                [name='StudentFeesManagement']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AcademicYear/GetPreviousAcademicYear/&lt;int:academic_year_id&gt;/&lt;int:org_id&gt;/&lt;int:branch_id&gt;
+                [name='previousacademicsessionyearlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeFrequency/GetAllFrequencyPeriodList/
+                [name='FrequencyPeriodlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructureCopy/CopyFeeStructure/
+                [name='StudentFeesManagement']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeStructure/GetFeeDetailsBasedOnFeeStructure/&lt;int:fee_structure_master_id&gt;
+                [name='feestructuremasterfeestructureDetailsGet']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Subjects/GetSubjectListBasedOnCourseAndSemester/
+                [name='class-subjects-filter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Subjects/GetSubjectListBasedOnCourseDepartment/
+                [name='get-subjects-by-department']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Subjects/GetSubjectListBasedOnLecture/
+                [name='class-subjects-filter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Club/GetClubGroupList/
+                [name='club-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Club/GetClubGroupListById/
+                [name='club-list-by-id']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Club/GetClubList/
+                [name='club-list']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Club/GetClubListById/
+                [name='club-list-by-id']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Club/UpdateOrCreateStudentClub/
+                [name='studentclubUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Filter/GetFilterStudentFilterdataBasedOnCondition/
+                [name='studentfilterdata']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PaymentMethod/GetAllPaymentMethodList/
+                [name='paymentmethodlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeReceipt/FeeReceiptCreate/
+                [name='feereciptscreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeReceipt/GetFilterFeeReceipts/
+                [name='filterfeereceipts']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeReceipt/GetFeeReceiptsBasedOnReceiptNo/
+                [name='studentlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/MessageType/GetAllMessageTypeList/
+                [name='Message_Type_List']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/MessageInitiated/GetAllMessageInitiatedList/
+                [name='Message_InitiatedList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/MessageSend/StudentMessageCreate/
+                [name='studentmessagecreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/MessageSend/StudentMessageHistoryFilter/
+                [name='StudentMessageHistoryFilter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeReceipt/FeeReceiptsCancelCreate/
+                [name='feereceiptscancel']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Professor/GetProfessorListBasedOnDay/&lt;int:academic_year_id&gt;/&lt;str:date&gt;
+                [name='Teacher_list_byDay']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Professor/GetCourseListBasedOnDay/&lt;int:academic_year_id&gt;/&lt;str:date&gt;/&lt;int:professorId&gt;
+                [name='ClassList_byDay']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Professor/GetSubjectListBasedOnDay/&lt;int:academic_year_id&gt;/&lt;str:date&gt;/&lt;int:professorId&gt;/&lt;int:courseId&gt;/&lt;int:sectionId&gt;
+                [name='subjectListByTeacher']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Professor/GetPeriodListBasedOnSubject/&lt;int:academic_year_id&gt;/&lt;str:date&gt;/&lt;int:professorId&gt;/&lt;int:courseId&gt;/&lt;int:sectionId&gt;/&lt;int:subjectId&gt;
+                [name='periodListByTeacher']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Professor/GetProfessorListBasedOnSubject/
+                [name='periodListByTeacher']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Assignment/GetAllAssignmentList/
+                [name='Assignmentlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Assignment/CreateAllAssignment/
+                [name='assignmentcreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Assignment/UpdateAssignment/
+                [name='AssignmentUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Assignment/DeleteAssignment/
+                [name='Assignmentdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Assignment/GetAssignmentBasedId/
+                [name='AssignmentBasedOnId']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CircularMessage/CreateCircularMessage/
+                [name='circularmessagecreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CircularMessage/GetAllCircularMessageList/
+                [name='circularmessagelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CircularMessage/UpdateCircularMessage/
+                [name='CircularMessageUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CircularMessage/DeleteCircularMessage/
+                [name='circularmessagedelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CircularMessage/CancelCircularMessage/
+                [name='circularmessagecancel']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CircularMessage/CircularMessageFilter/
+                [name='CIRCULARMESSAGEFilter']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/CircularMessage/GetCircularMessageBasedId/
+                [name='CircularMessageBasedOnId']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Period/GetAllUnpaidPeriodsList/&lt;int:orgId&gt;/&lt;int:branchId&gt;/&lt;int:academic_year_id&gt;/&lt;int:studentId&gt;/
+                [name='circularmessagelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeReceipt/GetFeeReceiptBasedOnReceiptId/
+                [name='GetFeeDetailsBasedOnId']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeReceipt/UpdatePaymentDetailBasedOnReceipt/
+                [name='FEESDETAILSUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/BANK/GetAllBankList/
+                [name='banklist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/AccountDetails/GetAccountDetailsBasedOnBankId/
+                [name='AccountDetailsList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeLedger/GetFeeLedgerBasedOnCondition/
+                [name='GetStudentFeeLedger']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeLedger/GetStudentFeesDetailsPDFBasedOnStudentId/
+                [name='StudentFeeDetails']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeLedger/GetStudentFeeDueReceiptStudentId/
+                [name='StudentFeeDueReceiptDetails']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeLedger/GetStudentFeeBalanceReceiptStudentId/
+                [name='StudentFeeBalanceReceiptDetails']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeLedger/GetStudentSemesterWiseReceiptStudentId/
+                [name='StudentMonthReceiptDetails']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeLedger/GetStudentPaymentMethodWiseReceiptStudentId/
+                [name='StudentPaymentMethodWiseReceiptDetails']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/FeeLedger/GetStudentSemesterElementWiseReceiptStudentId/
+                [name='StudentMonthlyElementWiseReceiptDetails']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCertificate/create/
+                [name='transfer-certificate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/transfer-certificate/update/
+                [name='update-student-certificates']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/GetAllCertificates/
+                [name='get-transfer-certificates']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STUDENT_CERTIFICATE/GetStudentCertificates/
+                [name='GetStudentCertificates']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STUDENT_CERTIFICATE/GetStudentDetailsBasedOnDocumentTypeStudentId/
+                [name='GetStudentDetailsBasedOnStudentIdDocumentType']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentCertificate/GetCertificatePDF/
+                [name='GetCertificatePDF']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentAttendance/GetSearchAttendanceByDateCourseDepartmentSemesterPeriod/
+                [name='GetSearchAttendanceDetails']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/StudentAttendance/CreateOrUpdateAttendance/
+                [name='Attendance_create_or_update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Filter/GetSubjectProfessorBasedOnLecture/
+                [name='GetSubjectProfessorList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Lecture/GetLectureList/
+                [name='GetLectureList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Lecture/GetLectureListByTimeTable/
+                [name='GetLectureList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Lecture/GetLecture/
+                [name='GetLectureById']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Professor/GetEmployeeList/
+                [name='GetSearchEmployee']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/State/GetStateListBasedOnCountryId/&lt;int:country_id&gt;
+                [name='GetAllStateListBasedOnCountry']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/City/GetCityListBasedOnStateId/&lt;int:state_id&gt;
+                [name='GetAllCityListBasedOnState']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Staff/EmployeeTypeList/
+                [name='EmployeeTypelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Student/GetStudentList/
+                [name='StudentsListAPIView']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/routemastercreate/
+                [name='routemasternameAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/routemasterlist/
+                [name='routemasterlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/routemasterupdate/&lt;int:pk&gt;
+                [name='RoutemasterUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/routemasterdelete/&lt;int:pk&gt;
+                [name='Routemasterdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT/pickuppointcreate/
+                [name='pickuppointAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT/pickuppointlist/
+                [name='pickuppointlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT/pickuppointupdate/&lt;int:pk&gt;
+                [name='PickupPointUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT/pickuppointdelete/&lt;int:pk&gt;
+                [name='PickupPointdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT_Add_On_Route/PickUpPointAddOnRouteCreate/
+                [name='pickuppointAddonroute']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT_Add_On_Route/PickUpPointAddOnRoutelist/
+                [name='pickuppointlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT_Add_On_Route/PickUpPointAddOnRouteupdate/&lt;int:pk&gt;
+                [name='RouteDetailsUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/PICKUP_POINT_Add_On_Route/PickUpPointAddOnRoutedelete/&lt;int:pk&gt;
+                [name='RouteDetailsdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/GetAllPickupPointBasedOnRoute/
+                [name='findpickuppointlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/GetAllRouteBasedOnOrganizationBranch/
+                [name='findRoutelist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/GetStudentTransportList/
+                [name='StudentTransportList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/UpdateStudentTransport/
+                [name='UpdateStudentTransport']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/TransportDetailsRetereiveByStudent/
+                [name='GetTransportDetailsByStudent']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/TransportChargesCalculateBasedOnStudent/
+                [name='TransportChargesCalculate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Transport/MonthlyElemetWiseStudentFees/
+                [name='MonthlyElemetWiseStudentFees']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_INCOME/CategoryCreate/
+                [name='ExpenseIncomeCategoryCreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_INCOME/CategoryList/
+                [name='ExpenseIncomeCategoryList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_INCOME/CategoryUpdate/&lt;int:pk&gt;
+                [name='ExpenseIncomeCategoryUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/PARTY_MASTER/PartyMasterCreate/
+                [name='PartyMasterCreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/PARTY_MASTER/PartyMasterList/
+                [name='PartyMasterCreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/PARTY_MASTER/PartyMasterRetrieve/
+                [name='PartyMasterRetrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/PARTY_MASTER/PARTYMASTERUpdate/&lt;int:pk&gt;
+                [name='PartyMasterUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/PARTY_MASTER/PartyMasterSearchList/
+                [name='PartySearchList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_HEADER/GetExpenseNo/
+                [name='ExpenseNoList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_HEADER/ExpenseCreate/
+                [name='ExpenseAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_INCOME/ListBasedOnCategory/
+                [name='ExpenseIncomeBasedOnCategoryList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_HEADER/ExpenseSearchList/
+                [name='ExpenseSearchList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_HEADER/ExpanseDetailsRetrieve/&lt;int:pk&gt;
+                [name='ExpansedetialsRetrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/EXPENSE_HEADER/ExpenseUpdate/&lt;int:pk&gt;
+                [name='ExpenseUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/INCOME/GetIncomeNo/
+                [name='IncomeNoList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/INCOME/IncomeCreate/
+                [name='IncomeAdd']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/INCOME/IncomeSearchList/
+                [name='IncomeSearchList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/INCOME/IncomeDetailsRetrieve/&lt;int:pk&gt;/
+                [name='IncomedetialsRetrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/INCOME/IncomeUpdate/&lt;int:pk&gt;
+                [name='IncomeUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/PROFIT_LOSS/profitlossGetList/
+                [name='ProfitLossListByDay']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/DayBook/ExpenseIncomeList/
+                [name='ProfitLossListByDay']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/ExpenseLedger/ExpenseLidgerList/
+                [name='ExpenseLidgerList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/ExpenseDetails/ExpenseNo/&lt;int:expense_no&gt;/
+                [name='ExpenseDetailsList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/EXPENSE/IncomeDetails/IncomeNo/&lt;int:Income_no&gt;/
+                [name='IncomedetialsList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/GetHostelList/
+                [name='GetHostelList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/GetHostelBlockList/
+                [name='GetHostelBlockList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/GetHostelBlockFloorList/
+                [name='GetHostelBlockFloorList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/GetHostelRoomTypeList/
+                [name='GetHostelBlockFloorList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/GetHostelRoomList/
+                [name='GetHostelBlockFloorList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/GetHostelRoomBedList/
+                [name='GetHostelBlockFloorList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/GetStudentHostelList/
+                [name='StudentHostelList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/HostelDetailsRetrieveByStudent/
+                [name='GetHostelDetailsByStudent']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/UpdateStudentHostel/
+                [name='HostelDetailsUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/StudentHostelAssign/
+                [name='StudentHostelAssign']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/HOSTEL/HostelChargesCalculateBasedOnStudent/
+                [name='HostelChargesCalculate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TrainingPlacement/create/
+                [name='Training_PlacementCreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TrainingPlacement/List/
+                [name='Training_PlacementList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TrainingPlacement/Retrieve/&lt;int:pk&gt;/
+                [name='Training_PlacementRetrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TrainingPlacement/Update/&lt;int:pk&gt;
+                [name='Training_PlacementUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TrainingPlacement/Delete/&lt;int:pk&gt;/
+                [name='Training_Placementdelete']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/GrievanceType/list/
+                [name='GrievanceTypeList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/GrievancePriority/list/
+                [name='GrievancePriorityList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/GrievanceSeverity/list/
+                [name='GrievanceSeverityList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Grievance/create/
+                [name='GrievanceCreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Grievance/listByStudent/
+                [name='GrievanceListByStudent']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Grievance/list/
+                [name='GrievanceDetailsList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Grievance/update/
+                [name='GrievanceActionTakenUpdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TIME_TABLE/TimeTableCreate/
+                [name='TimeTableCreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TIME_TABLE/GetSearchedTimeTableList/
+                [name='GetSearchedTimeTableEntry']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TIME_TABLE/GetTimeTableEntryDifSearchBasisList/
+                [name='GetTimeTableEntryDifSearchBasisList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TIME_TABLE/delete/&lt;int:pk&gt;
+                [name='deletetimetable']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LECTURE_PLAN/GetLectureList/
+                [name='GettopicListBasedOnSubject']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LECTURE_PLAN/LecturePlanCreate/
+                [name='LessionPlanCreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LECTURE_PLAN/GetProfessorLecturePlanList/
+                [name='GetTeacherlessonplanlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/TERM_SUBJECT_LIST/GetTermSubjectList/
+                [name='GettermBasedOnSubjectlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LECTURE_PLAN/GetProfessorLecturePlanUpdate/&lt;int:LESSON_PLAN_ID&gt;
+                [name='GetTeacherlessonplanupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/LECTURE_PLAN/GetProfessorLecturePlanSearchList/
+                [name='Professorlecturesearchlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Visitor/create
+                [name='visitorcreate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Visitor/list/
+                [name='visitorlist']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/Visitor/update/
+                [name='visitorouttimeupdate']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationCreate/
+                [name='Staff-Registration-Create']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationAddressCreateUpdate/
+                [name='Address-Create-Update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationDocumentUploadCreateUpdate/
+                [name='Document-Create-Update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationFamilyRelationCreateUpdate/
+                [name='Family-Relation-Create-Update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationQualificationCreateUpdate/
+                [name='Qualification-Create-Update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationCourseCreateUpdate/
+                [name='Course-Create-Update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationLANGUAGECreateUpdate/
+                [name='Language-Create-Update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationEXPERIENCECreateUpdate/
+                [name='Experience-Create-Update']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationBasicDetailsRetrieve/
+                [name='Staff-Basic-Details-Retrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationAddressDetailsRetrieve/&lt;int:employee_id&gt;/&lt;int:employee_type&gt;/
+                [name='Employee-Address-Details']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationDocumentDetailsRetrieve/
+                [name='Staff-Document-Retrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationRelationDetailsRetrieve/
+                [name='Staff-Relation-Retrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationEducationDetailsRetrieve/
+                [name='Staff-Education-Retrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationCourseDetailsRetrieve/
+                [name='Staff-Course-Retrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationLanguageDetailsRetrieve/
+                [name='Staff-Language-Retrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationExperienceDetailsRetrieve/
+                [name='Staff-Experience-Retrieve']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                
+                
+              </code>
+            
+              <code>
+                api/STAFF/RegistrationstaffList/
+                [name='StaffList']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/token/
+                [name='token_obtain_pair']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                api/token/refresh/
+                [name='token_refresh']
+              </code>
+            
+          </li>
+        
+          <li>
+            
+              <code>
+                ^SWOSTITECH_CMS/(?P&lt;path&gt;.*)$
+                
+              </code>
+            
+          </li>
+        
+      </ol>
+      <p>
+        
+          The current path, <code>SWOSTITECH_CMS/student_documents/Aadhaar_Card_ZKyr629</code>,
+        
+        matched the last one.
+      </p>
+    
+  </main>
+
+  <footer id="explanation">
+    <p>
+      You’re seeing this error because you have <code>DEBUG = True</code> in
+      your Django settings file. Change that to <code>False</code>, and Django
+      will display a standard 404 page.
+    </p>
+  </footer>
+</body>
+</html>
