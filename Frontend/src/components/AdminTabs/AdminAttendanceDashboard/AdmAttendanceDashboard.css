@@ -1,0 +1,105 @@
+/* @media (max-width: 768px) {
+  .attendance-chart-wrapper {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .attendance-chart-wrapper > div {
+    margin: 10px 0 !important;
+  }
+
+  .custom-section-box {
+    flex-direction: column !important;
+  }
+
+  .custom-section-box .datepicker {
+    width: 100% !important;
+    max-width: 300px !important;
+  }
+
+  .custom-section-box .table-responsive {
+    overflow-x: auto;
+  }
+
+  .attendance-container {
+    width: 90% !important;
+  }
+} */
+
+/* Default styling (already included in your original) */
+
+.attendance-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 20px;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 992px) {
+  .attendance-container {
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 15px !important;
+  }
+
+  .attendance-container > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 20px;
+  }
+
+  .attendance-container canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .attendance-container ul {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .custom-section-box {
+    flex-direction: column !important;
+  }
+
+  .custom-section-box .datepicker {
+    width: 100% !important;
+    max-width: 300px !important;
+    margin-top: 5px;
+  }
+
+  .custom-section-box .table-responsive {
+    overflow-x: auto;
+  }
+
+  .attendance-container {
+    width: 95% !important;
+  }
+
+  .attendance-container .list-unstyled {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .attendance-container {
+    padding: 10px !important;
+  }
+
+  .attendance-container .list-unstyled li {
+    font-size: 0.85rem;
+  }
+
+  .custom-section-box label {
+    font-size: 0.9rem;
+  }
+
+  .custom-section-box .table {
+    font-size: 0.85rem;
+  }
+}
+

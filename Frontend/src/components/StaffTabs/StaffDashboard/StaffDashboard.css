@@ -1,0 +1,86 @@
+/* .grey-background {
+  background-color: #f0f0f0;
+}
+
+.dashboard-card-staff-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background-color: #3498db;
+  color: #fff;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.dashboard-card-staff:hover{
+  background-color: #2c3e50;
+}
+
+.dashboard-card-text{
+  font-size: medium;
+  padding: 20px;
+  text-align: center;
+}
+
+.dashboard-card-staff {
+  background-color: #F8F9FA;
+  border: 1px solid #ccc;
+  padding: 20px;
+  margin: 10px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.dashboard-card-staff:hover {
+  transform: scale(1.05);
+}
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+ .dashboard-card-link {
+   text-decoration: none;
+   /* Remove underline from links */
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   height: 100%;
+   background-color: #3498db;
+   /* Background color */
+   color: #ffffff;
+   /* Text color */
+   border-radius: 8px;
+   /* Rounded corners */
+   transition: background-color 0.3s;
+   /* Smooth transition on hover */
+ }
+
+ .dashboard-card-link:hover {
+   background-color: #2c3e50;
+   /* Darker background color on hover */
+ }
+
+ .dashboard-card-text {
+   font-size: medium;
+   /* Set the font size to medium */
+   padding: 20px;
+   /* Padding for better spacing */
+   text-align: center;
+   /* Center text */
+ }
+
+ /* Optional: Add box shadow for a subtle lift effect */
+ .dashboard-card-link {
+   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+ }

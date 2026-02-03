@@ -1,0 +1,30 @@
+.std-assignment-form {
+  width: 100%; 
+  display: flex;
+  justify-content: flex-end; 
+}
+
+.std-assignment-search-bar {
+  width: 30%; 
+  max-width: 300px; 
+}
+
+.pagination-std-assignment {
+  display: inline-block;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Add media query for responsiveness */
+@media (max-width: 768px) {
+  .std-assignment-search-bar {
+    width: 50%; 
+  }
+}
+
+@media (max-width: 576px) {
+  .std-assignment-search-bar {
+    width: 70%; 
+  }
+}

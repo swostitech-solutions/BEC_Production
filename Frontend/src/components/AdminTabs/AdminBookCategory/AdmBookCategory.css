@@ -1,0 +1,104 @@
+.container-fluid {
+  padding: 10px;
+   width: 97%;
+}
+.card {
+  border-radius: 10px;
+  background-color: rgba(55, 123, 241, 0.1);
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.3s ease-in-out;
+    
+}
+.card-body {
+  padding: 15px;
+
+}
+p {
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+button {
+  font-size: 14px;
+  padding: 6px 12px;
+  width: 150px;
+}
+label {
+  font-weight: bold;
+}
+/* input[type="text"],
+input[type="date"]
+ {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+} */
+
+input[type="text"],
+input[type="date"]
+ {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Apply shadow to all input fields, select elements, and react-select components */
+/* input, 
+select,
+.react-select__control 
+{
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.3s ease-in-out;
+} */
+
+/* .detail
+.react-select__control
+{
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.3s ease-in-out;
+} */
+
+/* Enhance shadow on focus */
+/* input:focus, 
+select:focus */
+
+.detail
+{
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.3s ease-in-out;
+  height: 38px;
+}
+
+/* Ensure proper spacing in react-select dropdown */
+/* .react-select__menu {
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+} */
+
+.table {
+  margin-top: 10px;
+  background-color: white;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.3s ease-in-out;
+}
+.table th {
+  color: white;
+  background-color: #0D6EFD;
+  text-align: center;
+  font-weight: bold;
+}
+.table td {
+  text-align: center;
+  vertical-align: middle;
+}
+.table tbody tr:hover {
+  background-color: #F1F1F1;
+}
+.custom-section-box {
+  border: 1px solid #ccc;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.3s ease-in-out;
+  background-color: white !important;
+
+}

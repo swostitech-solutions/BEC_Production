@@ -1,0 +1,39 @@
+/* Container for hoverable text */
+.hoverable-text {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    color: #007bff; /* Optional: Add a color to make it visually distinct */
+  }
+  
+  /* Hidden popup initially */
+  .hover-popup {
+    visibility: hidden;
+    opacity: 0;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    text-align: left; /* Align content to the left for better readability */
+    border-radius: 4px;
+    padding: 10px;
+    position: absolute;
+    z-index: 1;
+    max-width: 90vw; /* Set the width to occupy 90% of the viewport width */
+    width: auto; /* Automatically adjust to content within the max-width */
+    white-space: pre-wrap; /* Allow wrapping for longer text and preserve line breaks */
+    word-wrap: break-word; /* Ensure words break correctly if too long */
+    bottom: 120%; /* Position above the text */
+    left: 50%;
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease-in-out;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem; /* Slightly smaller font size */
+    overflow-y: auto; /* Allow scrolling if the content is too tall */
+    max-height: 400px; /* Ensure taller content is scrollable */
+  }
+  
+  /* Show popup when hoverable text is hovered */
+  .hoverable-text:hover .hover-popup {
+    visibility: visible;
+    opacity: 1;
+  }
+  

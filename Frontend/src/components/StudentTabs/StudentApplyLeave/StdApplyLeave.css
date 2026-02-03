@@ -1,0 +1,58 @@
+.fee-dashboard {
+  font-family: Arial, sans-serif;
+  background-color: #FFFFE0;
+  padding: 20px;
+}
+
+.header {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.month-selector {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.calendar {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.calendar th, .calendar td {
+  border: 1px solid black;
+  padding: 10px;
+  text-align: center;
+  vertical-align: top;
+}
+
+.calendar th {
+  background-color: #CD853F;
+  color: white;
+}
+
+.details {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.details div {
+  width: 48%;
+  background-color: #EEE8AA;
+  padding: 10px;
+  border: 1px solid black;
+}
+
+.details h3 {
+  margin-top: 0;
+}
+
+.details p {
+  margin: 5px 0;
+}
+
+.details span {
+  float: right;
+}

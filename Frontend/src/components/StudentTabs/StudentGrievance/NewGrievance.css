@@ -1,0 +1,23 @@
+.form-grid {
+    display: flex;
+    gap: 20px;
+  }
+  .form-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-weight: bold;
+    text-align: right;
+  }
+  .form-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px;
+  }
+  .input-field {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }

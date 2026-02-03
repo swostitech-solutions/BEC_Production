@@ -1,0 +1,37 @@
+.custom-container-staff-own-attendance {
+  background-color: #f8f8f8;
+  padding: 20px;
+  border-radius: 5px;
+  margin: 20px auto;
+  max-width: 1500px;
+  text-align: center;
+}
+
+.form.custom-form-staff-own-attendance {
+  background-color: #e6e1e1;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.custom-label-staff-own-attendance {
+  font-size: 18px;
+}
+
+.custom-input-staff-own-attendance {
+  font-size: 16px;
+}
+
+.custom-table-staff-own-attendance {
+  margin-top: 20px;
+}
+
+.custom-table-staff-own-attendance th {
+  font-weight: bold;
+  background-color: #007bff;
+  color: #fff;
+}
+
+.custom-table-staff-own-attendance td {
+  font-size: 16px;
+}

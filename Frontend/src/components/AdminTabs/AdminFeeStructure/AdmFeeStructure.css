@@ -1,0 +1,33 @@
+@media (max-width: 768px) {
+  .add-fee-elements h5 {
+    font-size: 1.2rem;
+  }
+  
+  .table th, .table td {
+    padding: 0.5rem;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  /* Stack columns vertically on smaller screens */
+  .table td {
+    display: block;
+    width: 100%;
+  }
+}
+@media (max-width: 768px) {
+  .fee-structure-details h5 {
+    font-size: 1.2rem; /* Adjust the font size */
+  }
+
+  .table th, .table td {
+    padding: 0.5rem; /* Adjust padding for smaller screens */
+  }
+
+  /* Ensure the table is scrollable on small devices */
+  .table-responsive {
+    overflow-x: auto; /* Add horizontal scrolling */
+  }
+}

@@ -1,0 +1,38 @@
+.timetable-header {
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.table-timetable {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-timetable thead {
+  background-color: #f9fafb;
+  font-weight: bold;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table-timetable tbody tr:nth-child(even) {
+  background-color: #f8f9fc;
+}
+
+.table-timetable tbody tr:hover {
+  background-color: #eef2ff;
+  transition: background-color 0.3s ease;
+}
+
+.timetable-time-col {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
+
+.badge-subject {
+  padding: 8px 14px;
+  font-size: 0.875rem;
+  border-radius: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}

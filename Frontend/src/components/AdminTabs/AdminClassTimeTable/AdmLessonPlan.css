@@ -1,0 +1,7 @@
+.topic-select {
+  width: 100%;
+  min-width: 120px; /* Ensures the dropdown doesn't shrink too small */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

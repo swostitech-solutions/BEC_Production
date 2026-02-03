@@ -1,0 +1,11 @@
+.table td {
+    border: 1px solid #080404;
+    padding: 8px;
+    vertical-align: top;
+}
+td.action-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  

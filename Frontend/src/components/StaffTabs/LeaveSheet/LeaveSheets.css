@@ -1,0 +1,48 @@
+
+
+.container-staff-leave {
+  margin-top: 20px;
+}
+.input-select-staff-leaves {
+  margin-bottom: 15px;
+}
+
+.list-group-staff-leaves {
+ 
+  /* color: #FFFFFF;  */
+  font-size: 18px;
+  font-weight: bold;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.list-group-heading-staff-leaves{
+   
+    background-color: transparent !important;
+  /* color: #FFFFFF;  */
+  font-size: 18px;
+  font-weight: bold;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.container-staff-leave{
+     /* background-color: #F8F9FA; */
+}
+
+
+.add-leave-header-staff {
+  border: none; 
+}
+
+.add-leave-header-staff {
+  font-size: 24px; 
+  font-weight: bold; 
+}
+
+.form-label {
+  font-size: 18px; 
+  font-weight: bold; 
+}
+.add-leave-header {
+  font-size: 1.5rem; /* Increase the font size as needed */
+  font-weight: bold; /* Make the text bold */
+}

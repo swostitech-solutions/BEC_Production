@@ -1,0 +1,27 @@
+.lab-tabs-container {
+  width: 100%;
+  font-family: 'Arial', sans-serif;
+}
+
+.tab-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tab-button {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  cursor: pointer;
+  outline: none;
+}
+
+.tab-button.active {
+  background-color: #ddd;
+}
+
+.tab-content {
+  border: 1px solid #ccc;
+  padding: 20px;
+}

@@ -1,0 +1,10 @@
+.react-select-container .react-select__control {
+    height: 32px;
+    min-height: 32px;
+  }
+  .react-select-container .react-select__single-value {
+    line-height: 30px;
+  }
+  .react-select-container .react-select__menu {
+    max-height: 150px;
+  }

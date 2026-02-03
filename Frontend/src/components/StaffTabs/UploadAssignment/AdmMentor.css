@@ -1,0 +1,10 @@
+.custom-table {
+    border: none !important;
+    background: #000;
+  }
+  
+  .custom-table td,
+  .custom-table th {
+    border: none !important;
+  }
+  

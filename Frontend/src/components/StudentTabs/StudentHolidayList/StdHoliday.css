@@ -1,0 +1,26 @@
+.list-group-heading-staff-holiday {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.staff-holiday-form {
+  display: flex;
+  justify-content: flex-end; /* Aligns the search bar to the right */
+  width: 100%; /* Ensure the form takes full width of the container */
+}
+
+.staff-holiday-search-bar {
+  width: 50%; /* Reduced size of the search bar */
+  max-width: 400px; /* Ensures it doesn't grow too large on wide screens */
+}
+
+.custom-table-staff-holiday {
+  border: 1px solid black;
+}
+
+th, td {
+  text-align: center; /* Center-aligns the text in the table cells */
+  vertical-align: middle; /* Vertically centers the text */
+  border: 1px solid black;
+}

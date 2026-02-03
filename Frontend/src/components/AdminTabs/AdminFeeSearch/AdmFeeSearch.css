@@ -1,0 +1,93 @@
+
+.fee-search-page-container {
+    /* background-color: #F0F0F0; */
+    padding: 15px;
+    border: 1px solid #DCDCDC;
+    max-width: 90%; /* Reducing the container size */
+    margin: 0 auto; /* Centering the container */
+    margin-top: 10px;
+}
+
+.fee-search-page-header {
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #A52A2A;
+}
+
+/* Adding border around the button group */
+.fee-search-page-btn-group-box {
+    border: 1px solid #DCDCDC;
+    /* padding: 10px; */
+    /* background-color: #FFFFFF; */
+    margin-bottom: 20px;
+}
+
+.fee-search-page-btn-group {
+    display: flex;
+    justify-content: space-between;
+}
+
+.fee-search-page-button {
+    background-color: #0000FF; /* Blue color for buttons */
+    color: #FFFFFF; /* White text */
+    /* padding: 10px 20px; */
+    border: none;
+    /* border-radius: 5px; */
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+    width: 150px; /* Uniform size for all buttons */
+}
+
+.fee-search-page-button:hover {
+    background-color: #00008B; 
+}
+
+.fee-search-page-form-group {
+    margin-bottom: 20px;
+}
+
+.fee-search-page-fee-due-box {
+    border: 1px solid #DCDCDC;
+    padding: 10px;
+    /* background-color: #F0F0F0; */
+}
+
+.fee-search-page-radio-group {
+    margin-top: 20px;
+}
+
+.fee-search-page-footer {
+    text-align: center;
+    font-weight: bold;
+    /* color: #A52A2A; */
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .fee-search-page-btn-group {
+        flex-direction: column;
+    }
+    .fee-search-page-container {
+        padding: 10px;
+        max-width: 95%; /* Adjusting for smaller screens */
+    }
+    .fee-search-page-button {
+        width: 100%; /* Full width for buttons on smaller screens */
+        margin-bottom: 10px;
+    }
+}
+
+
+.pagination {
+  margin-top: 1rem;
+}
+.page-item.active .page-link {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+.page-link {
+  color: #007bff;
+}

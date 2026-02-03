@@ -1,0 +1,269 @@
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.checkbox-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  font-size: 14px;
+  flex: 1 1 45%;
+}
+
+@media (max-width: 576px) {
+  .checkbox-item {
+    flex: 1 1 100%;
+  }
+}
+
+.scroll-box {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.checkbox-class-group {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 15px;
+}
+
+.section-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+}
+
+.scroll-box {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+
+
+}
+
+.scroll-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-box::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.scroll-box::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+
+
+.circular-note-title,
+.circular-note-detail {
+  font-size: 14px;
+}
+
+.circular-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 120px;
+  font-size: 14px;
+  flex: 1 1 45%;
+}
+
+@media (max-width: 576px) {
+  .circular-checkbox-item {
+    flex: 1 1 100%;
+  }
+}
+
+.circular-scroll-box {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+}
+
+.circular-scroll-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.circular-scroll-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.circular-scroll-box::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.circular-scroll-box::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.circular-checkbox-class-group {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 15px;
+}
+
+.circular-section-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.circular-form-group {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modern Dropdown UI */
+.custom-dropdown-container {
+  position: relative;
+}
+
+.custom-dropdown-toggle {
+  background: #fff;
+  border: 1px solid #ced4da;
+  padding: 10px 14px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+  position: relative;
+}
+
+.custom-dropdown-toggle:hover {
+  background: #f7f7f7;
+}
+
+.custom-dropdown-toggle .arrow {
+  float: right;
+}
+
+.custom-dropdown-menu {
+  position: absolute;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  margin-top: 4px;
+  z-index: 2000;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.custom-search-box {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.custom-dropdown-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.dropdown-item-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  cursor: pointer;
+}
+
+.dropdown-item-check:hover {
+  background: #f2f2f2;
+  border-radius: 4px;
+}
+
+
+.filter-card {
+  transition: 0.2s ease-in-out;
+}
+
+.filter-card:hover {
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.filter-scroll {
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dashed #ddd;
+  cursor: pointer;
+}
+
+.filter-item:last-child {
+  border-bottom: none;
+}
+
+.filter-item:hover {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.circular-details-cell {
+  max-width: 180px;        
+  white-space: nowrap;     
+  overflow: hidden;        
+  text-overflow: ellipsis; 
+  cursor: pointer;        
+}

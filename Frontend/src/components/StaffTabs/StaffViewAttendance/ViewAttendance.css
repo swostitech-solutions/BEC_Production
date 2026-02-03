@@ -1,0 +1,122 @@
+/* 
+
+.custom-card-header {
+  background-color: #007bff;
+  color: #fff;
+  text-align: center;
+}
+
+
+
+
+.custom-dropdown {
+  width: 100%;
+}
+
+
+.custom-datepicker {
+  width: 100%;
+}
+
+
+.custom-table-view {
+  margin-top: 20px;
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e1e1e1;
+}
+
+.custom-table-view th,
+.custom-table-view td {
+  border: 1px solid #e1e1e1;
+  padding: 8px;
+  text-align: center;
+}
+
+.custom-table-view th {
+  background-color: #f2f2f2;
+}
+
+.custom-pagination-view {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+}
+
+.custom-pagination-view a {
+  text-decoration: none;
+  display: inline-block;
+  padding: 10px;
+  margin: 5px;
+  background-color: #f2f2f2;
+  color: #007bff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.custom-pagination-view .active a {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.custom-pagination-view .disabled a {
+  cursor: not-allowed;
+  opacity: 0.6;
+}  */
+
+
+.container-staff-view-attendance {
+  margin-top: 20px;
+}
+.input-select-staff-view-attendance {
+  margin-bottom: 15px;
+}
+
+.list-group-staff-view-attendance {
+  background-color: #007BFF; /* Adjust the color as needed */
+
+  font-size: 18px;
+  font-weight: bold;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.list-group-heading-staff-view-attendance{
+    background-color: #007BFF; /* Adjust the color as needed */
+/* Adjust the text color as needed */
+  font-size: 18px;
+  font-weight: bold;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.container-staff-view-attendance{
+    
+     
+}
+.bold {
+  font-weight: bold;
+}
+
+.table-bordered {
+
+}
+
+
+.table th,
+.table td {
+
+  padding: 8px;
+  vertical-align: top;
+}
+
+
+/* .table thead th {
+   color: #0804045c;
+} */
+.table-hover tbody tr:hover td,
+.table-hover tbody tr:hover th {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+.table-bordered {
+ 
+}

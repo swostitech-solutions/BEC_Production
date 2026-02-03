@@ -1,0 +1,10 @@
+.responsive-tabs .MuiTabs-flexContainer {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.responsive-tabs .MuiTab-root {
+  min-width: 120px;
+  flex: 1 1 auto;
+  text-align: center;
+}

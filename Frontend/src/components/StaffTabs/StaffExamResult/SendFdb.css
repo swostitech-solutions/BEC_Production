@@ -1,0 +1,301 @@
+
+
+
+
+
+.page {
+  display: flex;
+  height: 100vh;
+}
+
+.top-section {
+  flex: .1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+  background-color: #f8f9fa;
+}
+
+.middle-section {
+  flex: .4;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+  overflow-y: auto; 
+}
+
+.bottom-section {
+  flex: 1;
+}
+
+.vertical-divider {
+  width: 1px;
+  background-color: #ccc;
+  margin: 0 10px;
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.icon-container:hover {
+  color: blue;
+}
+
+.divider {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.card-send-fdb {
+  width: 80%;
+  border-bottom: 1px solid #ccc;
+  border-radius: 5px;
+  height: 16vh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+  margin-left: 7%;
+}
+
+.card-info {
+  display: flex;
+  justify-content: space-between; 
+  width: 100%;
+}
+
+.card-title-send-fdb {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.card-date-send-fdb {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+}
+
+.heading-line {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.round-shape {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #ccc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.round-shape span {
+  font-size: 20px;
+}
+
+.card-content-send-fdb {
+  display: flex;
+  align-items: center;
+}
+
+.card-subject-send-fdb {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+  margin-left: 10px; 
+}
+
+.modal-content-area {
+  margin-bottom: 10px;
+}
+
+.card-content a,
+.card-subject-send-fdb a {
+  color: black; 
+  text-decoration: none; 
+}
+
+
+
+.bottom-section-card {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 20px;
+  position: relative;
+  height: 40vh;
+}
+
+@media (max-width: 768px) {
+  .top-section {
+    flex-direction: column;
+  }
+  .divider {
+    display: none;
+  }
+}
+
+.bottom-card-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; 
+}
+
+.from-field,
+.to-field,
+.subject-field {
+  margin-bottom: 5px; 
+}
+
+.bottom-card-heading-line {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #ccc;
+  margin-bottom: 10px;
+}
+
+.card-date-time {
+  font-size: 14px;
+  color: #888;
+  text-align: left;
+  margin-left: 90%; 
+}
+
+.bottom-card-icons {
+ display: flex;
+  align-items: center;
+  justify-content: flex-start; 
+  margin-bottom: 10px;
+}
+
+.bottom-card-icons > * {
+  margin-left: 5px;
+}
+
+ .bottom-card {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 20px;
+  position: relative;
+  height: 40vh;
+}
+
+.bottom-card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.middle-section-top {
+  background-color: #87CEEB;
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.create-mail {
+  background-color: #87ceeb;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+
+.modal-header-left {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.modal-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.modal-header-right > div {
+  margin-left: 20px;
+}
+
+.modal-header-icons {
+  display: flex;
+  align-items: center;
+}
+
+.modal-header-icons .fa-icon {
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.modal-content-area-left {
+  margin-bottom: 15px;
+}
+
+.modal-content-area-left label {
+  font-weight: bold;
+}
+
+.modal-content-area-left input,
+.modal-content-area-left textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-content-area-left textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.modal-content-area-left input[type="file"] {
+  padding: 3px;
+}
+
+.modal-footer .btn {
+  padding: 10px 20px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header .fa-icon {
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+
+.minimized-modal {
+  width: 300px;
+  height: 40px;
+  overflow: hidden;
+  transition: height 0.3s ease;
+}
+
+.minimized-modal .modal-content {
+  height: 40px;
+  overflow: hidden;
+}
+
+.maximized-modal {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  transition: height 0.3s ease;
+}
+
+.maximized-modal .modal-content {
+  height: 100%;
+}

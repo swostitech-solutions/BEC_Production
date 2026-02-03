@@ -1,0 +1,33 @@
+.table-responsive th,
+.table-responsive td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table-responsive img {
+  width: 50px;
+  height: 50px;
+}
+
+.table-responsive .action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.table-header {
+  background-color: #87CEEB;
+}
+
+
+.add-principal-btn {
+    margin-bottom: 20px; /* Optional: Adds some space below the button */
+  }
+  
+
+  .table thead th {
+    /* background-color: #007bff; */
+    /* color: black; */
+    /* background-color:#87CEEB; */
+}
+  

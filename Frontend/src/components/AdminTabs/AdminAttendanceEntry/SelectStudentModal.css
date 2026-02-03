@@ -1,0 +1,102 @@
+.custom-modal .modal-dialog {
+    max-width: 100%; /* Adjust the percentage as needed */
+  }
+  
+  .custom-modal .modal-content {
+    width: 100%;
+  }
+  .form-label {
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 0px;
+}
+
+/* React-Select styles for detail classNamePrefix */
+.detail__control {
+    min-height: 38px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.detail__control:hover {
+    border-color: #adb5bd;
+}
+
+.detail__control--is-focused {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.detail__value-container {
+    padding: 2px 8px;
+}
+
+.detail__single-value {
+    color: #212529;
+    font-size: 0.8rem;
+}
+
+.detail__placeholder {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.detail__input-container {
+    color: #212529;
+    font-size: 0.8rem;
+}
+
+.detail__indicator-separator {
+    background-color: #dee2e6;
+}
+
+.detail__dropdown-indicator {
+    color: #6c757d;
+    padding: 8px;
+}
+
+.detail__menu {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    margin-top: 4px;
+}
+
+.detail__menu-list {
+    padding: 0;
+}
+
+.detail__option {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: #212529;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.detail__option:hover {
+    background-color: #f8f9fa;
+}
+
+.detail__option--is-focused {
+    background-color: #e9ecef;
+}
+
+.detail__option--is-selected {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+.detail__control--is-disabled {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+}
+
+.detail__single-value--is-disabled {
+    color: #6c757d;
+}
+  

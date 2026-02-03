@@ -1,0 +1,16 @@
+.table {
+  width: 100%;
+  table-layout: auto; /* Adjust table columns automatically */
+}
+
+.table th, .table td {
+  white-space: nowrap; /* Prevent text from wrapping inside cells */
+  text-overflow: ellipsis; /* Add ellipsis when text overflows */
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .table th, .table td {
+    font-size: 14px; /* Reduce font size for smaller screens */
+  }
+}
