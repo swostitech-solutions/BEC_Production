@@ -1045,6 +1045,20 @@ class UserLogin(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)  # Required for Django admin
     date_joined = models.DateTimeField(auto_now_add=True)
 
+    # Override PermissionsMixin fields with related_name to avoid clash with auth.User
+    groups = models.ManyToManyField(
+        'auth.Group',
+        blank=True,
+        related_name='userlogin_set',
+        help_text='The groups this user belongs to.'
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        blank=True,
+        related_name='userlogin_set',
+        help_text='Specific permissions for this user.'
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'user_name'
