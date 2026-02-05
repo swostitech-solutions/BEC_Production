@@ -10,10 +10,12 @@ ALLOWED_HOSTS = ['yourdomain.com', 'www.yourdomain.com', '*.onrender.com']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'your_db_name',
-        'USER': 'your_db_user',
-        'PASSWORD': 'your_db_password',
-        'HOST': 'your_db_host.postgres.render.com',
+        'NAME': 'college_management',
+        'USER': 'postgres',
+        'PASSWORD': 'Sunandita@19',
+        # 'HOST': 'your_db_host.postgres.render.com',
+        'HOST': 'localhost',
+
         'PORT': '5432',
     }
 }
