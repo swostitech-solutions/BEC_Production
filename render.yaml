@@ -1,14 +1,12 @@
-services:
-  # PostgreSQL Database
-  - type: pserv
-    name: bec-production-db
+databases:
+  - name: bec-production-db
     plan: free
     region: singapore
 
-  # Django Web Service
+services:
   - type: web
     name: bec-production-backend
-    env: python
+    runtime: python
     region: singapore
     plan: free
     buildCommand: "chmod +x build.sh && ./build.sh"
@@ -16,7 +14,7 @@ services:
     healthCheckPath: /admin/
     envVars:
       - key: PYTHON_VERSION
-        value: "3.13.0"
+        value: "3.13"
       
       - key: SECRET_KEY
         generateValue: true
