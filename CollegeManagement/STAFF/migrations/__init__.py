@@ -1,0 +1,1 @@
+# Migrations for STAFF app

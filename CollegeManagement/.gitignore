@@ -132,7 +132,7 @@ coverage.xml
 *.cover
 .hypothesis/
 *.pytest_cache/
-migrations/
+# migrations/ -- REMOVED to allow migration files in git
 # IDEs
 .vscode/
 .idea/
@@ -150,5 +150,5 @@ local_settings.py
 # ======================================
 .env
 
-*/migrations/*
-!*/migrations/__init__.py
+# */migrations/* -- REMOVED to allow migration files in git
+# !*/migrations/__init__.py
