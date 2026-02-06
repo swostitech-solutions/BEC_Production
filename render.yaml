@@ -2,12 +2,10 @@ services:
   # PostgreSQL Database
   - type: pserv
     name: bec-production-db
-    env: python
     plan: free
     region: singapore
-    databases:
-      - name: college_db
-        user: college_user
+    databaseName: college_db
+    databaseUser: college_user
 
   # Django Web Service
   - type: web
