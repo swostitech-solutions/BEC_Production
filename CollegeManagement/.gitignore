@@ -10,14 +10,12 @@ __pycache__/
 settings.py
 *.settings.py
 */settings.py
-.env
 
 12-04-25.sqlite3
 17-11-25db.sqlite3
 
 # Environment
 .env
-.env.local
 .venv/
 env/
 venv/
