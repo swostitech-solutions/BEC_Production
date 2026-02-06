@@ -18,4 +18,7 @@ python manage.py collectstatic --no-input
 echo "Running database migrations..."
 python manage.py migrate --no-input
 
+echo "Setting up initial data (Organization, Branch, UserType)..."
+python manage.py setup_initial_data
+
 echo "Build completed successfully!"
