@@ -12,6 +12,7 @@ pytz==2025.2
 PyYAML==6.0.3
 sqlparse==0.5.3
 uritemplate==4.2.0
+requests==2.32.3
 
 # Production dependencies
 psycopg2-binary==2.9.9
