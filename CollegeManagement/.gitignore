@@ -26,11 +26,11 @@ venv.bak/
 *.env
 
 
-# Media Files
- *.jpg
- *.jpeg
- *.png
- *.pdf
+# Media Files (allow folders, ignore content)
+# *.jpg
+# *.jpeg
+# *.png
+# *.pdf
 
 
 
