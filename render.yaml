@@ -4,8 +4,6 @@ services:
     name: bec-production-db
     plan: free
     region: singapore
-    databaseName: college_db
-    databaseUser: college_user
 
   # Django Web Service
   - type: web
@@ -13,8 +11,8 @@ services:
     env: python
     region: singapore
     plan: free
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn Swostitech_Acadix.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
+    buildCommand: "chmod +x build.sh && ./build.sh"
+    startCommand: "cd CollegeManagement && gunicorn Swostitech_Acadix.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
     healthCheckPath: /admin/
     envVars:
       - key: PYTHON_VERSION
