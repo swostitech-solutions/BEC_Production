@@ -9,6 +9,9 @@ pip install -r CollegeManagement/requirements.txt
 echo "Changing to project directory..."
 cd CollegeManagement
 
+echo "Creating database migrations..."
+python manage.py makemigrations
+
 echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
