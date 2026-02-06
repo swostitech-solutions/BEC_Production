@@ -12,46 +12,46 @@ class Command(BaseCommand):
         org, created = Organization.objects.get_or_create(
             id=1,
             defaults={
-                'code': 'DEFAULT',
-                'name': 'Default Organization',
+                'organization_code': 'DEFAULT',
+                'organization_description': 'Default Organization',
                 'is_active': True,
                 'created_by': 1,
             }
         )
         if created:
-            self.stdout.write(self.style.SUCCESS(f'✓ Created Organization: {org.name}'))
+            self.stdout.write(self.style.SUCCESS(f'✓ Created Organization: {org.organization_code}'))
         else:
-            self.stdout.write(f'✓ Organization already exists: {org.name}')
+            self.stdout.write(f'✓ Organization already exists: {org.organization_code}')
 
         # Create default Branch
         branch, created = Branch.objects.get_or_create(
             id=1,
             defaults={
-                'code': 'MAIN',
-                'name': 'Main Branch',
+                'branch_code': 'MAIN',
+                'branch_name': 'Main Branch',
                 'organization': org,
                 'is_active': True,
                 'created_by': 1,
             }
         )
         if created:
-            self.stdout.write(self.style.SUCCESS(f'✓ Created Branch: {branch.name}'))
+            self.stdout.write(self.style.SUCCESS(f'✓ Created Branch: {branch.branch_name}'))
         else:
-            self.stdout.write(f'✓ Branch already exists: {branch.name}')
+            self.stdout.write(f'✓ Branch already exists: {branch.branch_name}')
 
         # Create default UserType
         user_type, created = UserType.objects.get_or_create(
             id=1,
             defaults={
-                'code': 'ADMIN',
-                'name': 'Administrator',
+                'user_type': 'Administrator',
+                'description': 'System Administrator',
                 'is_active': True,
                 'created_by': 1,
             }
         )
         if created:
-            self.stdout.write(self.style.SUCCESS(f'✓ Created UserType: {user_type.name}'))
+            self.stdout.write(self.style.SUCCESS(f'✓ Created UserType: {user_type.user_type}'))
         else:
-            self.stdout.write(f'✓ UserType already exists: {user_type.name}')
+            self.stdout.write(f'✓ UserType already exists: {user_type.user_type}')
 
         self.stdout.write(self.style.SUCCESS('\n✅ Initial data setup complete! You can now create a superuser.'))
