@@ -7,9 +7,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-settings.py
-*.settings.py
-*/settings.py
+# Settings files are now safe to commit (using environment variables)
+# settings.py
+# *.settings.py
+# */settings.py
 
 12-04-25.sqlite3
 17-11-25db.sqlite3
