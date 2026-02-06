@@ -70,17 +70,24 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    # Custom user model app MUST be first, before django.contrib.auth
+    'Acadix',
+    
+    # Django built-in apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third-party apps
     'rest_framework_simplejwt',
     'corsheaders',
     'rest_framework',
     'drf_yasg',
-    'Acadix',
+    
+    # Local apps
     'Transport',
     'Library',
     'EXPENSE',
