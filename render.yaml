@@ -1,0 +1,78 @@
+databases:
+  - name: bec-production-db
+    plan: free
+    region: singapore
+
+services:
+  - type: web
+    name: bec-production-backend
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: "chmod +x build.sh && ./build.sh"
+    startCommand: "cd CollegeManagement && gunicorn Swostitech_Acadix.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
+    healthCheckPath: /admin/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      
+      - key: SECRET_KEY
+        generateValue: true
+      
+      - key: DEBUG
+        value: "False"
+      
+      - key: RENDER
+        value: "True"
+      
+      - key: DB_ENGINE
+        value: "django.db.backends.postgresql"
+      
+      - key: DB_NAME
+        fromDatabase:
+          name: bec-production-db
+          property: database
+      
+      - key: DB_USERNAME
+        fromDatabase:
+          name: bec-production-db
+          property: user
+      
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: bec-production-db
+          property: password
+      
+      - key: DB_HOST
+        fromDatabase:
+          name: bec-production-db
+          property: host
+      
+      - key: DB_PORT
+        fromDatabase:
+          name: bec-production-db
+          property: port
+      
+      - key: EMAIL_BACKEND
+        value: "django.core.mail.backends.smtp.EmailBackend"
+      
+      - key: EMAIL_HOST
+        value: "smtp.gmail.com"
+      
+      - key: EMAIL_PORT
+        value: "587"
+      
+      - key: EMAIL_USE_TLS
+        value: "True"
+      
+      - key: EMAIL_HOST_USER
+        sync: false
+      
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false

@@ -7,17 +7,16 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-settings.py
-*.settings.py
-*/settings.py
-.env
+# Settings files are now safe to commit (using environment variables)
+# settings.py
+# *.settings.py
+# */settings.py
 
 12-04-25.sqlite3
 17-11-25db.sqlite3
 
 # Environment
 .env
-.env.local
 .venv/
 env/
 venv/
@@ -27,11 +26,11 @@ venv.bak/
 *.env
 
 
-# Media Files
- *.jpg
- *.jpeg
- *.png
- *.pdf
+# Media Files (allow folders, ignore content)
+# *.jpg
+# *.jpeg
+# *.png
+# *.pdf
 
 
 
@@ -133,7 +132,7 @@ coverage.xml
 *.cover
 .hypothesis/
 *.pytest_cache/
-migrations/
+# migrations/ -- REMOVED to allow migration files in git
 # IDEs
 .vscode/
 .idea/
@@ -151,5 +150,5 @@ local_settings.py
 # ======================================
 .env
 
-*/migrations/*
-!*/migrations/__init__.py
+# */migrations/* -- REMOVED to allow migration files in git
+# !*/migrations/__init__.py
