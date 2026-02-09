@@ -45,10 +45,13 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false node --max-old-space-size=4096 ./node_modules/react-scripts/scripts/build.js",
+  "build": "CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "postinstall": "node scripts/fix-html2pdf-sourcemap.js"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "eslintConfig": {
     "extends": [
