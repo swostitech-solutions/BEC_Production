@@ -51,7 +51,7 @@
     "postinstall": "node scripts/fix-html2pdf-sourcemap.js"
   },
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "eslintConfig": {
     "extends": [
