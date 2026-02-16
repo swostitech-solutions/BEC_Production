@@ -2752,7 +2752,7 @@ const AdmADHOCFee = () => {
           return;
         }
 
-        const url = `http://31.97.63.174:9000/api/Semester/GetSemesterByDepartment/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${batch_id}&course_id=${course_id}&department_id=${department_id}`;
+        const url = `${ApiUrl.apiurl}Semester/GetSemesterByDepartment/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${batch_id}&course_id=${course_id}&department_id=${department_id}`;
 
         const response = await fetch(url, {
           method: "GET",

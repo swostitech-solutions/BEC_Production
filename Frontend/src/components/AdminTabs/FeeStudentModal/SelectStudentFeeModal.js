@@ -568,7 +568,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
         section_id: selectedSection?.value || "",
       });
 
-      const url = `http://31.97.63.174:9000/api/StudentCourse/StudentCourseRecordFilter/?${params.toString()}`;
+      const url = `${ApiUrl.apiurl}StudentCourse/StudentCourseRecordFilter/?${params.toString()}`;
       console.log("Fetching student records from:", url);
 
       const response = await fetch(url, {
@@ -658,45 +658,45 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
 
 
 
-const handleClearFilters = () => {
-  // Reset filter input fields
-  setFilters({
-    studentName: "",
-    admissionNo: "",
-    barcode: "",
-    classId: "",
-    section: "",
-    fatherName: "",
-    motherName: "",
-    schoolAdmissionNo: "",
-  });
+  const handleClearFilters = () => {
+    // Reset filter input fields
+    setFilters({
+      studentName: "",
+      admissionNo: "",
+      barcode: "",
+      classId: "",
+      section: "",
+      fatherName: "",
+      motherName: "",
+      schoolAdmissionNo: "",
+    });
 
-  // Reset dropdown selections
-  setSelectedClass("");
-  setSelectedSection("");
-  setSelectedAcademicYear(null);
-  setSelectedSemester(null);
-  setSelectedSession(null);
-  setSelectedCourse(null);
-  setSelectedDepartment(null);
-  setSelectedSessionId(null);
+    // Reset dropdown selections
+    setSelectedClass("");
+    setSelectedSection("");
+    setSelectedAcademicYear(null);
+    setSelectedSemester(null);
+    setSelectedSession(null);
+    setSelectedCourse(null);
+    setSelectedDepartment(null);
+    setSelectedSessionId(null);
 
-  // Reset dependent dropdown lists (optional)
-  setSemesters([]);
-  setSections([]);
-  setSessions([]);
-  setCourses([]);
-  setDepartments([]);
-  setAcademicYears([]);
+    // Reset dependent dropdown lists (optional)
+    setSemesters([]);
+    setSections([]);
+    setSessions([]);
+    setCourses([]);
+    setDepartments([]);
+    setAcademicYears([]);
 
-  // Reset student table data
-  setStudentData(fullStudentData); // full list back
-  setShowTable(false); // hide table after clearing (optional)
+    // Reset student table data
+    setStudentData(fullStudentData); // full list back
+    setShowTable(false); // hide table after clearing (optional)
 
-  // Reset students fetch status
-  setStudentError("");
-  setStudentLoading(false);
-};
+    // Reset students fetch status
+    setStudentError("");
+    setStudentLoading(false);
+  };
 
 
   return (

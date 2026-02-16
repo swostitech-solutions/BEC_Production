@@ -2120,24 +2120,24 @@ const FeeCollection = () => {
     setTotalDues(computedTotalDues);
   }, [selectedFeeDetails]);
 
-useEffect(() => {
-  const computedTotalOtherCharges = Object.entries(charges).reduce(
-    (acc, [key, val]) => {
-      const value = parseFloat(val || 0);
+  useEffect(() => {
+    const computedTotalOtherCharges = Object.entries(charges).reduce(
+      (acc, [key, val]) => {
+        const value = parseFloat(val || 0);
 
-      // ✅ ONLY discount should subtract
-      if (key === "discount_fee") {
-        return acc - value;
-      }
+        // ✅ ONLY discount should subtract
+        if (key === "discount_fee") {
+          return acc - value;
+        }
 
-      // ✅ All others add
-      return acc + value;
-    },
-    0
-  );
+        // ✅ All others add
+        return acc + value;
+      },
+      0
+    );
 
-  setTotalOtherCharges(computedTotalOtherCharges);
-}, [charges]);
+    setTotalOtherCharges(computedTotalOtherCharges);
+  }, [charges]);
 
 
   const [paidAmount, setPaidAmount] = useState(totalDues + totalOtherCharges);
@@ -2453,8 +2453,8 @@ useEffect(() => {
     fetchAccountDetails();
   }, [selectedBankId]);
 
-  
-  
+
+
 
   const fetchStudentData = async ({ id, barcode, admissionNo } = {}) => {
     // Validate that at least one identifier is provided
@@ -2470,7 +2470,7 @@ useEffect(() => {
     queryParams.append("barcode", barcode || "");
     queryParams.append("college_admission_no", admissionNo || "");
 
-    const url = `http://31.97.63.174:9000/api/Filter/GetFilterStudentFilterdataBasedOnCondition/?${queryParams.toString()}`;
+    const url = `${ApiUrl.apiurl}Filter/GetFilterStudentFilterdataBasedOnCondition/?${queryParams.toString()}`;
 
     try {
       const response = await fetch(url, {
@@ -2960,38 +2960,38 @@ useEffect(() => {
   };
 
   // Helper function to group and sum fee details by element_name and period_month
- const aggregateFeeDetails = (feeDetails) => {
-   const map = {};
+  const aggregateFeeDetails = (feeDetails) => {
+    const map = {};
 
-   feeDetails.forEach((item) => {
-     const key = `${item.semester}-${item.element_name}`;
+    feeDetails.forEach((item) => {
+      const key = `${item.semester}-${item.element_name}`;
 
-     if (!map[key]) {
-       map[key] = {
-         id: item.id,
-         period: item.semester,
-         period_id: item.semester_id,
-         element_name: item.element_name,
-         element_amount: Number(item.element_amount) || 0,
-         paid_amount: Number(item.paid_amount) || 0,
-       };
-     } else {
-       map[key].element_amount += Number(item.element_amount) || 0;
-       map[key].paid_amount += Number(item.paid_amount) || 0;
-     }
+      if (!map[key]) {
+        map[key] = {
+          id: item.id,
+          period: item.semester,
+          period_id: item.semester_id,
+          element_name: item.element_name,
+          element_amount: Number(item.element_amount) || 0,
+          paid_amount: Number(item.paid_amount) || 0,
+        };
+      } else {
+        map[key].element_amount += Number(item.element_amount) || 0;
+        map[key].paid_amount += Number(item.paid_amount) || 0;
+      }
 
-     map[key].balance = map[key].element_amount - map[key].paid_amount;
-   });
+      map[key].balance = map[key].element_amount - map[key].paid_amount;
+    });
 
-   return Object.values(map);
- };
+    return Object.values(map);
+  };
 
-useEffect(() => {
-  if (feeDetails.length > 0) {
-    setAggregatedFeeDetails(aggregateFeeDetails(feeDetails));
-    setUniquePeriods(getUniquePeriods(feeDetails));
-  }
-}, [feeDetails]);
+  useEffect(() => {
+    if (feeDetails.length > 0) {
+      setAggregatedFeeDetails(aggregateFeeDetails(feeDetails));
+      setUniquePeriods(getUniquePeriods(feeDetails));
+    }
+  }, [feeDetails]);
 
 
   useEffect(() => {
@@ -2999,37 +2999,37 @@ useEffect(() => {
   }, []);
 
   // Helper to get unique periods with summed total and balance amounts
- const getUniquePeriods = (feeDetails) => {
-   if (!Array.isArray(feeDetails) || feeDetails.length === 0) return [];
+  const getUniquePeriods = (feeDetails) => {
+    if (!Array.isArray(feeDetails) || feeDetails.length === 0) return [];
 
-   const periodMap = new Map();
+    const periodMap = new Map();
 
-   feeDetails.forEach((detail) => {
-     const period = detail.semester;
-     const elementAmount = Number(detail.element_amount) || 0;
-     const paidAmount = Number(detail.paid_amount) || 0;
+    feeDetails.forEach((detail) => {
+      const period = detail.semester;
+      const elementAmount = Number(detail.element_amount) || 0;
+      const paidAmount = Number(detail.paid_amount) || 0;
 
-     if (!periodMap.has(period)) {
-       periodMap.set(period, {
-         period,
-         totalAmount: elementAmount,
-         paidAmount: paidAmount,
-         discount: 0,
-       });
-     } else {
-       const existing = periodMap.get(period);
-       existing.totalAmount += elementAmount;
-       existing.paidAmount += paidAmount;
-     }
-   });
+      if (!periodMap.has(period)) {
+        periodMap.set(period, {
+          period,
+          totalAmount: elementAmount,
+          paidAmount: paidAmount,
+          discount: 0,
+        });
+      } else {
+        const existing = periodMap.get(period);
+        existing.totalAmount += elementAmount;
+        existing.paidAmount += paidAmount;
+      }
+    });
 
-   return Array.from(periodMap.values()).map((p) => ({
-     ...p,
-     totalAmount: Number(p.totalAmount),
-     paidAmount: Number(p.paidAmount),
-     balanceAmount: Number(p.totalAmount - p.paidAmount),
-   }));
- };
+    return Array.from(periodMap.values()).map((p) => ({
+      ...p,
+      totalAmount: Number(p.totalAmount),
+      paidAmount: Number(p.paidAmount),
+      balanceAmount: Number(p.totalAmount - p.paidAmount),
+    }));
+  };
 
 
   // const uniquePeriods = getUniquePeriods(feeDetails);
@@ -3575,15 +3575,15 @@ useEffect(() => {
                                               <td>{item.balance}</td>
                                               <td>
                                                 {parseFloat(item.balance) >
-                                                0 ? (
+                                                  0 ? (
                                                   <input
                                                     type="checkbox"
                                                     checked={selectedFeeDetails.some(
                                                       (detail) =>
                                                         detail.period ===
-                                                          row.period &&
+                                                        row.period &&
                                                         detail.element_name ===
-                                                          item.element_name
+                                                        item.element_name
                                                     )}
                                                     onChange={() =>
                                                       handleNestedCheckboxChange(
@@ -3739,8 +3739,8 @@ useEffect(() => {
                         value={
                           selectedBankId
                             ? bankOptions.find(
-                                (option) => option.value === selectedBankId
-                              )
+                              (option) => option.value === selectedBankId
+                            )
                             : null
                         }
                         onChange={(selectedOption) =>
@@ -3768,8 +3768,8 @@ useEffect(() => {
                         value={
                           selectedAccountId
                             ? accountNumberOptions.find(
-                                (option) => option.value === selectedAccountId
-                              )
+                              (option) => option.value === selectedAccountId
+                            )
                             : null
                         }
                         onChange={(selectedOption) =>
