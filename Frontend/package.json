@@ -45,9 +45,12 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "node --max-old-space-size=4096 ./node_modules/react-scripts/scripts/build.js",
+    "build": "DISABLE_ESLINT_PLUGIN=true CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "engines": {
+    "node": "24.x"
   },
   "eslintConfig": {
     "extends": [
