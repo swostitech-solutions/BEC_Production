@@ -285,9 +285,8 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
         params.append("academic_year_id", 1);
       }
 
-      const apiUrl = `${
-        ApiUrl.apiurl
-      }StudentRegistrationApi/GetAllSTUDENTList/?${params.toString()}`;
+      const apiUrl = `${ApiUrl.apiurl
+        }StudentRegistrationApi/GetAllSTUDENTList/?${params.toString()}`;
       console.log("Search API URL:", apiUrl);
 
       const response = await fetch(apiUrl, {
@@ -419,7 +418,6 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
 
     // ✅ Clear formData if applicable (profile pic, etc.)
     try {
-      sessionStorage.removeItem("profile_pic_base64");
       sessionStorage.removeItem("profile_pic_name");
       sessionStorage.removeItem("profile_pic_type");
 
@@ -616,8 +614,8 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                             !selectedOrganization || !selectedOrgBranch
                               ? "Select Branch first"
                               : batchLoading
-                              ? "Loading Session..."
-                              : "Select Session"
+                                ? "Loading Session..."
+                                : "Select Session"
                           }
                           isDisabled={batchLoading}
                           isLoading={batchLoading}
@@ -628,12 +626,12 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           value={
                             selectedSession
                               ? {
-                                  value: selectedSession,
-                                  label:
-                                    BatchList.find(
-                                      (b) => b.id === selectedSession
-                                    )?.batch_description || "",
-                                }
+                                value: selectedSession,
+                                label:
+                                  BatchList.find(
+                                    (b) => b.id === selectedSession
+                                  )?.batch_description || "",
+                              }
                               : null
                           }
                           onChange={(selectedOption) => {
@@ -921,31 +919,31 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                             genderLoading
                               ? "Loading genders..."
                               : genderError
-                              ? "Error loading genders"
-                              : "Select Gender"
+                                ? "Error loading genders"
+                                : "Select Gender"
                           }
                           isLoading={genderLoading}
                           isDisabled={genderLoading || !!genderError}
                           options={
                             Array.isArray(genders)
                               ? genders.map((g) => ({
-                                  value: g.id,
-                                  label: g.gender_name,
-                                }))
+                                value: g.id,
+                                label: g.gender_name,
+                              }))
                               : []
                           }
                           value={
                             Array.isArray(genders)
                               ? genders
-                                  .map((g) => ({
-                                    value: g.id,
-                                    label: g.gender_name,
-                                  }))
-                                  .find(
-                                    (opt) =>
-                                      Number(opt.value) ===
-                                      Number(filters.gender)
-                                  ) || null
+                                .map((g) => ({
+                                  value: g.id,
+                                  label: g.gender_name,
+                                }))
+                                .find(
+                                  (opt) =>
+                                    Number(opt.value) ===
+                                    Number(filters.gender)
+                                ) || null
                               : null
                           }
                           onChange={(selectedOption) => {
@@ -1045,9 +1043,8 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                             return (
                               <tr key={index}>
                                 <td>{indexOfFirstRow + index + 1}</td>
-                                <td>{`${studentBasicDetails.first_name || ""} ${
-                                  studentBasicDetails.middle_name || ""
-                                } ${studentBasicDetails.last_name || ""}`}</td>
+                                <td>{`${studentBasicDetails.first_name || ""} ${studentBasicDetails.middle_name || ""
+                                  } ${studentBasicDetails.last_name || ""}`}</td>
                                 <td>
                                   {studentBasicDetails.college_admission_no}
                                 </td>

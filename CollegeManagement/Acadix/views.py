@@ -10620,9 +10620,13 @@ class UtilityGroupMixin:
                 start_from = documents.get('start_from')
                 end_to = documents.get('end_to')
 
-                # Check if the combination of data exist or not
-                if StudentDocument.objects.filter(document_no=document_no, document_type=document_type,
-                                                  is_active=True).exists():
+                # Check if this student already has a document with the same number & type
+                if StudentDocument.objects.filter(
+                    student=instance,
+                    document_no=document_no,
+                    document_type=document_type,
+                    is_active=True
+                ).exists():
                     raise ValueError(f"This Document data with document_no {document_no} has already been added.")
 
                 # Save the Emergency contact on db
@@ -11090,12 +11094,19 @@ class StudentRegistrationCreate(CreateAPIView, UtilityGroupMixin):
 
                 # Create the student class entry linked to the student
 
+                # Look up the 'Student' UserType safely (never insert — avoids sequence issues)
+                student_user_type = (
+                    UserType.objects.filter(user_type__iexact='Student').first()
+                    or UserType.objects.filter(user_type__icontains='student').first()
+                    or UserType.objects.first()
+                )
+
                 user_login = UserLogin.objects.create(
                     user_name=student_instance.user_name,
                     password=student_instance.first_name,
                     plain_password=student_instance.first_name,
                     reference_id=student_instance.id,
-                    user_type=UserType.objects.get(id=2),
+                    user_type=student_user_type,
                     organization=student_instance.organization,
                     branch=student_instance.branch
                 )
@@ -11123,16 +11134,23 @@ class StudentRegistrationCreate(CreateAPIView, UtilityGroupMixin):
                 #     password = ''.join(secrets.choice(chars) for _ in range(length))
                 #     return password
                 def send_welcome_email():
-                    send_mail(
-                        subject="Welcome to Acadix!",
-                        message=f"Hello {student_instance.first_name}, your registration was successful!"
-                                f" Your Login UserId is {student_instance.user_name} & "
-                                f"Your Login Password is {student_instance.first_name}",
-                        # f"Your One Time Login Password is {one_time_password()}",
-                        from_email=settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[student_instance.email],
-                        fail_silently=False,
-                    )
+                    # Only send if email is configured on both ends
+                    from_email = settings.DEFAULT_FROM_EMAIL
+                    to_email = student_instance.email
+                    if not from_email or not to_email:
+                        return
+                    try:
+                        send_mail(
+                            subject="Welcome to Acadix!",
+                            message=f"Hello {student_instance.first_name}, your registration was successful!"
+                                    f" Your Login UserId is {student_instance.user_name} & "
+                                    f"Your Login Password is {student_instance.first_name}",
+                            from_email=from_email,
+                            recipient_list=[to_email],
+                            fail_silently=True,
+                        )
+                    except Exception:
+                        pass  # Never let email failure crash the registration
 
                 transaction.on_commit(send_welcome_email)
             return Response({"message": "Student Registered Successfully.", "data": response_data},

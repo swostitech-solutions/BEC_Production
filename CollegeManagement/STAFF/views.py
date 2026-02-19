@@ -18,7 +18,7 @@ from django.core.files.base import ContentFile
 # from utils import months_dict
 
 from Acadix.models import ExceptionTrack, EmployeeMaster, Address, UserType, EmployeeType, State, City, Country, \
-    Organization, Branch, Batch, Gender, UserLogin, Designation
+    Organization, Branch, Batch, Gender, UserLogin, Designation, Department
 from STAFF.models import EmployeeDocument, EmployeeFamilyDetail, EmployeeQualification, EmployeeCourse, \
     EmployeeLanguage, EmployeeExperience
 from STAFF.serializers import staffRegistrationserializer, staffRegistrationAddressSerializer, \
@@ -128,7 +128,27 @@ class StaffRegistrationBasicInfoCreateAPIView(CreateAPIView):
                 EmployeeMaster_Records = None
             # Map existing Emplyee by employee_id for fast lookup
             employee_map = {doc.id: doc for doc in EmployeeMaster_Records}
-            designation_instance = Designation.objects.first()
+            # Get a valid designation for this org+branch (required field — cannot be null)
+            org_instance = serializer.validated_data.get('organization')
+            branch_instance = serializer.validated_data.get('branch')
+            dept_instance = Department.objects.filter(
+                organization=org_instance, branch=branch_instance
+            ).first()
+            designation_instance, _ = Designation.objects.get_or_create(
+                designation_name='General',
+                organization=org_instance,
+                branch=branch_instance,
+                department=dept_instance,
+                defaults={
+                    'designation_description': 'General Designation',
+                    'enabled': 'Y',
+                    'is_active': True,
+                    'created_by': 1,
+                    'updated_by': 1,
+                }
+            ) if dept_instance else (Designation.objects.filter(
+                organization=org_instance, branch=branch_instance
+            ).first(), False)
             # create staff
             if EmployeeMaster_Records:
                 staffcreateInstance = employee_map[serializer.validated_data.get('id')]
@@ -194,7 +214,12 @@ class StaffRegistrationBasicInfoCreateAPIView(CreateAPIView):
                 staffcreateInstance.profile_photo_path = request.build_absolute_uri(staffcreateInstance.profile_pic.url)
                 staffcreateInstance.save()
 
-                user_type_instance = UserType.objects.get(id=3,is_active=True)
+                # Look up the 'Staff' UserType safely (never insert — avoids sequence issues)
+                user_type_instance = (
+                    UserType.objects.filter(user_type__iexact='Staff').first()
+                    or UserType.objects.filter(user_type__icontains='staff').first()
+                    or UserType.objects.first()
+                )
 
                 # # Create Employee Login Instance
                 employee_login_instance = UserLogin(
@@ -261,11 +286,17 @@ class StaffRegistrationBasicInfoCreateAPIView(CreateAPIView):
             return Response({'error': f'An unexpected error occurred: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     def log_exception(self, request, error_message):
-        ExceptionTrack.objects.create(
-            request=str(request),
-            process_name='Staff-Registration-Create',
-            message=error_message,
-        )
+        import traceback
+        print("STAFF-REGISTRATION ERROR:", error_message)
+        traceback.print_exc()
+        try:
+            ExceptionTrack.objects.create(
+                request=str(request),
+                process_name='Staff-Registration-Create',
+                message=str(error_message)[:190],  # ExceptionTrack.message is varchar(200)
+            )
+        except Exception:
+            pass  # Never let logging failure mask the real error
 
 
 class StaffRegistrationAddressCreateUpdateAPIView(UpdateAPIView):
@@ -988,13 +1019,13 @@ class StaffRegistrationExperienceCreateUpdateAPIView(UpdateAPIView):
             employee_id = request.query_params.get('employee_id')
 
             # get employee Instance
-            if organization_id and branch_id and employee_id:
+            if organization_id and branch_id and employee_id and employee_id != 'null':
                 try:
                     EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id,is_active=True)
                 except EmployeeMaster.DoesNotExist:
                     return Response({"message":"No Employee Found !!!"}, status=status.HTTP_404_NOT_FOUND)
             else:
-                return Response({"message":"organization_id, branch_id and employee_id is required !!!"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"message":"organization_id, branch_id and a valid employee_id are required."}, status=status.HTTP_400_BAD_REQUEST)
             # try:
             #     EmployeeInstance = EmployeeMaster.objects.get(id=employee_id, is_active=True)
             # except:

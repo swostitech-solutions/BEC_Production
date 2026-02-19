@@ -180,6 +180,14 @@ export default function BasicTabs() {
     const employeeId = localStorage.getItem("employeeId"); // Get employeeId from localStorage
     const createdBy = sessionStorage.getItem("userId"); // Get userId from sessionStorage
 
+    // Guard: employee must be created first via the Basic Info / Address tabs
+    if (!employeeId || employeeId === "null") {
+      alert(
+        "No staff record found. Please complete the Basic Info and Address tabs first by clicking 'Next' on each tab before saving."
+      );
+      return;
+    }
+
     const payload = {
       created_by: parseInt(createdBy), // Ensure integer type if API expects int
       experience_details: experienceData.map((item) => ({
@@ -206,7 +214,8 @@ export default function BasicTabs() {
       );
 
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || "Network response was not ok");
       }
 
       const result = await response.json();
@@ -214,7 +223,7 @@ export default function BasicTabs() {
       alert("Data saved successfully!");
     } catch (error) {
       console.error("API Error:", error);
-      alert("Error saving data!");
+      alert("Error saving data: " + error.message);
     }
   };
 
