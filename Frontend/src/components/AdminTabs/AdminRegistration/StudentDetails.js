@@ -1597,6 +1597,7 @@ const AdmAttendanceEntry = ({
                             target: { name: "childreninfamily", value },
                           });
                         }}
+                        maxLength={10}
                       />{" "}
                     </div>
 
@@ -1639,6 +1640,7 @@ const AdmAttendanceEntry = ({
                         name="username"
                         value={formData.username}
                         onChange={handleInputChange}
+                        maxLength={30}
                         disabled
                       />
                       {errors.username && (
@@ -1661,6 +1663,7 @@ const AdmAttendanceEntry = ({
                         name="remarks"
                         value={formData.remarks}
                         onChange={handleInputChange}
+                        maxLength={50}
                       />
                     </div>
 

@@ -506,7 +506,116 @@ export default function BasicTabs() {
     }
   }, [id]);
 
+  // ─── Pre-submit validation for Tabs 1–4 ──────────────────────────────────
+  const validateTabsOneThroughFour = () => {
+    const errs = [];
+
+    // ── TAB 1: Student Details ───────────────────────────────────────────────
+    if (!formData.first_name?.trim())
+      errs.push("• First Name is required. (Student tab)");
+    if (!formData.gender)
+      errs.push("• Gender is required. (Student tab)");
+    if (!formData.dob)
+      errs.push("• Date of Birth is required. (Student tab)");
+    if (!formData.date_of_admission)
+      errs.push("• Date of Admission is required. (Student tab)");
+    if (!formData.doj)
+      errs.push("• Date of Join is required. (Student tab)");
+    if (!formData.religion)
+      errs.push("• Religion is required. (Student tab)");
+    if (!formData.category)
+      errs.push("• Category is required. (Student tab)");
+    if (!formData.house)
+      errs.push("• House is required. (Student tab)");
+    if (!formData.nationality)
+      errs.push("• Nationality is required. (Student tab)");
+    if (!formData.blood_group_id)
+      errs.push("• Blood Group is required. (Student tab)");
+    if (!formData.email?.trim())
+      errs.push("• Email is required. (Student tab)");
+
+    // Academic hierarchy
+    const batchId =
+      formData.batch || sessionStorage.getItem("batch_id");
+    const courseId =
+      formData.course || sessionStorage.getItem("course_id");
+    const deptId =
+      formData.department || sessionStorage.getItem("department_id");
+    const semesterId =
+      formData.semester || sessionStorage.getItem("semester_id");
+    const sectionId =
+      formData.addmitted_section || sessionStorage.getItem("section_id");
+    const academicYearId =
+      formData.academic_year ||
+      sessionStorage.getItem("academic_year_id") ||
+      localStorage.getItem("selectedAcademicYearId");
+
+    if (!batchId) errs.push("• Session / Batch is required. (Student tab)");
+    if (!courseId) errs.push("• Course is required. (Student tab)");
+    if (!deptId) errs.push("• Department is required. (Student tab)");
+    if (!academicYearId) errs.push("• Academic Year is required. (Student tab)");
+    if (!semesterId) errs.push("• Semester is required. (Student tab)");
+    if (!sectionId) errs.push("• Section is required. (Student tab)");
+
+    // ── TAB 2: Guardian Details ──────────────────────────────────────────────
+    if (!formData.father_name?.trim())
+      errs.push("• Father's Name is required. (Guardian tab)");
+    if (!formData.father_profession?.trim())
+      errs.push("• Father's Profession is required. (Guardian tab)");
+    if (!formData.mother_name?.trim())
+      errs.push("• Mother's Name is required. (Guardian tab)");
+    if (!formData.mother_profession?.trim())
+      errs.push("• Mother's Profession is required. (Guardian tab)");
+
+    // ── TAB 3: Address Details ───────────────────────────────────────────────
+    if (!formData.present_address?.trim())
+      errs.push("• Residence Address is required. (Address tab)");
+    if (!formData.present_country?.trim())
+      errs.push("• Residence Country is required. (Address tab)");
+    if (!formData.present_state?.trim())
+      errs.push("• Residence State is required. (Address tab)");
+    if (!formData.present_city?.trim())
+      errs.push("• Residence City / District is required. (Address tab)");
+    if (!formData.present_pincode?.trim())
+      errs.push("• Residence Pincode is required. (Address tab)");
+    else if (String(formData.present_pincode).trim().length !== 6)
+      errs.push("• Residence Pincode must be exactly 6 digits. (Address tab)");
+
+    if (!formData.permanent_address?.trim())
+      errs.push("• Permanent Address is required. (Address tab)");
+    if (!formData.permanent_country?.trim())
+      errs.push("• Permanent Country is required. (Address tab)");
+    if (!formData.permanent_state?.trim())
+      errs.push("• Permanent State is required. (Address tab)");
+    if (!formData.permanent_city?.trim())
+      errs.push("• Permanent City / District is required. (Address tab)");
+    if (!formData.permanent_pincode?.trim())
+      errs.push("• Permanent Pincode is required. (Address tab)");
+    else if (String(formData.permanent_pincode).trim().length !== 6)
+      errs.push("• Permanent Pincode must be exactly 6 digits. (Address tab)");
+
+    // ── TAB 4: Fee Details (create only – fee group is locked on edit) ───────
+    if (!id) {
+      if (!formData.feegroup)
+        errs.push("• Fee Group is required. (Fee tab)");
+      if (!formData.feeappfrom)
+        errs.push("• Fee Applied From (Semester) is required. (Fee tab)");
+    }
+
+    return errs;
+  };
+
   const handleSave = async () => {
+    // ── Pre-submit validation ────────────────────────────────────────────────
+    const validationErrors = validateTabsOneThroughFour();
+    if (validationErrors.length > 0) {
+      alert(
+        "⚠️ Please fix the following before saving:\n\n" +
+        validationErrors.join("\n")
+      );
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
     const academicYearId =
@@ -709,7 +818,19 @@ export default function BasicTabs() {
         }
       );
 
-      const result = await response.json();
+      const responseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (_) {
+        // Server returned an HTML error page (e.g. Render 502, Django debug page)
+        console.error("Non-JSON response from server:", responseText.slice(0, 300));
+        alert(
+          `❌ Server returned an unexpected response (HTTP ${response.status}).\n` +
+          "Please check the server logs or contact support."
+        );
+        return;
+      }
       console.log("API Response:", result);
 
       if (
@@ -723,7 +844,9 @@ export default function BasicTabs() {
         sessionStorage.removeItem("profile_pic_type");
         navigate("/admin/registration");
       } else {
-        alert("❌ Failed: " + JSON.stringify(result));
+        const errMsg =
+          result.message || result.error || JSON.stringify(result);
+        alert("❌ Failed: " + errMsg);
         console.error("Save Failed:", result);
       }
     } catch (error) {
@@ -733,6 +856,16 @@ export default function BasicTabs() {
   };
 
   const handleUpdate = async () => {
+    // ── Pre-submit validation ────────────────────────────────────────────────
+    const validationErrors = validateTabsOneThroughFour();
+    if (validationErrors.length > 0) {
+      alert(
+        "⚠️ Please fix the following before updating:\n\n" +
+        validationErrors.join("\n")
+      );
+      return;
+    }
+    // ────────────────────────────────────────────────────────────────────────
     const token = localStorage.getItem("accessToken");
     const userId = sessionStorage.getItem("userId");
     const studentId = id || formData.id; // from URL params
@@ -951,7 +1084,18 @@ export default function BasicTabs() {
         body: formPayload,
       });
 
-      const result = await response.json();
+      const updateResponseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(updateResponseText);
+      } catch (_) {
+        console.error("Non-JSON update response:", updateResponseText.slice(0, 300));
+        alert(
+          `❌ Server returned an unexpected response (HTTP ${response.status}).\n` +
+          "Please check the server logs or contact support."
+        );
+        return;
+      }
       console.log("✅ Update Response:", result);
 
       if (
@@ -968,10 +1112,8 @@ export default function BasicTabs() {
         // ✅ Redirect to registration page
         navigate("/admin/registration");
       } else {
-        alert(
-          "❌ Failed to update student record: " +
-          (result.message || "Unknown error")
-        );
+        const updateErrMsg = result.message || result.error || JSON.stringify(result);
+        alert("❌ Failed to update student record: " + updateErrMsg);
       }
     } catch (error) {
       console.error("❌ Update error:", error);

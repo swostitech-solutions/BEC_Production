@@ -10760,8 +10760,12 @@ class StudentRegistrationCreate(CreateAPIView, UtilityGroupMixin):
                 except ValidationError as e:
                     return Response({"message": e.detail}, status=status.HTTP_400_BAD_REQUEST)
                 except Exception as e:
-                    print(e)
-                    # return Response({"message":str(e)}, status.HTTP_400_BAD_REQUEST)
+                    # Do NOT fall through – serializer.validated_data would not exist
+                    print("Serializer error:", e)
+                    return Response(
+                        {"message": f"Request could not be processed: {str(e)}"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
                 # Get Serialized data
 
@@ -11115,17 +11119,21 @@ class StudentRegistrationCreate(CreateAPIView, UtilityGroupMixin):
                 user_login.set_password(student_instance.first_name)
                 user_login.save()
 
-                # If everything is successful, return the response
-                # Add the student to the response
-
-                response_data = serializer.data
-                response_data['student_id'] = student_instance.id
-
-                # Get the absolute URL of the profile picture if it exists
-                if student_instance.profile_pic:
-                    response_data['profile_pic'] = request.build_absolute_uri(student_instance.profile_pic.url)
-                else:
-                    response_data['profile_pic'] = None  # or handle accordingly
+                # Build the response from the student instance
+                # (serializer.data is immutable ReturnDict — cannot be mutated directly)
+                response_data = {
+                    "student_id": student_instance.id,
+                    "admission_no": student_instance.admission_no,
+                    "first_name": student_instance.first_name,
+                    "last_name": student_instance.last_name,
+                    "email": student_instance.email,
+                    "user_name": student_instance.user_name,
+                    "profile_pic": (
+                        request.build_absolute_uri(student_instance.profile_pic.url)
+                        if student_instance.profile_pic
+                        else None
+                    ),
+                }
 
                 # def one_time_password():
                 #     length = 12

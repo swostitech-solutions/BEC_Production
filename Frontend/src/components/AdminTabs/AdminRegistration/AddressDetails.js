@@ -25,6 +25,8 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
   const [errors, setErrors] = useState({
     present_phone_number: "",
     permanent_phone_number: "",
+    present_pincode: "",
+    permanent_pincode: "",
   });
 
   // 10282025
@@ -96,7 +98,7 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
         // 🔥 UPDATE formData (Now Select boxes will show values)
         setFormData((prev) => ({
           ...prev,
-          
+
           // Present
           present_address: address.present_address || "",
           present_country: matchedPresentCountry,
@@ -171,6 +173,13 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
         updatedErrors[name] = "Phone number must be exactly 10 digits.";
       } else {
         updatedErrors[name] = ""; // Clear error if valid
+      }
+    }
+    if (name === "present_pincode" || name === "permanent_pincode") {
+      if (value.length > 0 && value.length < 6) {
+        updatedErrors[name] = "Pincode must be exactly 6 digits.";
+      } else {
+        updatedErrors[name] = "";
       }
     }
     setErrors(updatedErrors); // Update the error state
@@ -360,7 +369,7 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                       value={formData.present_pincode || ""}
                       onChange={(e) => {
                         // Restrict input to only digits (0-9)
-                        const value = e.target.value.replace(/[^0-9]/g, ""); 
+                        const value = e.target.value.replace(/[^0-9]/g, "");
                         handleInputChange({
                           target: { name: "present_pincode", value },
                         });
@@ -368,6 +377,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                       maxLength={6}
                       required
                     />
+                    {errors.present_pincode && (
+                      <small style={{ color: "red", fontSize: "0.8em" }}>
+                        {errors.present_pincode}
+                      </small>
+                    )}
                   </div>
                   <div className="col-6 mb-2">
                     <label htmlFor="present_phone_number" className="form-label">
@@ -382,7 +396,7 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                       value={formData.present_phone_number || ""}
                       maxLength={10} // restrict to 10 digits
                       onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9]/g, ""); 
+                        const value = e.target.value.replace(/[^0-9]/g, "");
                         if (value.length <= 10) {
                           handleInputChange({
                             target: { name: "present_phone_number", value },
@@ -593,6 +607,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                   maxLength={6}
                   required
                 />
+                {errors.permanent_pincode && (
+                  <small style={{ color: "red", fontSize: "0.8em" }}>
+                    {errors.permanent_pincode}
+                  </small>
+                )}
               </div>
               <div className="col-6 mb-2">
                 <label htmlFor="permanent_phone_number" className="form-label">

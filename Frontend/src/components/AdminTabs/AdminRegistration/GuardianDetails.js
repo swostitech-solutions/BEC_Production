@@ -19,6 +19,10 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
     mother_contact_number: "",
     mother_email: "",
     father_email: "",
+    father_name: "",
+    father_profession: "",
+    mother_name: "",
+    mother_profession: "",
   });
 
   const handleInputChange = (e) => {
@@ -80,6 +84,25 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
           [name]: "Please enter a valid email address",
         }));
       }
+    }
+
+    // Required-field validation for names & professions
+    if (name === "father_name" || name === "mother_name") {
+      // Letters and spaces only
+      const lettersOnly = value.replace(/[^A-Za-z\s]/g, "");
+      setErrors((prev) => ({
+        ...prev,
+        [name]: lettersOnly.trim() === "" ? "This field is required." : "",
+      }));
+      setFormData((prevData) => ({ ...prevData, [name]: lettersOnly }));
+      return;
+    }
+
+    if (name === "father_profession" || name === "mother_profession") {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: !value ? "Please select a profession." : "",
+      }));
     }
 
     // Update form data
@@ -216,6 +239,9 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
             value={formData.father_name}
             onChange={handleInputChange}
           />
+          {errors.father_name && (
+            <small style={{ color: "red" }}>{errors.father_name}</small>
+          )}
         </div>
 
         <div className="col-12 col-md-2 mb-2">
@@ -241,6 +267,9 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                 </option>
               ))}
           </select>
+          {errors.father_profession && (
+            <small style={{ color: "red" }}>{errors.father_profession}</small>
+          )}
         </div>
 
         {/* Father's Contact Number */}
@@ -327,6 +356,9 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
             value={formData.mother_name}
             onChange={handleInputChange}
           />
+          {errors.mother_name && (
+            <small style={{ color: "red" }}>{errors.mother_name}</small>
+          )}
         </div>
         <div className="col-12 col-md-2 mb-2">
           <label htmlFor="mother-profession" className="form-label">
@@ -351,6 +383,9 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                 </option>
               ))}
           </select>
+          {errors.mother_profession && (
+            <small style={{ color: "red" }}>{errors.mother_profession}</small>
+          )}
         </div>
 
         <div className="col-12 col-md-3 mb-2">
