@@ -390,7 +390,8 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                       </div>
                     </div>
 
-                    <div className="col-md-3 mb-3">
+                    {/* NUID field hidden as per client request — field is optional (null=True, blank=True in DB) */}
+                    {/* <div className="col-md-3 mb-3">
                       <label htmlFor="nuid-code" className="form-label">
                         NUID
                       </label>
@@ -409,7 +410,7 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           }
                         />
                       </div>
-                    </div>
+                    </div> */}
 
                     <div className="col-12 col-md-1 mb-3">
                       <label htmlFor="select" className="form-label">

@@ -937,7 +937,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                         <tr>
                           <th scope="col">Sl No.</th>
                           <th scope="col">Student Name</th>
-                          <th scope="col">ONMRC Registration No</th>
+                          <th scope="col">BPUT Registration Number</th>
                           <th scope="col">Admission No</th>
                           <th scope="col">Session</th>
                           <th scope="col">Course</th>
