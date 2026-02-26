@@ -1,0 +1,102 @@
+# School Management System - Combined Repository
+# Python, Node.js, Django, React
+
+# ===============================================
+# Python / Django (Backend)
+# ===============================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Django
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+/media
+/staticfiles
+/static
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ===============================================
+# Node.js / React (Frontend)
+# ===============================================
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===============================================
+# Deployment
+# ===============================================
+
+# Deployment artifacts
+*.zip
+*.tar.gz
+
+# ===============================================
+# Project Specific
+# ===============================================
+
+# Media files (uploaded content)
+SWOSTITECH_CMS/
+**/SWOSTITECH_CMS/
+
+# Build artifacts
+*.pyc
+*.pyo
+
+# Documentation (keep deployment docs but ignore temp files)
+*.tmp
+*.bak
+
+# Lock files (optional - remove if you want to commit them)
+# package-lock.json
+# Pipfile.lock

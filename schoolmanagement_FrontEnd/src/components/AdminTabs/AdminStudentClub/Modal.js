@@ -1,0 +1,687 @@
+import React, { useState, useEffect } from "react";
+import { Modal } from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { useNavigate } from "react-router-dom";
+import Select from "react-select";
+import useFetchSessionList from "../../hooks/fetchSessionList";
+import useFetchCourseByFilter from "../../hooks/useFetchCourses";
+import useFetchBranch from "../../hooks/useFetchBranch";
+import useFetchAcademicYearByFilter from "../../hooks/useFetchAcademicYearByFilter";
+import useFetchSemesterByFilter from "../../hooks/useFetchSemesterByFilter";
+import useFetchSectionByFilter from "../../hooks/useFetchSectionByFilter";
+import { ApiUrl } from "../../../ApiUrl";
+
+const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
+  const [students, setStudents] = useState([]);
+  const [studentLoading, setStudentLoading] = useState(false);
+  const [studentError, setStudentError] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
+  // ====================== DROPDOWN STATES ======================
+  const organizationId = sessionStorage.getItem("organization_id");
+  const branchId = sessionStorage.getItem("branch_id");
+
+  const [selectedBatch, setSelectedBatch] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState(null);
+  const [selectedSemester, setSelectedSemester] = useState(null);
+  const [selectedSection, setSelectedSection] = useState(null);
+
+  // ====================== HOOK CALLS (Filtered) ======================
+  const { BatchList } = useFetchSessionList(organizationId, branchId);
+  const { CourseList } = useFetchCourseByFilter(organizationId, selectedBatch);
+  const { BranchList } = useFetchBranch(
+    organizationId,
+    branchId,
+    selectedBatch,
+    selectedCourse
+  );
+  const { AcademicYearList } = useFetchAcademicYearByFilter(
+    organizationId,
+    branchId,
+    selectedBatch,
+    selectedCourse,
+    selectedDepartment
+  );
+  const { SemesterList } = useFetchSemesterByFilter(
+    organizationId,
+    branchId,
+    selectedBatch,
+    selectedCourse,
+    selectedDepartment,
+    selectedAcademicYear
+  );
+  const { SectionList } = useFetchSectionByFilter(
+    organizationId,
+    branchId,
+    selectedBatch,
+    selectedCourse,
+    selectedDepartment,
+    selectedAcademicYear,
+    selectedSemester
+  );
+
+  const [studentData, setStudentData] = useState([]);
+  const [fullStudentData, setFullStudentData] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [filters, setFilters] = useState({
+    studentName: "",
+    admissionNo: "",
+    barcode: "",
+    classId: "",
+    section: "",
+    fatherName: "",
+    motherName: "",
+    schoolAdmissionNo: "",
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value,
+    }));
+  };
+
+  // Trigger modal open logic (you might have this somewhere else in your code)
+  const handleOpen = () => {
+    setIsModalOpen(true);
+  };
+
+  // const handleSearch = async () => {
+  //   try {
+  //     const orgId = sessionStorage.getItem("organization_id") || 1;
+  //     const branchId = sessionStorage.getItem("branch_id") || 1;
+  //     const token = localStorage.getItem("accessToken"); // ✅ TOKEN
+
+  //     const url = `${ApiUrl.apiurl}StudentCourse/StudentCourseRecordFilter/?organization_id=${orgId}&branch_id=${branchId}`;
+
+  //     console.log("Fetching Student Course data:", url);
+  //     setStudentLoading(true);
+
+  //     // const response = await fetch(url);
+  //     const response = await fetch(url, {
+  //       method: "GET",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`, // ✅ ADD TOKEN
+  //       },
+  //     });
+  //     const data = await response.json();
+
+  //     if (response.ok && Array.isArray(data) && data.length > 0) {
+  //       setFullStudentData(data);
+  //       setStudentData(data);
+  //       setStudentError("");
+  //     } else if (response.ok && Array.isArray(data.data)) {
+  //       // sometimes API returns { data: [...] }
+  //       setFullStudentData(data.data);
+  //       setStudentData(data.data);
+  //       setStudentError("");
+  //     } else {
+  //       setFullStudentData([]);
+  //       setStudentData([]);
+  //       setStudentError(data.message || "No records found");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching StudentCourseRecordFilter:", error);
+  //     setStudentError("Error fetching student course data");
+  //   } finally {
+  //     setStudentLoading(false);
+  //   }
+  // };
+
+  const handleSearch = async () => {
+    try {
+      const organization_id = sessionStorage.getItem("organization_id") || 1;
+      const branch_id = sessionStorage.getItem("branch_id") || 1;
+      const token = localStorage.getItem("accessToken");
+
+      // 🔹 Build query params
+      const queryParams = new URLSearchParams({
+        organization_id,
+        branch_id,
+
+        // text inputs
+        student_name: filters.studentName || "",
+        admission_no: filters.admissionNo || "",
+        barcode: filters.barcode || "",
+        father_name: filters.fatherName || "",
+        mother_name: filters.motherName || "",
+        registration_no: filters.schoolAdmissionNo || "",
+
+        // dropdowns
+        batch_id: selectedBatch || "",
+        course_id: selectedCourse || "",
+        department_id: selectedDepartment || "",
+        academic_year_id: selectedAcademicYear || "",
+        semester_id: selectedSemester || "",
+        section_id: selectedSection || "",
+      });
+
+      const url = `${
+        ApiUrl.apiurl
+      }StudentCourse/StudentCourseRecordFilter/?${queryParams.toString()}`;
+
+      console.log("🔍 Search URL:", url);
+
+      setStudentLoading(true);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ token
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && Array.isArray(data?.data)) {
+        setStudentData(data.data);
+        setFullStudentData(data.data);
+        setStudentError("");
+      } else if (Array.isArray(data)) {
+        setStudentData(data);
+        setFullStudentData(data);
+        setStudentError("");
+      } else {
+        setStudentData([]);
+        setFullStudentData([]);
+        setStudentError(data?.message || "No records found");
+      }
+    } catch (error) {
+      console.error("Search Error:", error);
+      setStudentError("Error fetching student data");
+    } finally {
+      setStudentLoading(false);
+    }
+  };
+
+  const handleSelectStudent = (student) => {
+    // student raw structure coming from API
+    const s = student.rawData || student;
+
+    const formatted = {
+      studentBasicDetails: {
+        id: s.student_id,
+        first_name: s.student_name,
+        admission_no: s.admission_no,
+        barcode: s.barcode,
+        father_name: s.father_name,
+        mother_name: s.mother_name,
+      },
+
+      academicDetails: {
+        batch_id: s.batch_id,
+        course_id: s.course_id,
+        department_id: s.department_id,
+        academic_year_id: s.academic_year_id,
+        semester_id: s.semester_id,
+        section_id: s.section,
+      },
+    };
+
+    onSelectStudent(formatted);
+    handleClose();
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      studentName: "",
+      admissionNo: "",
+      barcode: "",
+      classId: "",
+      section: "",
+      fatherName: "",
+      motherName: "",
+      schoolAdmissionNo: "",
+    });
+
+    // 🔹 Reset dropdowns
+    setSelectedBatch(null);
+    setSelectedCourse(null);
+    setSelectedDepartment(null);
+    setSelectedAcademicYear(null);
+    setSelectedSemester(null);
+    setSelectedSection(null);
+
+    // 🔹 Reset data
+    setStudentData(fullStudentData);
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  // ✅ Reset modal state every time it closes
+  useEffect(() => {
+    if (!show) {
+      setFilters({
+        studentName: "",
+        admissionNo: "",
+        barcode: "",
+        classId: "",
+        section: "",
+        fatherName: "",
+        motherName: "",
+        schoolAdmissionNo: "",
+      });
+      setStudentData([]);
+      setFullStudentData([]);
+      setStudentError("");
+    }
+  }, [show]);
+
+  return (
+    <Modal
+      show={show}
+      size="xl"
+      aria-labelledby="contained-modal-title-vcenter"
+      centered
+    >
+      <Modal.Header closeButton onClick={handleClose}></Modal.Header>
+
+      <Modal.Body style={{ maxHeight: "75vh", overflowY: "auto" }}>
+        <div className="container-fluid">
+          <div className="row">
+            <div className="col-12">
+              <div className="card p-0">
+                <div className="card-body">
+                  <p
+                    style={{
+                      marginBottom: "0px",
+                      textAlign: "center",
+                      fontSize: "20px",
+                      fontWeight: "700",
+                    }}
+                  >
+                    STUDENT SEARCH
+                  </p>
+                  <div className="row mb-2">
+                    <div className="col-12 d-flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary me-2"
+                        style={{ width: "150px" }}
+                        onClick={handleSearch}
+                      >
+                        Search
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary me-2"
+                        style={{ width: "150px" }}
+                        onClick={handleClearFilters}
+                      >
+                        Clear
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-danger me-2"
+                        style={{ width: "150px" }}
+                        onClick={handleClose}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                  {/* Search Fields */}
+                  <div className="row mt-3">
+                    <div className="col-12 col-md-3 mb-2">
+                      <label
+                        htmlFor="school-admission-no"
+                        className="form-label"
+                      >
+                        {" "}
+                        Student Name{" "}
+                      </label>
+                      <input
+                        type="text"
+                        name="studentName"
+                        value={filters.studentName}
+                        onChange={handleInputChange}
+                        className="form-control detail"
+                        placeholder="Student Name"
+                        style={{ height: "38px", padding: "0.375rem 0.75rem" }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-3 mb-2">
+                      <label
+                        htmlFor="school-admission-no"
+                        className="form-label"
+                      >
+                        {" "}
+                        Admission No{" "}
+                      </label>
+                      <input
+                        type="text"
+                        name="admissionNo"
+                        value={filters.admissionNo}
+                        onChange={handleInputChange}
+                        className="form-control detail"
+                        placeholder="Admission No"
+                        style={{ height: "38px", padding: "0.375rem 0.75rem" }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-3 mb-2">
+                      <label
+                        htmlFor="school-admission-no"
+                        className="form-label"
+                      >
+                        {" "}
+                        Student Barcode{" "}
+                      </label>
+                      <input
+                        type="text"
+                        name="barcode"
+                        value={filters.barcode}
+                        onChange={handleInputChange}
+                        className="form-control detail"
+                        placeholder="Student Barcode"
+                        style={{ height: "38px", padding: "0.375rem 0.75rem" }}
+                      />
+                    </div>
+                    {/* Batch */}
+                    <div className="col-12 col-md-3 mb-2">
+                      <label className="form-label">Session</label>
+                      <Select
+                        options={
+                          BatchList?.map((b) => ({
+                            value: b.id,
+                            label: b.batch_description,
+                          })) || []
+                        }
+                        value={
+                          BatchList?.find((b) => b.id === selectedBatch)
+                            ? {
+                                value: selectedBatch,
+                                label: BatchList.find(
+                                  (b) => b.id === selectedBatch
+                                )?.batch_description,
+                              }
+                            : null
+                        }
+                        onChange={(opt) => {
+                          setSelectedBatch(opt?.value || "");
+                          setSelectedCourse(null);
+                          setSelectedDepartment(null);
+                          setSelectedAcademicYear(null);
+                          setSelectedSemester(null);
+                          setSelectedSection(null);
+                        }}
+                        placeholder="Select Session"
+                      />
+                    </div>
+                  </div>
+                  <div className="row mt-2">
+                    {/* Course */}
+                    <div className="col-12 col-md-3 mb-2">
+                      <label className="form-label">Course</label>
+                      <Select
+                        options={
+                          CourseList?.map((c) => ({
+                            value: c.id,
+                            label: c.course_name,
+                          })) || []
+                        }
+                        value={
+                          CourseList?.find((c) => c.id === selectedCourse)
+                            ? {
+                                value: selectedCourse,
+                                label: CourseList.find(
+                                  (c) => c.id === selectedCourse
+                                )?.course_name,
+                              }
+                            : null
+                        }
+                        onChange={(opt) => {
+                          setSelectedCourse(opt?.value || "");
+                          setSelectedDepartment(null);
+                          setSelectedAcademicYear(null);
+                          setSelectedSemester(null);
+                          setSelectedSection(null);
+                        }}
+                        placeholder="Select Course"
+                      />
+                    </div>
+
+                    {/* Department */}
+                    <div className="col-12 col-md-3 mb-2">
+                      <label className="form-label">Department</label>
+                      <Select
+                        options={
+                          BranchList?.map((d) => ({
+                            value: d.id,
+                            label: d.department_description,
+                          })) || []
+                        }
+                        value={
+                          BranchList?.find((d) => d.id === selectedDepartment)
+                            ? {
+                                value: selectedDepartment,
+                                label: BranchList.find(
+                                  (d) => d.id === selectedDepartment
+                                )?.department_description,
+                              }
+                            : null
+                        }
+                        onChange={(opt) => {
+                          setSelectedDepartment(opt?.value || "");
+                          setSelectedAcademicYear(null);
+                          setSelectedSemester(null);
+                          setSelectedSection(null);
+                        }}
+                        placeholder="Select Department"
+                      />
+                    </div>
+
+                    {/* Academic Year */}
+                    <div className="col-12 col-md-3 mb-2">
+                      <label className="form-label">Academic Year</label>
+                      <Select
+                        options={
+                          AcademicYearList?.map((a) => ({
+                            value: a.id,
+                            label: a.academic_year_description,
+                          })) || []
+                        }
+                        value={
+                          AcademicYearList?.find(
+                            (a) => a.id === selectedAcademicYear
+                          )
+                            ? {
+                                value: selectedAcademicYear,
+                                label: AcademicYearList.find(
+                                  (a) => a.id === selectedAcademicYear
+                                )?.academic_year_description,
+                              }
+                            : null
+                        }
+                        onChange={(opt) => {
+                          setSelectedAcademicYear(opt?.value || "");
+                          setSelectedSemester(null);
+                          setSelectedSection(null);
+                        }}
+                        placeholder="Select Academic Year"
+                      />
+                    </div>
+
+                    {/* Semester */}
+                    <div className="col-12 col-md-3 mb-2">
+                      <label className="form-label">Semester</label>
+                      <Select
+                        options={
+                          SemesterList?.map((s) => ({
+                            value: s.id,
+                            label: s.semester_description,
+                          })) || []
+                        }
+                        value={
+                          SemesterList?.find((s) => s.id === selectedSemester)
+                            ? {
+                                value: selectedSemester,
+                                label: SemesterList.find(
+                                  (s) => s.id === selectedSemester
+                                )?.semester_description,
+                              }
+                            : null
+                        }
+                        onChange={(opt) => {
+                          setSelectedSemester(opt?.value || "");
+                          setSelectedSection(null);
+                        }}
+                        placeholder="Select Semester"
+                      />
+                    </div>
+
+                    {/* Section */}
+                    <div className="col-12 col-md-3 mb-2">
+                      <label className="form-label">Section</label>
+                      <Select
+                        options={
+                          SectionList?.map((s) => ({
+                            value: s.id,
+                            label: s.section_name,
+                          })) || []
+                        }
+                        value={
+                          SectionList?.find((s) => s.id === selectedSection)
+                            ? {
+                                value: selectedSection,
+                                label: SectionList.find(
+                                  (s) => s.id === selectedSection
+                                )?.section_name,
+                              }
+                            : null
+                        }
+                        onChange={(opt) => setSelectedSection(opt?.value || "")}
+                        placeholder="Select Section"
+                      />
+                    </div>
+                    <div className="col-12 col-md-3 mb-2">
+                      <label
+                        htmlFor="school-admission-no"
+                        className="form-label"
+                      >
+                        {" "}
+                        Father's Name{" "}
+                      </label>
+                      <input
+                        type="text"
+                        name="fatherName"
+                        value={filters.fatherName}
+                        onChange={handleInputChange}
+                        className="form-control detail"
+                        placeholder="Father's Name"
+                        style={{ height: "38px", padding: "0.375rem 0.75rem" }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-3 mb-2">
+                      <label
+                        htmlFor="school-admission-no"
+                        className="form-label"
+                      >
+                        {" "}
+                        Mother's Name{" "}
+                      </label>
+                      <input
+                        type="text"
+                        name="motherName"
+                        value={filters.motherName}
+                        onChange={handleInputChange}
+                        className="form-control detail"
+                        placeholder="Mother's Name"
+                        style={{ height: "38px", padding: "0.375rem 0.75rem" }}
+                      />
+                    </div>
+                    <div className="col-12 col-md-3 mb-2">
+                      <label
+                        htmlFor="school-admission-no"
+                        className="form-label"
+                      >
+                        ONMRC Registration No
+                      </label>
+                      <input
+                        type="text"
+                        name="schoolAdmissionNo"
+                        value={filters.schoolAdmissionNo}
+                        onChange={handleInputChange}
+                        className="form-control detail"
+                        placeholder="ONMRC Registration No"
+                        style={{ height: "38px", padding: "0.375rem 0.75rem" }}
+                      />
+                    </div>
+                  </div>
+                  {/* Students Table */}
+                  <div
+                    className="table-responsive mt-3"
+                    style={{ maxHeight: "300px", overflowY: "auto" }}
+                  >
+                    <table className="table table-bordered table-striped">
+                      <thead>
+                        <tr>
+                          <th>Student Name</th>
+                          <th>ONMRC Registration No</th>
+                          <th>Admission No</th>
+                          <th>Session</th>
+                          <th>Course</th>
+                          <th>Department</th>
+                          <th>Academic Year</th>
+                          <th>Semester</th>
+                          <th>Section</th>
+                          <th>Father Name</th>
+                          <th>Mother Name</th>
+                          <th>Student Barcode</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {studentData.length > 0 ? (
+                          studentData.map((student, index) => (
+                            <tr key={index}>
+                              <td>{student.student_name}</td>
+                              <td>{student.registration_no}</td>
+                              <td>{student.college_admission_no}</td>
+                              <td>{student.batch_code}</td>
+                              <td>{student.course_name}</td>
+                              <td>{student.department_code}</td>
+                              <td>{student.academic_year_code}</td>
+                              <td>{student.semester_name}</td>
+                              <td>{student.section_name}</td>
+                              <td>{student.father_name}</td>
+                              <td>{student.mother_name}</td>
+                              <td>{student.barcode}</td>
+                              <td>
+                                <button
+                                  className="btn btn-success"
+                                  onClick={() => handleSelectStudent(student)}
+                                >
+                                  Select
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="9" className="text-center">
+                              {studentError || "No data found"}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal.Body>
+    </Modal>
+  );
+};
+
+export default SelectStudentModal;

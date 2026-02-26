@@ -1,0 +1,60 @@
+/* Non-Teaching Staff Search - Additional styles */
+
+.custom-section-box {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 5px;
+  background-color: #f8f9fa;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.form-control.detail {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  height: 38px;
+}
+
+.form-control.detail:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Scoped styles for Non-Teaching Staff module only */
+.non-teaching-staff-container .table-responsive {
+  overflow-x: auto;
+}
+
+.non-teaching-staff-container .table {
+  margin-bottom: 1rem;
+  background-color: transparent;
+}
+
+.non-teaching-staff-container .table thead th {
+  background-color: #0D6EFD !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #dee2e6 !important;
+  border: 1px solid #dee2e6 !important;
+  padding: 12px !important;
+  text-align: left !important;
+  vertical-align: middle !important;
+}
+
+.non-teaching-staff-container .table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.non-teaching-staff-container .table tbody td {
+  padding: 10px;
+  vertical-align: middle;
+}
+
+.non-teaching-staff-container .table-bordered {
+  border: 1px solid #dee2e6;
+}
+
+.non-teaching-staff-container .table-bordered th,
+.non-teaching-staff-container .table-bordered td {
+  border: 1px solid #dee2e6;
+}

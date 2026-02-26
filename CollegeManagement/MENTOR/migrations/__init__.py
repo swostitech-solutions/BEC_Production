@@ -1,1 +1,0 @@
-# Migrations for MENTOR app

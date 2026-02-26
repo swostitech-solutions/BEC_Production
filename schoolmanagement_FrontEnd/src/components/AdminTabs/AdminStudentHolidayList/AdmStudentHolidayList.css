@@ -1,0 +1,36 @@
+
+
+.event-card-container-std {
+  background-color: #f7f7f7;
+
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  
+ 
+}
+
+h3 {
+  font-size: 24px;
+  color: #007bff;
+  margin-bottom: 20px;
+}
+
+th {
+  background-color: #007bff;
+  color: #fff;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+
+tbody tr:hover {
+  background-color: #e0e0e0;
+}
+
+.icon {
+  font-size: 20px;
+  margin-right: 5px;
+}

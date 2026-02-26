@@ -1,0 +1,170 @@
+/* .form-control {
+    display: block;
+    width: 100%;
+    padding: .375rem .75rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--bs-body-color);
+    appearance: none;
+    background-color: var(--bs-body-bg);
+    background-clip: padding-box;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+
+.form-select {
+    --bs-form-select-bg-img: url(data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3e%3cpath fill=%27none%27 stroke=%27%23343a40%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27m2 5 6 6 6-6%27/%3e%3c/svg%3e);
+    display: block;
+    width: 100%;
+    padding: .375rem 2.25rem .375rem .75rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--bs-body-color);
+    appearance: none;
+    background-color: var(--bs-body-bg);
+    background-image: var(--bs-form-select-bg-img), var(--bs-form-select-bg-icon, none);
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 16px 12px;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.form-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 0px;
+}
+.mb-2 {
+    margin-bottom: .1rem !important;
+}
+
+.col-md-2 {
+    flex: 0 0 auto;
+    width: 12%;
+}
+.form-check {
+    display: block;
+    min-height: -1.5rem;
+    padding-left: 1.5em;
+    margin-bottom: -0.9rem;
+}
+p {
+    margin-top: 0;
+    margin-bottom: 0.8;
+}
+.mb-2 {
+    margin-bottom: 0.1rem !important;
+} */
+
+
+.form-control {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding: .375rem .75rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--bs-body-color);
+    appearance: none;
+    background-color: var(--bs-body-bg);
+    background-clip: padding-box;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    box-sizing: border-box;
+}
+
+.form-select {
+    --bs-form-select-bg-img: url(data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3e%3cpath fill=%27none%27 stroke=%27%23343a40%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%272%27 d=%27m2 5 6 6 6-6%27/%3e%3c/svg%3e);
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding: .375rem 2.25rem .375rem .75rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--bs-body-color);
+    appearance: none;
+    background-color: var(--bs-body-bg);
+    background-image: var(--bs-form-select-bg-img), var(--bs-form-select-bg-icon, none);
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 16px 12px;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    box-sizing: border-box;
+}
+
+.form-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 0px;
+}
+
+.mb-2 {
+    margin-bottom: .1rem !important;
+}
+
+/* ============================== */
+/* RESPONSIVE COLUMN FIX */
+/* ============================== */
+
+.col-md-2 {
+    flex: 0 0 auto;
+    width: 12%;
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+    .col-md-2 {
+        width: 48%;   /* 2 fields per row */
+    }
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+    .col-md-2 {
+        width: 100%;  /* 1 field per row */
+    }
+}
+
+/* ============================== */
+/* FIX CHECKBOX / RADIO OVERLAP */
+/* ============================== */
+
+.form-check {
+    display: block;
+    min-height: 1.5rem;      /* removed negative height */
+    padding-left: 1.5em;
+    margin-bottom: 0.3rem;  /* removed negative margin */
+}
+
+/* ============================== */
+/* FIX PARAGRAPH SPACING */
+/* ============================== */
+
+p {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+}
+
+/* ============================== */
+/* REACT-SELECT FIX (if used) */
+/* ============================== */
+
+.react-select__control {
+    width: 100%;
+    min-height: 36px;
+}
+
+.react-select__menu {
+    z-index: 9999;
+}

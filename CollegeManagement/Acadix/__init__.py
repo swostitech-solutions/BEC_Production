@@ -1,1 +1,0 @@
-# Acadix Django App
