@@ -152,6 +152,3 @@ local_settings.py
 # End of .gitignore
 # ======================================
 .env
-
-*/migrations/*
-!*/migrations/__init__.py
