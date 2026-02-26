@@ -1106,8 +1106,8 @@ const AdmAttendanceEntry = () => {
   const generatePDF = async (data) => {
     const doc = new jsPDF("portrait", "mm", "a4");
 
-    // Load Sparsh logo
-    const sparshLogo = await toBase64("/Assets/sparsh.jpeg");
+    // Load BEC logo
+    const becLogo = await toBase64("/Assets/logobec.png");
 
     // Image positioning
     const imgX = 10;
@@ -1117,14 +1117,14 @@ const AdmAttendanceEntry = () => {
 
     // Add the logo
     try {
-      doc.addImage(sparshLogo, "JPEG", imgX, imgY, imgWidth, imgHeight);
+      doc.addImage(becLogo, "JPEG", imgX, imgY, imgWidth, imgHeight);
     } catch (error) {
       console.error("Error adding image:", error);
     }
 
     // ====== INSTITUTION HEADER (CENTERED) ======
     const pageWidth = doc.internal.pageSize.getWidth();
-    const headerText = "Sparsh College of Nursing and Allied Sciences";
+    const headerText = "Bhubaneswar Engineering College";
 
     doc.setFontSize(14);
     doc.setFont("Helvetica", "bold");

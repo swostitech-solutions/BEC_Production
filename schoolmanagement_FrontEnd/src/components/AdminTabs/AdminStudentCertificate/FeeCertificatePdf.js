@@ -50,7 +50,7 @@ const FeeCertificatePDF = () => {
      const imgX = 10;
      const imgY = 10;
      doc.addImage(
-       "/Assets/sparsh.jpeg",
+       "/Assets/logobec.png",
        "JPEG",
        imgX,
        imgY,
@@ -65,7 +65,7 @@ const FeeCertificatePDF = () => {
      doc.setTextColor(0, 0, 255); // Blue
      doc.setFont("Helvetica", "bold");
      doc.text(
-       "Sparsh College of Nursing and Allied Sciences", //  Updated heading
+       "Bhubaneswar Engineering College", //  Updated heading
        headingX,
        headingY
      );
@@ -75,10 +75,10 @@ const FeeCertificatePDF = () => {
      doc.setTextColor(0, 0, 0); // Black
      doc.setFont("Helvetica", "normal");
      doc.text("Affiliated to", headingX, headingY + 6);
-     doc.text("Affiliation No.: School Code: SPARSH", headingX, headingY + 12);
+     doc.text("Affiliation No.: School Code: BEC", headingX, headingY + 12);
      doc.text("Tel. No.:", headingX, headingY + 18);
      doc.text(
-       "https://sparshhospitals.com/nursing-college-admission/",
+       "",
        headingX,
        headingY + 24
      );

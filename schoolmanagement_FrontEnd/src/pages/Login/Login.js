@@ -411,7 +411,7 @@ const Login = ({ onLogin }) => {
   return (
     <div
       style={{
-        backgroundImage: "url('/img/bgsparsh.png')",
+        backgroundImage: "url('/img/becbackground.png')",
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",
@@ -428,7 +428,7 @@ const Login = ({ onLogin }) => {
             <Card className="card bg-dark text-light" style={{ opacity: 0.9 }}>
               <Card.Img
                 variant="top"
-                src="/Assets/sparsh.jpeg"
+                src="/Assets/logobec.png"
                 className="beautiful-face mx-auto d-block"
                 style={{ width: "300px", height: "100px", marginTop: "10px" }}
               />

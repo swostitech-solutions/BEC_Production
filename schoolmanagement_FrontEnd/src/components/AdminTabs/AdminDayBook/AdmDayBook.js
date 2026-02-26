@@ -893,8 +893,8 @@ const AdmAttendanceEntry = () => {
       });
 
     try {
-      const sparshLogo = await toBase64("/Assets/sparsh.jpeg");
-      doc.addImage(sparshLogo, "JPEG", 10, 10, 20, 20);
+      const becLogo = await toBase64("/Assets/logobec.png");
+      doc.addImage(becLogo, "JPEG", 10, 10, 20, 20);
     } catch (error) {
       console.error("Error adding image:", error);
     }
@@ -903,7 +903,7 @@ const AdmAttendanceEntry = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(16);
-    const headerText = "Sparsh College of Nursing and Allied Sciences";
+    const headerText = "Bhubaneswar Engineering College";
     const textWidth =
       (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
       doc.internal.scaleFactor;
@@ -1146,7 +1146,7 @@ const AdmAttendanceEntry = () => {
       const pageWidth = doc.internal.pageSize.getWidth();
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(16);
-      const headerText = "Sparsh College of Nursing and Allied Sciences";
+      const headerText = "Bhubaneswar Engineering College";
       const textWidth =
         (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
         doc.internal.scaleFactor;
@@ -1380,7 +1380,7 @@ const AdmAttendanceEntry = () => {
         resolve(canvas.toDataURL("image/jpeg"));
       };
       img.onerror = (err) => reject(err);
-      img.src = "/Assets/sparsh.jpeg";
+      img.src = "/Assets/logobec.png";
     });
   };
 
@@ -1405,7 +1405,7 @@ const AdmAttendanceEntry = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(16);
-    const headerText = "Sparsh College of Nursing and Allied Sciences";
+    const headerText = "Bhubaneswar Engineering College";
     const textWidth =
       (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
       doc.internal.scaleFactor;
@@ -1616,7 +1616,7 @@ const AdmAttendanceEntry = () => {
         const pageWidth = doc.internal.pageSize.getWidth();
         doc.setFont("Helvetica", "bold");
         doc.setFontSize(16);
-        const headerText = "Sparsh College of Nursing and Allied Sciences";
+        const headerText = "Bhubaneswar Engineering College";
         const textWidth =
           (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
           doc.internal.scaleFactor;

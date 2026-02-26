@@ -330,7 +330,7 @@ const AutoLayoutExample = () => {
 
   // If user has restricted access, show welcome screen instead of full dashboard
   if (isRestrictedUser && accessibleModules && accessibleModules.length > 0) {
-    const organizationName = sessionStorage.getItem("organization_name") || "Sparsh College";
+    const organizationName = sessionStorage.getItem("organization_name") || "Bhubaneswar Engineering College";
     const userName = sessionStorage.getItem("username") || "User";
 
     return (

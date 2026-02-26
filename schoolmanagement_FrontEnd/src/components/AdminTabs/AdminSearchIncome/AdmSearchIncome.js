@@ -130,7 +130,7 @@ const AdmAttendanceEntry = () => {
     doc.text("Income Receipt", 105, 20, null, null, "center");
 
     doc.setFontSize(14);
-    doc.text("Sparsh College of Nursing and Allied Sciences", 105, 30, null, null, "center");
+    doc.text("Bhubaneswar Engineering College", 105, 30, null, null, "center");
 
     doc.setFontSize(12);
     doc.text(`Income No: ${selectedIncome.income_no || ""}`, 15, 45);
