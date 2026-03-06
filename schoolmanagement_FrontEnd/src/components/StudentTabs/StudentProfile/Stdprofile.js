@@ -30,7 +30,7 @@ const StudentProfileCard = ({ studentData, onClose }) => {
         } ${basicDetails.last_name || ""}`.trim(),
       admissionNo: basicDetails.admission_no || "-",
       classSection:
-        `${basicDetails.course_name || ""} ${basicDetails.section_name || ""
+        `${basicDetails.course_name || ""} ${basicDetails.department_description || ""
           }`.trim() || "-",
       rollNo:
         basicDetails.registration_no ||
@@ -318,10 +318,10 @@ const StudentProfileCard = ({ studentData, onClose }) => {
                                   display: "inline-block",
                                 }}
                               >
-                                Section:
+                                Department:
                               </strong>{" "}
                               <span style={{ color: "#333" }}>
-                                {basicDetails.section_name || "-"}
+                                {basicDetails.department_description || "-"}
                               </span>
                             </div>
                             <div

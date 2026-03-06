@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import { ApiUrl } from "../../ApiUrl";
 import ForgotPasswordModal from "./ForgotPasswordModal";
+import WelcomePopup from "../../components/WelcomePopup/WelcomePopup";
 
 
 
@@ -28,6 +29,8 @@ const Login = ({ onLogin }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [welcomeData, setWelcomeData] = useState({});
 
 
   const [formData, setFormData] = useState({
@@ -318,6 +321,8 @@ const Login = ({ onLogin }) => {
         branch_name,
         user_login_id,
         accessible_modules,
+        display_name,
+        role_name,
       } = loginData.data;
 
 
@@ -344,25 +349,20 @@ const Login = ({ onLogin }) => {
       localStorage.setItem("organizationName", organization_name);
       localStorage.setItem("branchName", branch_name);
 
-      // --- Step 2: Navigate based on role ---
-      switch (userRole) {
-        case "staff":
-          navigate("/staff/dashboard");
-          onLogin("staff");
-          break;
-        case "student":
-          navigate("/student/dashboards");
-          onLogin("student");
-          break;
-        case "principal":
-        case "admin":
-          navigate("/admin/dashboard");
-          onLogin("principal");
-          break;
-        default:
-          console.error("Unknown user role:", userRole);
-          break;
-      }
+      // Store display_name and role_name for welcome popup
+      if (display_name) sessionStorage.setItem("display_name", display_name);
+      if (role_name) sessionStorage.setItem("role_name", role_name);
+
+      // --- Step 2: Show welcome popup, then navigate ---
+      setWelcomeData({
+        displayName: display_name || username || '',
+        roleName: role_name || '',
+        userRole: userRole,
+      });
+      setShowWelcome(true);
+
+      // Store navigation info for after popup dismissal
+      sessionStorage.setItem("_pendingUserRole", userRole);
 
       setIsLoggedIn(true);
 
@@ -538,6 +538,36 @@ const Login = ({ onLogin }) => {
       <ForgotPasswordModal
         show={showForgotPassword}
         onHide={() => setShowForgotPassword(false)}
+      />
+
+      {/* 🎓 Welcome Popup */}
+      <WelcomePopup
+        show={showWelcome}
+        displayName={welcomeData.displayName}
+        roleName={welcomeData.roleName}
+        userRole={welcomeData.userRole}
+        onDismiss={() => {
+          setShowWelcome(false);
+          const pendingRole = sessionStorage.getItem("_pendingUserRole");
+          sessionStorage.removeItem("_pendingUserRole");
+          switch (pendingRole) {
+            case "staff":
+              navigate("/staff/dashboard");
+              onLogin("staff");
+              break;
+            case "student":
+              navigate("/student/dashboards");
+              onLogin("student");
+              break;
+            case "principal":
+            case "admin":
+              navigate("/admin/dashboard");
+              onLogin("principal");
+              break;
+            default:
+              break;
+          }
+        }}
       />
     </div>
   );

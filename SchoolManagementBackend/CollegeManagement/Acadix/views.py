@@ -865,6 +865,24 @@ class RegisterUserLoginAPIView(CreateAPIView):
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
                     elif user_type == 'ADMIN':
                         AdminInstance = user.user_type
+
+                        # Build display_name for admin
+                        admin_display_name = ''
+                        admin_role_name = user.role_name if user.role_name else ''
+
+                        # If reference_id exists and > 0, try to get EmployeeMaster name
+                        if user.reference_id and user.reference_id > 0:
+                            try:
+                                emp = EmployeeMaster.objects.get(id=user.reference_id)
+                                emp_name_parts = [emp.title or '', emp.first_name or '', emp.middle_name or '', emp.last_name or '']
+                                admin_display_name = ' '.join(part for part in emp_name_parts if part).strip()
+                            except EmployeeMaster.DoesNotExist:
+                                admin_display_name = ''
+
+                        # Fallback: role_name -> username
+                        if not admin_display_name:
+                            admin_display_name = admin_role_name if admin_role_name else user.user_name
+
                         data = {
                             "organization_id": user.organization.id,
                             "organization_name": user.organization.organization_code,
@@ -875,7 +893,9 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             'userRole': AdminInstance.user_type,
                             'userTypeId': AdminInstance.id,
                             'user_login_id': user.id,
-                            'accessible_modules': user.accessible_modules if user.accessible_modules else []
+                            'accessible_modules': user.accessible_modules if user.accessible_modules else [],
+                            'display_name': admin_display_name,
+                            'role_name': admin_role_name,
                         }
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
                     elif user_type == 'STAFF':
@@ -896,6 +916,12 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             )
                         # --- End Validation ---
 
+                        # Build display_name for staff from EmployeeMaster
+                        staff_name_parts = [employee_master.title or '', employee_master.first_name or '', employee_master.middle_name or '', employee_master.last_name or '']
+                        staff_display_name = ' '.join(part for part in staff_name_parts if part).strip()
+                        if not staff_display_name:
+                            staff_display_name = user.user_name
+
                         StaffInstance = user.user_type
                         data = {
                             "organization_id": user.organization.id,
@@ -905,11 +931,25 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             'userId': user.reference_id,
                             'username': user.user_name,
                             'userRole': StaffInstance.user_type,
-                            'userTypeId': StaffInstance.id
+                            'userTypeId': StaffInstance.id,
+                            'display_name': staff_display_name,
                         }
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
                     elif user_type == 'STUDENT':
                         student = user.user_type
+
+                        # Build display_name for student from StudentRegistration
+                        student_display_name = ''
+                        if user.reference_id and user.reference_id > 0:
+                            try:
+                                student_reg = StudentRegistration.objects.get(id=user.reference_id)
+                                student_name_parts = [student_reg.first_name or '', student_reg.middle_name or '', student_reg.last_name or '']
+                                student_display_name = ' '.join(part for part in student_name_parts if part).strip()
+                            except StudentRegistration.DoesNotExist:
+                                student_display_name = ''
+                        if not student_display_name:
+                            student_display_name = user.user_name
+
                         data = {
                             "organization_id": user.organization.id,
                             "organization_name": user.organization.organization_code,
@@ -918,7 +958,8 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             'userId': user.reference_id,
                             'username': user.user_name,
                             'userRole': student.user_type,
-                            'userTypeId': student.id
+                            'userTypeId': student.id,
+                            'display_name': student_display_name,
                         }
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
 

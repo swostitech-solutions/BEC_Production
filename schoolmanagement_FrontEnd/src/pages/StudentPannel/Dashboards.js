@@ -434,8 +434,8 @@ function Dashboard() {
                           <span style={{ color: "#333" }}>{basicDetails.course_name || "-"}</span>
                         </div>
                         <div style={{ marginBottom: "12px", fontSize: "14px" }}>
-                          <strong style={{ color: "#555", minWidth: "140px", display: "inline-block" }}>Section:</strong>{" "}
-                          <span style={{ color: "#333" }}>{basicDetails.section_name || "-"}</span>
+                          <strong style={{ color: "#555", minWidth: "140px", display: "inline-block" }}>Department:</strong>{" "}
+                          <span style={{ color: "#333" }}>{basicDetails.department_description || "-"}</span>
                         </div>
                         <div style={{ marginBottom: "12px", fontSize: "14px" }}>
                           <strong style={{ color: "#555", minWidth: "140px", display: "inline-block" }}>Academic Year:</strong>{" "}
