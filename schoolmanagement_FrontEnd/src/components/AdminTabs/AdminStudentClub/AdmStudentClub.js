@@ -1023,7 +1023,7 @@ const AdmAttendanceEntry = () => {
                   ) : errorStudents ? (
                     <p style={{ color: "red" }}>{errorStudents}</p>
                   ) : (
-                    <table className="table ">
+                    <table className="table  table-bordered">
                       <thead>
                         <tr>
                           <th>
@@ -1042,7 +1042,7 @@ const AdmAttendanceEntry = () => {
                           <th>Student Name</th>
                           <th>ONMRC Registration No</th>
                           <th>Admission No</th>
-                          <th>Barcode</th>
+                          {/* <th>Barcode</th> */}
                           <th>Course</th>
                           <th>Section</th>
                           <th>Father Name</th>
@@ -1076,7 +1076,7 @@ const AdmAttendanceEntry = () => {
                                 <td>{student.studentName}</td>
                                 <td>{student.registration_no}</td>
                                 <td>{student.college_admission_no}</td>
-                                <td>{student.barcode}</td>
+                                {/* <td>{student.barcode}</td> */}
                                 <td>{student.course_name}</td>
                                 <td>{student.section_name}</td>
                                 <td>{student.father_name}</td>

@@ -531,7 +531,41 @@ export default function BasicTabs() {
     }
   }, [id]);
 
+  const validateAllTabs = () => {
+    const validationErrors = {};
+
+    const requiredFieldRules = [
+      { key: "first_name", label: "This field is required" },
+      { key: "last_name", label: "This field is required" },
+      { key: "batch", label: "This field is required" },
+      { key: "course", label: "This field is required" },
+      { key: "department", label: "This field is required" },
+      { key: "academic_year", label: "This field is required" },
+      { key: "semester", label: "This field is required" },
+      { key: "addmitted_section", label: "This field is required" },
+      { key: "admission_type", label: "This field is required" },
+      { key: "date_of_admission", label: "This field is required" },
+      { key: "doj", label: "This field is required" },
+    ];
+
+    requiredFieldRules.forEach(({ key, label }) => {
+      const fieldValue = formData[key];
+      if (!fieldValue || String(fieldValue).trim() === "") {
+        validationErrors[key] = label;
+      }
+    });
+
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
+  };
+
   const handleSave = async () => {
+    const isValid = validateAllTabs();
+    if (!isValid) {
+      setValue(0);
+      return;
+    }
+
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
     const academicYearId =
@@ -760,6 +794,12 @@ export default function BasicTabs() {
   };
 
   const handleUpdate = async () => {
+    const isValid = validateAllTabs();
+    if (!isValid) {
+      setValue(0);
+      return;
+    }
+
     const token = localStorage.getItem("accessToken");
     const userId = sessionStorage.getItem("userId");
     const studentId = id || formData.id; // from URL params
@@ -1084,6 +1124,7 @@ export default function BasicTabs() {
           frontCover={frontCover}
           setFrontCover={setFrontCover}
           fileInputRef={fileInputRef}
+          submitErrors={errors}
         />
       </CustomTabPanel>
 

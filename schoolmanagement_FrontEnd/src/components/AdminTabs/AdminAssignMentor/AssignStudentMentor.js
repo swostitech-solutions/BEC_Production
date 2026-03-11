@@ -1027,7 +1027,7 @@ const AssignStudentMentor = () => {
                           />
                         </div>
 
-                        <div className="col-12 col-md-4 mb-3">
+                        {/* <div className="col-12 col-md-4 mb-3">
                           <label
                             htmlFor="school-barcode"
                             className="form-label"
@@ -1049,7 +1049,7 @@ const AssignStudentMentor = () => {
                             }}
                             disabled={!selectedMentor || !selectedMentor.value}
                           />
-                        </div>
+                        </div> */}
 
                         <div className="col-12 col-md-4 mb-3 mt-4">
                           {/* <input
@@ -1093,7 +1093,7 @@ const AssignStudentMentor = () => {
                         <th>Sr.No</th>
                         <th>Student Name</th>
                         <th>Admission No</th>
-                        <th>BarCode</th>
+                        {/* <th>BarCode</th> */}
                         <th>Course</th>
                         <th>Section</th>
                         <th>Father Name</th>
@@ -1130,11 +1130,11 @@ const AssignStudentMentor = () => {
                                      student.fullData?.college_admission_no)
                                   : (student.registration_no || student.college_admission_no)}
                               </td>
-                              <td>
+                              {/* <td>
                                 {student.studentBasicDetails
                                   ? student.studentBasicDetails.barcode
                                   : student.barcode}
-                              </td>
+                              </td> */}
                               <td>
                                 {student.studentBasicDetails
                                   ? (student.studentBasicDetails.classname || student.studentBasicDetails.course_name)

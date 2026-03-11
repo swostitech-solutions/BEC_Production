@@ -419,7 +419,7 @@ const AdmAttendanceEntry = () => {
                         <th>Current Count</th>
                         <th>Student Name</th>
                         <th>Admission No</th>
-                        <th>BarCode</th>
+                        {/* <th>BarCode</th> */}
                         <th>Course</th>
                         <th>Section</th>
                         <th>Assignment Date</th>
@@ -454,7 +454,7 @@ const AdmAttendanceEntry = () => {
                                 {/* Student details */}
                                 <td>{student.student_name}</td>
                                 <td>{student.admission_no || "N/A"}</td>
-                                <td>{student.barcode || "N/A"}</td>
+                                {/* <td>{student.barcode || "N/A"}</td> */}
                                 <td>{student.course_name || "N/A"}</td>
                                 <td>{student.section_name || "N/A"}</td>
                                 <td>

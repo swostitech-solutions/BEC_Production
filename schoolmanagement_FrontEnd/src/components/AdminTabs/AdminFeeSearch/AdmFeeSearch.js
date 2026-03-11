@@ -1468,7 +1468,7 @@ const FeeSearchPage = () => {
                           <th>Father's Name</th>
                           <th>Course</th>
                           <th>Section</th>
-                          <th>Bar Code No</th>
+                          {/* <th>Bar Code No</th> */}
                           <th>College Admission No</th>
                           <th>Receipt Date</th>
                           <th>Receipt Amount</th>
@@ -1488,7 +1488,7 @@ const FeeSearchPage = () => {
                             <td>{receipt.father_name}</td>
                             <td>{receipt.course_name}</td>
                             <td>{receipt.section_name}</td>
-                            <td>{receipt.barcode}</td>
+                            {/* <td>{receipt.barcode}</td> */}
                             <td>{receipt.college_admission_no}</td>
                             <td>
                               {new Date(

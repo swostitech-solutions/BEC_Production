@@ -1282,14 +1282,14 @@ const AdmAttendanceEntry = () => {
 
               <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table" id="studentclassid">
+                  <table className="table table-bordered   " id="studentclassid">
                     <thead>
                       <tr>
                         <th>Sr.No</th>
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
                         <th>Admission No</th>
-                        <th>BarCode</th>
+                        {/* <th>BarCode</th> */}
                         <th>Session</th>
                         <th>Course</th>
                         <th>Department</th>
@@ -1314,7 +1314,7 @@ const AdmAttendanceEntry = () => {
                             <td>{student.student_name}</td>
                             <td>{student.registration_no}</td>
                             <td>{student.college_admission_no}</td>
-                            <td>{student.barcode}</td>
+                            {/* <td>{student.barcode}</td> */}
 
                             <td>{student.batch_code}</td>
                             <td>{student.course_name}</td>
@@ -1426,7 +1426,7 @@ const AdmAttendanceEntry = () => {
                       disabled
                     />
                   </div>
-                  <div className="col-12 col-md-3 mb-2">
+                  {/* <div className="col-12 col-md-3 mb-2">
                     <label className="form-label">Student Barcode</label>
                     <input
                       type="text"
@@ -1434,7 +1434,7 @@ const AdmAttendanceEntry = () => {
                       value={selectedStudent.barcode}
                       disabled
                     />
-                  </div>
+                  </div> */}
                   <div className="col-12 col-md-3 mb-2">
                     <label className="form-label">Father Name</label>
                     <input

@@ -847,7 +847,7 @@ const StudentSearch = () => {
                         <th>Student Name</th>
                         <th>Enrollment No</th>
                         <th>Roll No</th>
-                        <th>BarCode</th>
+                        {/* <th>BarCode</th> */}
                         <th>Father Name</th>
                         <th>Mother Name</th>
                         <th>Select Term</th>
@@ -865,7 +865,7 @@ const StudentSearch = () => {
                             <td>{student.full_name}</td>
                             <td>{student.enrollment_no}</td>
                             <td>{student.rollno || "-"}</td>
-                            <td>{student.barcode || "-"}</td>
+                            {/* <td>{student.barcode || "-"}</td> */}
                             <td>{student.father_name || "-"}</td>
                             <td>{student.mother_name || "-"}</td>
                             <td>

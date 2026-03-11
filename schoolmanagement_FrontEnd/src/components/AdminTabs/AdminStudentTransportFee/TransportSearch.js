@@ -1451,7 +1451,7 @@ const AdmAttendanceEntry = () => {
                         <th>Academic Year</th>
                         <th>Semester</th>
                         <th>Student Name</th>
-                        <th>Barcode</th>
+                        {/* <th>Barcode</th> */}
                         <th>Father Name</th>
                         <th>Mother Name</th>
                         <th>House</th>
@@ -1468,7 +1468,7 @@ const AdmAttendanceEntry = () => {
                             <td>{student.academicYear || "N/A"}</td>
                             <td>{student.semester || "N/A"}</td>
                             <td>{student.studentName || "N/A"}</td>
-                            <td>{student.barcode || "N/A"}</td>
+                            {/* <td>{student.barcode || "N/A"}</td> */}
                             <td>{student.fatherName || "N/A"}</td>
                             <td>{student.motherName || "N/A"}</td>
                             <td>{student.houseName || "N/A"}</td>{" "}

@@ -1570,7 +1570,7 @@ const AdmAttendanceEntry = () => {
                         <tr>
                           <th>Student Name</th>
                           <th>Admission No</th>
-                          <th>BarCode</th>
+                          {/* <th>BarCode</th> */}
                           <th>Course</th>
                           <th>Section</th>
                           <th>Father Name</th>
@@ -1598,7 +1598,7 @@ const AdmAttendanceEntry = () => {
                             <tr key={offset + index}>
                               <td>{item.student_name}</td>
                               <td>{item.college_admission_no}</td>
-                              <td>{item.barcode}</td>
+                              {/* <td>{item.barcode}</td> */}
                               <td>{item.course_name}</td>
                               <td>{item.section_name}</td>
                               <td>{item.fatherName}</td>

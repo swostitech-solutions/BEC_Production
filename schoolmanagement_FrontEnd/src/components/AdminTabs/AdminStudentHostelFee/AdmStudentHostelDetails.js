@@ -1364,7 +1364,7 @@ const AdmStudentHostelDetails = () => {
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
                         <th>Admission No</th>
-                        <th>Barcode</th>
+                        {/* <th>Barcode</th> */}
                         <th>Session</th>
                         <th>Course</th>
                         <th>Department</th>
@@ -1388,7 +1388,7 @@ const AdmStudentHostelDetails = () => {
                             <td>{student.student_name}</td>
                             <td>{student.registration_no}</td>
                             <td>{student.college_admission_no || "N/A"}</td>
-                            <td>{student.barcode || "N/A"}</td>
+                            {/* <td>{student.barcode || "N/A"}</td> */}
                             <td>{student.batch}</td>
                             <td>{student.course_name}</td>
                             <td>{student.department_name}</td>

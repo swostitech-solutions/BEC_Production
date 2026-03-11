@@ -666,7 +666,7 @@ function SelectedStudentTable({}) {
                         </div>
                       </div>
 
-                      <div className="col-12 col-md-3 mb-4">
+                      {/* <div className="col-12 col-md-3 mb-4">
                         <div className="mb-3">
                           <label htmlFor="barcode" className="form-label">
                             Barcode
@@ -685,7 +685,7 @@ function SelectedStudentTable({}) {
                             }
                           />
                         </div>
-                      </div>
+                      </div> */}
 
                       <div className="col-12 col-md-3 mt-4">
                         <button
@@ -792,7 +792,7 @@ function SelectedStudentTable({}) {
                           Student Name
                         </th>
                         <th>Admission No</th>
-                        <th>Barcode</th>
+                        {/* <th>Barcode</th> */}
                         <th
                           style={{ paddingLeft: "50px", paddingRight: "50px" }}
                         >
@@ -838,7 +838,7 @@ function SelectedStudentTable({}) {
                               <td>{details.section_name}</td>
                               <td>{details.student_name}</td>
                               <td>{details.college_admission_no}</td>
-                              <td>{details.barcode}</td>
+                              {/* <td>{details.barcode}</td> */}
                               <td>{details.father_name}</td>
                               <td>{details.mother_name}</td>
                               <td>
