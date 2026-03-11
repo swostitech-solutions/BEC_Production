@@ -528,152 +528,7 @@ export default function BasicTabs() {
     }
   }, [id]);
 
-  const validateAllTabs = () => {
-    const validationErrors = {};
-
-    const requiredFieldRules = [
-      { key: "first_name", label: "First name", tabIndex: 0 },
-      { key: "last_name", label: "Last name", tabIndex: 0 },
-      { key: "batch", label: "Session", tabIndex: 0 },
-      { key: "course", label: "Course", tabIndex: 0 },
-      { key: "department", label: "Department", tabIndex: 0 },
-      { key: "academic_year", label: "Academic year", tabIndex: 0 },
-      { key: "semester", label: "Semester", tabIndex: 0 },
-      { key: "addmitted_section", label: "Section", tabIndex: 0 },
-      { key: "date_of_admission", label: "Date of admission", tabIndex: 0 },
-      { key: "doj", label: "Date of join", tabIndex: 0 },
-      { key: "admission_type", label: "Admission type", tabIndex: 0 },
-      { key: "present_address", label: "Present address", tabIndex: 2 },
-      { key: "present_country", label: "Present country", tabIndex: 2 },
-      { key: "present_state", label: "Present state", tabIndex: 2 },
-      { key: "present_city", label: "Present city/district", tabIndex: 2 },
-      { key: "present_pincode", label: "Present pincode", tabIndex: 2 },
-      { key: "permanent_address", label: "Permanent address", tabIndex: 2 },
-      { key: "permanent_country", label: "Permanent country", tabIndex: 2 },
-      { key: "permanent_state", label: "Permanent state", tabIndex: 2 },
-      { key: "permanent_city", label: "Permanent city/district", tabIndex: 2 },
-      { key: "permanent_pincode", label: "Permanent pincode", tabIndex: 2 },
-      { key: "father_name", label: "Father name", tabIndex: 3 },
-      { key: "father_profession", label: "Father profession", tabIndex: 3 },
-      { key: "father_contact_number", label: "Father contact number", tabIndex: 3 },
-      { key: "mother_name", label: "Mother name", tabIndex: 3 },
-      { key: "mother_profession", label: "Mother profession", tabIndex: 3 },
-      { key: "mother_contact_number", label: "Mother contact number", tabIndex: 3 },
-    ];
-
-    if (!isEditMode) {
-      requiredFieldRules.push(
-        { key: "feeappfrom", label: "Fee App From", tabIndex: 1 },
-        { key: "feegroup", label: "Fee Group", tabIndex: 1 }
-      );
-    }
-
-    requiredFieldRules.forEach(({ key, label, tabIndex }) => {
-      const value = formData[key];
-      if (!value || String(value).trim() === "") {
-        validationErrors[key] = `${label} is required`;
-        validationErrors[`${key}__tab`] = tabIndex;
-      }
-    });
-
-    const emergencyRows = formData.emegencyContact || [];
-    emergencyRows.forEach((row, index) => {
-      if (!row?.name?.trim()) {
-        validationErrors[`emegencyContact.${index}.name`] = "This field is required";
-        validationErrors[`emegencyContact.${index}.name__tab`] = 5;
-      }
-      if (!row?.relationship?.trim()) {
-        validationErrors[`emegencyContact.${index}.relationship`] = "This field is required";
-        validationErrors[`emegencyContact.${index}.relationship__tab`] = 5;
-      }
-      if (!row?.Mobile_Number?.trim()) {
-        validationErrors[`emegencyContact.${index}.Mobile_Number`] = "This field is required";
-        validationErrors[`emegencyContact.${index}.Mobile_Number__tab`] = 5;
-      }
-    });
-
-    const pickupRows = formData.authorizedpickup || [];
-    pickupRows.forEach((row, index) => {
-      if (!row?.name?.trim()) {
-        validationErrors[`authorizedpickup.${index}.name`] = "This field is required";
-        validationErrors[`authorizedpickup.${index}.name__tab`] = 6;
-      }
-      if (!row?.relationship?.trim()) {
-        validationErrors[`authorizedpickup.${index}.relationship`] = "This field is required";
-        validationErrors[`authorizedpickup.${index}.relationship__tab`] = 6;
-      }
-      if (!row?.Mobile_Number?.trim()) {
-        validationErrors[`authorizedpickup.${index}.Mobile_Number`] = "This field is required";
-        validationErrors[`authorizedpickup.${index}.Mobile_Number__tab`] = 6;
-      }
-      if (!row?.address?.trim()) {
-        validationErrors[`authorizedpickup.${index}.address`] = "This field is required";
-        validationErrors[`authorizedpickup.${index}.address__tab`] = 6;
-      }
-      if (!row?.email?.trim()) {
-        validationErrors[`authorizedpickup.${index}.email`] = "This field is required";
-        validationErrors[`authorizedpickup.${index}.email__tab`] = 6;
-      }
-    });
-
-    const documentRows = formData.documentsDetails || [];
-    documentRows.forEach((row, index) => {
-      if (!row?.document_type?.trim()) {
-        validationErrors[`documentsDetails.${index}.document_type`] = "This field is required";
-        validationErrors[`documentsDetails.${index}.document_type__tab`] = 7;
-      }
-      if (!row?.document_no?.trim()) {
-        validationErrors[`documentsDetails.${index}.document_no`] = "This field is required";
-        validationErrors[`documentsDetails.${index}.document_no__tab`] = 7;
-      }
-      if (!(row?.document_pic || row?.preview_url || row?.document_url)) {
-        validationErrors[`documentsDetails.${index}.document_pic`] = "This field is required";
-        validationErrors[`documentsDetails.${index}.document_pic__tab`] = 7;
-      }
-    });
-
-    const educationRows = formData.previousEducationDetails || [];
-    const rowsToValidate =
-      educationRows.length > 0
-        ? educationRows
-        : [{ nameofschool: "", year_from: "", year_to: "" }];
-
-    rowsToValidate.forEach((row, index) => {
-      if (!row?.nameofschool?.trim()) {
-        validationErrors[`previousEducationDetails.${index}.nameofschool`] = "This field is required";
-        validationErrors[`previousEducationDetails.${index}.nameofschool__tab`] = 8;
-      }
-      if (!row?.year_from?.trim()) {
-        validationErrors[`previousEducationDetails.${index}.year_from`] = "This field is required";
-        validationErrors[`previousEducationDetails.${index}.year_from__tab`] = 8;
-      }
-      if (!row?.year_to?.trim()) {
-        validationErrors[`previousEducationDetails.${index}.year_to`] = "This field is required";
-        validationErrors[`previousEducationDetails.${index}.year_to__tab`] = 8;
-      }
-    });
-
-    setErrors(validationErrors);
-
-    const firstErrorTab = Object.keys(validationErrors)
-      .filter((key) => key.endsWith("__tab"))
-      .map((key) => validationErrors[key])
-      .sort((a, b) => a - b)[0];
-
-    return {
-      isValid: Object.keys(validationErrors).filter((key) => !key.endsWith("__tab")).length === 0,
-      firstErrorTab,
-    };
-  };
-
   const handleSave = async () => {
-    const { isValid, firstErrorTab } = validateAllTabs();
-    if (!isValid) {
-      const targetTab = typeof firstErrorTab === "number" ? firstErrorTab : 0;
-      setValue(isEditMode ? Math.max(targetTab - 1, 0) : targetTab);
-      return;
-    }
-
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
     const academicYearId =
@@ -901,13 +756,6 @@ export default function BasicTabs() {
   };
 
   const handleUpdate = async () => {
-    const { isValid, firstErrorTab } = validateAllTabs();
-    if (!isValid) {
-      const targetTab = typeof firstErrorTab === "number" ? firstErrorTab : 0;
-      setValue(isEditMode ? Math.max(targetTab - 1, 0) : targetTab);
-      return;
-    }
-
     const token = localStorage.getItem("accessToken");
     const userId = sessionStorage.getItem("userId");
     const studentId = id || formData.id; // from URL params
@@ -1231,7 +1079,6 @@ export default function BasicTabs() {
           frontCover={frontCover}
           setFrontCover={setFrontCover}
           fileInputRef={fileInputRef}
-          submitErrors={errors}
         />
       </CustomTabPanel>
 
@@ -1244,64 +1091,38 @@ export default function BasicTabs() {
             batch_id={formData.batch}
             course_id={formData.course}
             department_id={formData.department}
-            submitErrors={errors}
           />
         </CustomTabPanel>
       )}
 
       <CustomTabPanel value={value} index={isEditMode ? 1 : 2}>
-        <AdmPersonalDetails
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <AdmPersonalDetails formData={formData} setFormData={setFormData} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 2 : 3}>
-        <GuardianDetails
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <GuardianDetails formData={formData} setFormData={setFormData} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 3 : 4}>
-        <AdmOtherDetails
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <AdmOtherDetails formData={formData} setFormData={setFormData} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 4 : 5}>
-        <EmergencyContact
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <EmergencyContact formData={formData} setFormData={setFormData} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 5 : 6}>
-        <AuthorisedPickUp
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <AuthorisedPickUp formData={formData} setFormData={setFormData} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 6 : 7}>
-        <DocumentsSubmitted
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <DocumentsSubmitted formData={formData} setFormData={setFormData} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 7 : 8}>
         <PreviousEducationDetails
           formData={formData}
           setFormData={setFormData}
-          submitErrors={errors}
         />
       </CustomTabPanel>
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>

@@ -332,7 +332,7 @@ const TransferCertificateForm = () => {
                       />
                     </div>
                   </div>
-                  {/* <div className="row mb-3">
+                  <div className="row mb-3">
                     <div className="col-md-6 d-flex align-items-center">
                       <label
                         className="form-label me-3"
@@ -391,7 +391,7 @@ const TransferCertificateForm = () => {
                         <option value="">New</option>{" "}
                       </select>
                     </div>
-                  </div> */}
+                  </div>
                 </div>
 
                 {/* Additional fields */}

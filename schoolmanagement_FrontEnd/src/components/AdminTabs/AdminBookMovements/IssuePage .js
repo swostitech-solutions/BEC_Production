@@ -966,7 +966,7 @@ const IssuePage = () => {
                           />
                         </div>
                       </div>
-                      {/* <div className="col-12 col-md-3 mb-1">
+                      <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="student-barcode" className="form-label">
                           Student Barcode
                         </label>
@@ -979,7 +979,7 @@ const IssuePage = () => {
                             placeholder="Enter student barcode"
                           />
                         </div>
-                      </div> */}
+                      </div>
                       <div className="col-md-3">
                         <label htmlFor="session" className="form-label">
                           Session

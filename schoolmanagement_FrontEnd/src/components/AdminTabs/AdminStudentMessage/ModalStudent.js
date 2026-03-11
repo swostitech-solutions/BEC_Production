@@ -365,7 +365,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
-                    {/* <div className="col-12 col-md-3 mb-2">
+                    <div className="col-12 col-md-3 mb-2">
                       <label htmlFor="barcodeNo" className="form-label">
                         Student Barcode
                       </label>
@@ -376,7 +376,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                         placeholder="Barcode No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
-                    </div> */}
+                    </div>
                     <div className="col-12 col-md-3 mb-2">
                       <label className="form-label">Session</label>
                       <Select
@@ -635,7 +635,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Student Barcode</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -654,7 +654,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                               <td>{student.section_name}</td>
                               <td>{student.father_name}</td>
                               <td>{student.mother_name}</td>
-                              {/* <td>{student.barcode}</td> */}
+                              <td>{student.barcode}</td>
                               <td>
                                 <button
                                   className="btn btn-success"

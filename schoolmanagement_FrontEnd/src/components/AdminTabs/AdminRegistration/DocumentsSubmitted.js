@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import "./AdmOtherDetails.css";
 import { ApiUrl } from "../../../ApiUrl";
 
-const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
+const AdmOtherDetails = ({ formData, setFormData }) => {
   const { id } = useParams();
   const [documentTypes, setDocumentTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -314,9 +314,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
     return <div>{error}</div>;
   }
 
-  const getSubmitFieldError = (index, field) =>
-    submitErrors[`documentsDetails.${index}.${field}`] || "";
-
   return (
     <form onSubmit={handleSubmit} className="container-fluid form-container">
       <div className="table-responsive">
@@ -361,11 +358,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                         </option>
                       ))}
                     </select>
-                    {getSubmitFieldError(index, "document_type") && (
-                      <small style={{ color: "red", display: "block" }}>
-                        {getSubmitFieldError(index, "document_type")}
-                      </small>
-                    )}
                   </td>
                   <td>
                     <input
@@ -414,11 +406,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       }}
                       required
                     />
-                    {getSubmitFieldError(index, "document_no") && (
-                      <small style={{ color: "red", display: "block" }}>
-                        {getSubmitFieldError(index, "document_no")}
-                      </small>
-                    )}
                   </td>
                   <td>
                     <input
@@ -439,11 +426,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                           View Uploaded File
                         </a>
                       </div>
-                    )}
-                    {getSubmitFieldError(index, "document_pic") && (
-                      <small style={{ color: "red", display: "block" }}>
-                        {getSubmitFieldError(index, "document_pic")}
-                      </small>
                     )}
                   </td>
                   <td>

@@ -1206,14 +1206,14 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             BatchList?.find(
-                              (b) => b.id === Number(formData.batch),
+                              (b) => b.id === Number(formData.batch)
                             )
                               ? {
-                                  value: formData.batch,
-                                  label: BatchList.find(
-                                    (b) => b.id === Number(formData.batch),
-                                  )?.batch_description,
-                                }
+                                value: formData.batch,
+                                label: BatchList.find(
+                                  (b) => b.id === Number(formData.batch)
+                                )?.batch_description,
+                              }
                               : null
                           }
                           onChange={(opt) => {
@@ -1251,19 +1251,19 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             CourseList.find(
-                              (c) => c.id === Number(formData.course),
+                              (c) => c.id === Number(formData.course)
                             )
                               ? {
-                                  value: formData.course,
-                                  label:
-                                    CourseList.find(
-                                      (c) => c.id === Number(formData.course),
-                                    )?.course_name ||
-                                    CourseList.find(
-                                      (c) => c.id === Number(formData.course),
-                                    )?.description ||
-                                    "Unnamed Course",
-                                }
+                                value: formData.course,
+                                label:
+                                  CourseList.find(
+                                    (c) => c.id === Number(formData.course)
+                                  )?.course_name ||
+                                  CourseList.find(
+                                    (c) => c.id === Number(formData.course)
+                                  )?.description ||
+                                  "Unnamed Course",
+                              }
                               : null
                           }
                           onChange={(opt) =>
@@ -1304,19 +1304,19 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             BranchList.find(
-                              (b) => b.id === Number(formData.branch),
+                              (b) => b.id === Number(formData.branch)
                             )
                               ? {
-                                  value: formData.branch,
-                                  label:
-                                    BranchList.find(
-                                      (b) => b.id === Number(formData.branch),
-                                    )?.department_description ||
-                                    BranchList.find(
-                                      (b) => b.id === Number(formData.branch),
-                                    )?.department_code ||
-                                    "Unnamed Department",
-                                }
+                                value: formData.branch,
+                                label:
+                                  BranchList.find(
+                                    (b) => b.id === Number(formData.branch)
+                                  )?.department_description ||
+                                  BranchList.find(
+                                    (b) => b.id === Number(formData.branch)
+                                  )?.department_code ||
+                                  "Unnamed Department",
+                              }
                               : null
                           }
                           onChange={(opt) =>
@@ -1356,17 +1356,17 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             AcademicYearList.find(
-                              (y) => y.id === Number(formData.academic_year),
+                              (y) => y.id === Number(formData.academic_year)
                             )
                               ? {
-                                  value: formData.academic_year,
-                                  label:
-                                    AcademicYearList.find(
-                                      (y) =>
-                                        y.id === Number(formData.academic_year),
-                                    )?.academic_year_description ||
-                                    "Unnamed Academic Year",
-                                }
+                                value: formData.academic_year,
+                                label:
+                                  AcademicYearList.find(
+                                    (y) =>
+                                      y.id === Number(formData.academic_year)
+                                  )?.academic_year_description ||
+                                  "Unnamed Academic Year",
+                              }
                               : null
                           }
                           onChange={(opt) =>
@@ -1406,16 +1406,16 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             SemesterList.find(
-                              (s) => s.id === Number(formData.semester),
+                              (s) => s.id === Number(formData.semester)
                             )
                               ? {
-                                  value: formData.semester,
-                                  label:
-                                    SemesterList.find(
-                                      (s) => s.id === Number(formData.semester),
-                                    )?.semester_description ||
-                                    "Unnamed Semester",
-                                }
+                                value: formData.semester,
+                                label:
+                                  SemesterList.find(
+                                    (s) => s.id === Number(formData.semester)
+                                  )?.semester_description ||
+                                  "Unnamed Semester",
+                              }
                               : null
                           }
                           onChange={(opt) =>
@@ -1454,18 +1454,17 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             SectionList.find(
-                              (s) =>
-                                s.id === Number(formData.addmitted_section),
+                              (s) => s.id === Number(formData.addmitted_section)
                             )
                               ? {
-                                  value: formData.addmitted_section,
-                                  label:
-                                    SectionList.find(
-                                      (s) =>
-                                        s.id ===
-                                        Number(formData.addmitted_section),
-                                    )?.section_name || "Unnamed Section",
-                                }
+                                value: formData.addmitted_section,
+                                label:
+                                  SectionList.find(
+                                    (s) =>
+                                      s.id ===
+                                      Number(formData.addmitted_section)
+                                  )?.section_name || "Unnamed Section",
+                              }
                               : null
                           }
                           onChange={(opt) =>
@@ -1499,27 +1498,21 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             LectureList.find(
-                              (lec) => lec.id === Number(formData.lectureId),
+                              (lec) => lec.id === Number(formData.lectureId)
                             )
                               ? {
-                                  value: formData.lectureId,
-                                  label: `${
-                                    LectureList.find(
-                                      (lec) =>
-                                        lec.id === Number(formData.lectureId),
-                                    )?.lecture_period_name
-                                  } (${
-                                    LectureList.find(
-                                      (lec) =>
-                                        lec.id === Number(formData.lectureId),
-                                    )?.time_from
-                                  } - ${
-                                    LectureList.find(
-                                      (lec) =>
-                                        lec.id === Number(formData.lectureId),
-                                    )?.time_to
-                                  })`,
-                                }
+                                value: formData.lectureId,
+                                label: `${LectureList.find(
+                                  (lec) =>
+                                    lec.id === Number(formData.lectureId)
+                                )?.lecture_period_name} (${LectureList.find(
+                                  (lec) =>
+                                    lec.id === Number(formData.lectureId)
+                                )?.time_from} - ${LectureList.find(
+                                  (lec) =>
+                                    lec.id === Number(formData.lectureId)
+                                )?.time_to})`,
+                              }
                               : null
                           }
                           onChange={(opt) => {
@@ -1567,14 +1560,14 @@ const AdmAttendanceEntry = () => {
                         // }
                         value={
                           SubjectList.find(
-                            (s) => s.id === Number(formData.subjectId),
+                            (s) => s.id === Number(formData.subjectId)
                           )
                             ? {
-                                value: formData.subjectId,
-                                label: SubjectList.find(
-                                  (s) => s.id === Number(formData.subjectId),
-                                )?.subjectdescription, // ✅ Only subject name
-                              }
+                              value: formData.subjectId,
+                              label: SubjectList.find(
+                                (s) => s.id === Number(formData.subjectId)
+                              )?.subjectdescription, // ✅ Only subject name
+                            }
                             : null
                         }
                         onChange={(opt) =>
@@ -1610,16 +1603,16 @@ const AdmAttendanceEntry = () => {
                         value={
                           ProfessorList.find(
                             (p) =>
-                              p.professor_id === Number(formData.professorId),
+                              p.professor_id === Number(formData.professorId)
                           )
                             ? {
-                                value: formData.professorId,
-                                label: ProfessorList.find(
-                                  (p) =>
-                                    p.professor_id ===
-                                    Number(formData.professorId),
-                                )?.professor_name,
-                              }
+                              value: formData.professorId,
+                              label: ProfessorList.find(
+                                (p) =>
+                                  p.professor_id ===
+                                  Number(formData.professorId)
+                              )?.professor_name,
+                            }
                             : null
                         }
                         onChange={(opt) =>
@@ -1814,7 +1807,7 @@ const AdmAttendanceEntry = () => {
 
               <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table table-bordered">
+                  <table className="table">
                     <thead>
                       <tr>
                         <th>Sr.No</th>
@@ -1855,9 +1848,9 @@ const AdmAttendanceEntry = () => {
                               <div className="hoverable-text">
                                 {item.assignment_details.length > 50
                                   ? `${item.assignment_details.substring(
-                                      0,
-                                      50,
-                                    )}...`
+                                    0,
+                                    50
+                                  )}...`
                                   : item.assignment_details}
                                 <div className="hover-popup">
                                   {item.assignment_details}

@@ -315,7 +315,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                         placeholder="Application number"
                       />
                     </div>
-                    {/* <div className="col-12 col-md-3 mb-2">
+                    <div className="col-12 col-md-3 mb-2">
                       <label className="form-label">Student Barcode</label>
                       <input
                         type="text"
@@ -325,7 +325,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                         className="form-control detail"
                         placeholder="Student Barcode"
                       />
-                    </div> */}
+                    </div>
                     {/* Batch */}
                     <div className="col-12 col-md-3 mb-2">
                       <label className="form-label">Session</label>
@@ -561,7 +561,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Student Barcode</th>
                           <th>Status</th>
                           <th>Actions</th>
                         </tr>
@@ -580,7 +580,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                             <td>{student.section_name}</td>
                             <td>{student.fatherName}</td>
                             <td>{student.motherName}</td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
                             <td>{student.student_status}</td>
                             <td>
                               <button

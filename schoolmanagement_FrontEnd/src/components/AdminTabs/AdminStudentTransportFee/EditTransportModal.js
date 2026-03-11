@@ -983,7 +983,7 @@ const EditTransportModal = ({
                 />
               </div>
 
-              {/* <div className="col-md-4">
+              <div className="col-md-4">
                 <label className="form-label">Student Barcode</label>
                 <input
                   type="text"
@@ -992,7 +992,7 @@ const EditTransportModal = ({
                   readOnly
                   disabled
                 />
-              </div> */}
+              </div>
             </div>
 
             <div className="row g-2 mt-2">

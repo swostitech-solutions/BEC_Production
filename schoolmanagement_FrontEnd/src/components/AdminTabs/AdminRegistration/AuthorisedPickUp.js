@@ -7,10 +7,9 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
+const AuthorisedPickUp = ({ formData, setFormData }) => {
   const { id } = useParams(); // Get student ID from the URL
   const [errors, setErrors] = useState([]);
-  const [rowActionError, setRowActionError] = useState("");
 
   // Ensure blank row when cleared
   useEffect(() => {
@@ -141,13 +140,11 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
     );
 
     if (incompletePickups.length > 0) {
-      setRowActionError(
-        "Please fill all required fields in the current row before adding a new one."
+      alert(
+        "Please fill in all required fields (Name, Relationship, Mobile No, Address, Email) before adding a new one."
       );
       return;
     }
-
-    setRowActionError("");
 
     setAuthorisedPickups([
       ...authorisedPickups,
@@ -158,13 +155,12 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
   //New Code 01082025
   const handleRemoveRow = (index) => {
     if (!authorisedPickups[index].isNew) {
-      setRowActionError("Only newly added rows can be removed.");
+      alert("Only newly added rows can be removed.");
       return;
     }
     const updatedRows = authorisedPickups.filter((_, i) => i !== index);
     setAuthorisedPickups(updatedRows);
     setFormData({ ...formData, authorizedpickup: updatedRows });
-    setRowActionError("");
   };
 
   // Function to handle input changes
@@ -202,9 +198,6 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
     setAuthorisedPickups(updatedRows);
     setFormData({ ...formData, authorizedpickup: updatedRows }); // Update formData
   };
-
-  const getSubmitFieldError = (index, field) =>
-    submitErrors[`authorizedpickup.${index}.${field}`] || "";
 
   return (
     <div className="table-responsive">
@@ -247,11 +240,6 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
                   }}
                   required
                 />
-                {getSubmitFieldError(index, "name") && (
-                  <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
-                    {getSubmitFieldError(index, "name")}
-                  </span>
-                )}
               </td>
 
               {/* ✅ Relationship - Only alphabets and spaces */}
@@ -265,11 +253,6 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
                   }}
                   required
                 />
-                {getSubmitFieldError(index, "relationship") && (
-                  <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
-                    {getSubmitFieldError(index, "relationship")}
-                  </span>
-                )}
               </td>
 
               {/* ✅ Mobile Number - Only digits, 10 max */}
@@ -296,11 +279,6 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
                     {errors[index].mobile}
                   </span>
                 )}
-                {getSubmitFieldError(index, "Mobile_Number") && (
-                  <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
-                    {getSubmitFieldError(index, "Mobile_Number")}
-                  </span>
-                )}
               </td>
 
               <td>
@@ -312,11 +290,6 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
                   }
                   required
                 />
-                {getSubmitFieldError(index, "address") && (
-                  <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
-                    {getSubmitFieldError(index, "address")}
-                  </span>
-                )}
               </td>
 
               <td>
@@ -338,11 +311,6 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
                     }}
                   >
                     {errors[index].email}
-                  </span>
-                )}
-                {getSubmitFieldError(index, "email") && (
-                  <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
-                    {getSubmitFieldError(index, "email")}
                   </span>
                 )}
               </td>
@@ -380,11 +348,6 @@ const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
           Add New Guardian
         </button>
       </div>
-      {rowActionError && (
-        <small style={{ color: "red", display: "block", marginTop: "6px" }}>
-          {rowActionError}
-        </small>
-      )}
     </div>
   );
 };

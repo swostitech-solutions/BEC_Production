@@ -3353,7 +3353,7 @@ const FeeCollection = () => {
                         />
                       </div>
 
-                      {/* <div className="col-12 col-md-3 mb-3">
+                      <div className="col-12 col-md-3 mb-3">
                         <label htmlFor="student-barcode" className="form-label">
                           Student BarCode
                         </label>
@@ -3373,7 +3373,7 @@ const FeeCollection = () => {
                             onBlur={fetchStudentData}
                           />
                         </div>
-                      </div> */}
+                      </div>
 
                       <div className="col-12 col-md-3 mb-1">
                         <label

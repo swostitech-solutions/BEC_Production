@@ -305,7 +305,7 @@ const TransferCertificateForm = () => {
                       />
                     </div>
                   </div>
-                  {/* <div className="row mb-3">
+                  <div className="row mb-3">
                     <div className="col-md-6 d-flex align-items-center">
                       <label
                         className="form-label me-3"
@@ -371,7 +371,7 @@ const TransferCertificateForm = () => {
                         <option value="C">Cancelled</option>
                       </select>
                     </div>
-                  </div> */}
+                  </div>
                 </div>
                 {/* Additional fields */}
                 <ul className="list-unstyled  mb-3 mt-3 mx-1 custom-section-box">

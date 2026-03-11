@@ -14,7 +14,6 @@ const DesignComponent = ({
   batch_id,
   course_id,
   department_id,
-  submitErrors = {},
 }) => {
   const { id } = useParams();
 
@@ -288,9 +287,6 @@ const DesignComponent = ({
                       }
                       isDisabled={isDisabled}
                     />
-                    {submitErrors.feeappfrom && (
-                      <small style={{ color: "red" }}>{submitErrors.feeappfrom}</small>
-                    )}
                   </div>
 
                   <div className="col-12 col-md-6 mb-2">
@@ -355,9 +351,6 @@ const DesignComponent = ({
                         }))
                       }
                     />
-                    {submitErrors.feegroup && (
-                      <small style={{ color: "red" }}>{submitErrors.feegroup}</small>
-                    )}
                   </div>
                 </div>
               </div>

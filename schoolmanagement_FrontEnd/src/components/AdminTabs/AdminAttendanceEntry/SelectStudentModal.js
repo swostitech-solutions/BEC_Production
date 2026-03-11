@@ -341,7 +341,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                           />
                         </div>
-                        {/* <div className="col-12 col-md-3 mb-2">
+                        <div className="col-12 col-md-3 mb-2">
                           <label className="form-label">Student Barcode</label>
                           <input
                             type="text"
@@ -352,7 +352,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             placeholder="Student Barcode"
                             style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                           />
-                        </div> */}
+                        </div>
                         <div className="col-12 col-md-3 mb-2">
                           <label className="form-label">Semester</label>
                           <Select
@@ -452,7 +452,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Student Barcode</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -494,7 +494,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                                 </td>
                                 <td>{studentDetails.father_name}</td>
                                 <td>{studentDetails.mother_name}</td>
-                                {/* <td>{studentDetails.barcode}</td> */}
+                                <td>{studentDetails.barcode}</td>
                                 <td>
                                   <input
                                     type="radio"
