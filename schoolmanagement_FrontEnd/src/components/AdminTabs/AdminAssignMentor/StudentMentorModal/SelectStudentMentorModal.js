@@ -545,14 +545,14 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                     </div>
                     
                     <div className="col-12 col-md-3 mb-2">
-                      <label htmlFor="admission-no" className="form-label">Admission No</label>
+                      <label htmlFor="admission-no" className="form-label">Application number</label>
                       <input
                         type="text"
                         name="admissionNo"
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Admission No"
+                        placeholder="Application number"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>

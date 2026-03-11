@@ -248,7 +248,7 @@ const AdmMentorStudentDetails = () => {
                         <td className="text-start">
                           {studentDetails?.student_name || " "}
                         </td>
-                        <td className="fw-bold text-start">Admission No</td>
+                        <td className="fw-bold text-start">Application number</td>
                         <td className="text-start">
                           {studentDetails?.admission_no || " "}
                         </td>

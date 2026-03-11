@@ -238,13 +238,13 @@
 //                   <div className="row flex-grow-1">
 //                     <div className="col-12 col-md-4 mb-2">
 //                       <label htmlFor="admission-no" className="form-label">
-//                         Admission No<span style={{ color: "red" }}>*</span>{" "}
+//                         Application number<span style={{ color: "red" }}>*</span>{" "}
 //                       </label>
 //                       <input
 //                         type="text"
 //                         id="admission-no"
 //                         className="form-control"
-//                         placeholder="Enter admission no"
+//                         placeholder="Enter Application number"
 //                         name="last_name"
 //                         value={formData.admission_no}
 //                         onChange={handleInputChange}
@@ -477,13 +477,13 @@
 //                         className="form-label"
 //                       >
 //                         {" "}
-//                         School Admission No{" "}
+//                         School Application number{" "}
 //                       </label>
 //                       <input
 //                         type="text"
 //                         id="school-admission-no"
 //                         className="form-control"
-//                         placeholder="Enter school admission no"
+//                         placeholder="Enter school Application number"
 //                         name="school_admission_no"
 //                         value={formData.school_admission_no}
 //                         onChange={handleInputChange}

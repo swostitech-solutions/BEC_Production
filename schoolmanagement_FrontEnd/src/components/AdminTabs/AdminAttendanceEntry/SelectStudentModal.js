@@ -188,7 +188,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
         (studentDetails.college_admission_no?.toString().includes(filters.admissionNo)) ||
         (studentDetails.admission_no?.toString().includes(filters.admissionNo));
 
-      // Check school admission number (College Admission No field)
+      // Check school admission number (College Application number field)
       const schoolAdmissionNoMatch = !filters.schoolAdmissionNo ||
         (studentDetails.college_admission_no?.toString().includes(filters.schoolAdmissionNo));
 
@@ -330,14 +330,14 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                           />
                         </div>
                         <div className="col-12 col-md-3 mb-2">
-                          <label className="form-label">Admission No</label>
+                          <label className="form-label">Application number</label>
                           <input
                             type="text"
                             name="admissionNo"
                             value={filters.admissionNo}
                             onChange={handleInputChange}
                             className="form-control detail"
-                            placeholder="Admission No"
+                            placeholder="Application number"
                             style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                           />
                         </div>
@@ -426,14 +426,14 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                           />
                         </div>
                         <div className="col-12 col-md-3 mb-2">
-                          <label className="form-label">College Admission No</label>
+                          <label className="form-label">College Application number</label>
                           <input
                             type="text"
                             name="schoolAdmissionNo"
                             value={filters.schoolAdmissionNo}
                             onChange={handleInputChange}
                             className="form-control detail"
-                            placeholder="College Admission No"
+                            placeholder="College Application number"
                             style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                           />
                         </div>
@@ -447,7 +447,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                       <thead>
                         <tr>
                           <th>Student Name</th>
-                          <th>Admission No</th>
+                          <th>Application number</th>
                           <th>Course</th>
                           <th>Section</th>
                           <th>Father Name</th>

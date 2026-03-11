@@ -86,7 +86,7 @@ const FeeDetails = () => {
     doc.text(`Class: ${row.class}`, 160, startY + 10);
     doc.text(`Student Name: ${row.name}`, 20, startY + 20);
     doc.text(`Section: ${row.section}`, 160, startY + 20);
-    doc.text(`Admission No: ${row.admissionNo}`, 20, startY + 30);
+    doc.text(`Application number: ${row.admissionNo}`, 20, startY + 30);
     doc.text(`Father Name: Naresh`, 160, startY + 30);
     doc.text(`Fee Periods: ${row.feePeriod}`, 20, startY + 40);
 
@@ -253,7 +253,7 @@ const FeeDetails = () => {
             <th>Name</th>
             <th>Class</th>
             <th>Section</th>
-            <th>School Admission No</th>
+            <th>School Application number</th>
             <th>Payment Method</th>
             <th>Discount</th>
             <th>Received Fees</th>

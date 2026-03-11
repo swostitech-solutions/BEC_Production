@@ -132,7 +132,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
           studentname: s.student_name,
           // ✅ Correct fields from API
           registration_no: s.registration_no, // ONMRC Registration No
-          college_admission_no: s.college_admission_no, // Admission No
+          college_admission_no: s.college_admission_no, // Application number
           rollno: s.enrollment_no,
           batch_code: s.batch_code,
           course_name: s.course_name,
@@ -321,7 +321,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         className="form-label"
                       >
                         {" "}
-                        Admission No{" "}
+                        Application number{" "}
                       </label>
                       <input
                         type="text"
@@ -329,7 +329,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Admission No"
+                        placeholder="Application number"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -585,7 +585,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         <tr>
                           <th>Student Name</th>
                           <th>ONMRC Registration No</th>
-                          <th>Admission No</th>
+                          <th>Application number</th>
                           <th>Session</th>
                           <th>Course</th>
                           <th>Department</th>

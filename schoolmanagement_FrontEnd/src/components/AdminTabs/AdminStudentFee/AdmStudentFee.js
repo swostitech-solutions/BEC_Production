@@ -565,7 +565,7 @@ const StudentFee = () => {
         : "";
 
       if (!id && !barcode && !admissionNo) {
-        console.error("Please enter Student ID, Barcode, or Admission No.");
+        console.error("Please enter Student ID, Barcode, or Application number.");
         return;
       }
 
@@ -907,14 +907,14 @@ const StudentFee = () => {
                           htmlFor="school-admission-no"
                           className="form-label"
                         >
-                          College Admission No
+                          College Application number
                         </label>
                         <div className="d-flex align-items-center">
                           <input
                             type="text"
                             id="school-admission-no"
                             className="form-control detail"
-                            placeholder="Enter school admission no"
+                            placeholder="Enter school Application number"
                             value={selectedStudent.admissionNo || ""}
                             onChange={(e) =>
                               setSelectedStudent({

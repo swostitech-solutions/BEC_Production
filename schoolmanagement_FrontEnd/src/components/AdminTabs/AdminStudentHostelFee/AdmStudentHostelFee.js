@@ -749,7 +749,7 @@ const AdmAttendanceEntry = () => {
       hostelData.map((item, index) => ({
         // "Sr.No": index + 1,
         "Student Name": item.student_name,
-        "Admission No": item.course_admission_no,
+        "Application number": item.course_admission_no,
         Course: item.course_name,
         Section: item.section_name,
         "Father Name": item.father_name,
@@ -1160,7 +1160,7 @@ const AdmAttendanceEntry = () => {
                         <th>Sr.No</th>
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
-                        <th>Admission No</th>
+                        <th>Application number</th>
                         <th>Course</th>
                         <th>Section</th>
                         <th>Father Name</th>
@@ -1189,7 +1189,7 @@ const AdmAttendanceEntry = () => {
                             {/* Registration No */}
                             <td>{item.registration_no}</td>
 
-                            {/* Admission No */}
+                            {/* Application number */}
                             <td>{item.course_admission_no}</td>
 
                             {/* Class Name */}

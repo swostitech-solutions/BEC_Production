@@ -1363,7 +1363,7 @@ const AdmStudentHostelDetails = () => {
                         <th>Sr.No</th>
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
-                        <th>Admission No</th>
+                        <th>Application number</th>
                         <th>Barcode</th>
                         <th>Session</th>
                         <th>Course</th>

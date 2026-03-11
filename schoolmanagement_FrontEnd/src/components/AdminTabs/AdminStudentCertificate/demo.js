@@ -133,7 +133,7 @@ const TransferCertificateForm = () => {
           <div className="col-md-6 d-flex align-items-center">
             <label className="form-label me-3" style={{ width: "200px" }}>
               {" "}
-              School Admission No.{" "}
+              School Application number.{" "}
             </label>
             <input
               type="text"

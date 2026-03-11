@@ -333,7 +333,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         className="form-label"
                       >
                         {" "}
-                        Admission No{" "}
+                        Application number{" "}
                       </label>
                       <input
                         type="text"
@@ -341,7 +341,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         name="admissionNo"
                         value={filters.admissionNo}
                         onChange={handleInputChange}
-                        placeholder="Admission No"
+                        placeholder="Application number"
                       />
                     </div>
                     <div className="col-3">
@@ -611,7 +611,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                           </th>
                           <th>Student Name</th>
                           <th>ONMRC Registration No</th>
-                          <th>Admission No</th>
+                          <th>Application number</th>
                           <th>Session</th>
                           <th>Course</th>
                           <th>Department</th>

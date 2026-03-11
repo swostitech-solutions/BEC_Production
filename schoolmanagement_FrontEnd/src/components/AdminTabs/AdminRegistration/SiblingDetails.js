@@ -151,7 +151,7 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
 
     if (incompleteSiblings.length > 0) {
       alert(
-        "Please fill in all required fields (Admission No, Student Name, Class, Section) for sibling details before adding a new one."
+        "Please fill in all required fields (Application number, Student Name, Class, Section) for sibling details before adding a new one."
       );
       return; // Prevent adding a new row
     }
@@ -221,7 +221,7 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
           <thead>
             <tr>
               <th>S.No.</th>
-              <th>Admission No</th>
+              <th>Application number</th>
               <th>Student Name</th>
               <th>Class</th>
               <th>Section</th>

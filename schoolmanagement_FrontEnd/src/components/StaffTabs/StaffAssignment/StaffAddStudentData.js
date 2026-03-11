@@ -141,7 +141,7 @@ const AddStudentExamData = () => {
                 Term: <span>Term 1</span>
               </p>
               <p>
-                Admission No: <span>2239</span>
+                Application number: <span>2239</span>
               </p>
               <p>
                 Class: <span>PP-II</span>

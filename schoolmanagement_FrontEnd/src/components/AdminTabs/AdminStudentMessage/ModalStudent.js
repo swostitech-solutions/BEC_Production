@@ -344,7 +344,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
-                        Admission No
+                        Application number
                       </label>
                       {/* <input
                         type="text"
@@ -352,7 +352,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Admission No"
+                        placeholder="Application number"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       /> */}
                       <input
@@ -361,7 +361,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                         value={filters.admission_no}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Admission No"
+                        placeholder="Application number"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -626,7 +626,7 @@ const ModalStudent = ({ show, handleClose, onSelectStudent }) => {
                         <tr>
                           <th>Student Name</th>
                           <th>ONMRC Registration No</th>
-                          <th>Admission No</th>
+                          <th>Application number</th>
                           <th>Session</th>
                           <th>Course</th>
                           <th>Department</th>

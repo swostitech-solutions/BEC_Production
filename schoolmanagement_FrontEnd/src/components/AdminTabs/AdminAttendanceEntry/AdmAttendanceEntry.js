@@ -162,7 +162,7 @@
 
 //                       <div className="col-12 col-md-3 mb-1">
 //                         <label htmlFor="admission-no" className="form-label">
-//                           School Admission No
+//                           School Application number
 //                         </label>
 //                         <input
 //                           type="text"
@@ -267,7 +267,7 @@
 //                         <th>Class</th>
 //                         <th>Section</th>
 //                         <th>Roll No</th>
-//                         <th>School Admission No</th>
+//                         <th>School Application number</th>
 //                         <th>BarCode</th>
 //                         <th>Student Name</th>
 //                         <th>Primary Guardian</th>
@@ -507,7 +507,7 @@ const AdmAttendanceEntry = () => {
 
                       <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="admission-no" className="form-label">
-                          School Admission No
+                          School Application number
                         </label>
                         <input
                           type="text"
@@ -612,7 +612,7 @@ const AdmAttendanceEntry = () => {
                         <th>Class</th>
                         <th>Section</th>
                         <th>Roll No</th>
-                        <th>School Admission No</th>
+                        <th>School Application number</th>
                         <th>BarCode</th>
                         <th>Student Name</th>
                         <th>Primary Guardian</th>

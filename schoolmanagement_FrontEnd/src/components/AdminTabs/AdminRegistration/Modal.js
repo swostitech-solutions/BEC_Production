@@ -436,7 +436,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             <th>Semester</th>
                             <th>Section</th>
                             <th>Student Name</th>
-                            <th>Admission No</th>
+                            <th>Application number</th>
                             <th>BarCode</th>
                             <th>Father Name</th>
                             <th>Select</th>

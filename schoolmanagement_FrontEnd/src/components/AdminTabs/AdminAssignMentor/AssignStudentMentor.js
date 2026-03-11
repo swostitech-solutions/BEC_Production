@@ -959,7 +959,7 @@ const AssignStudentMentor = () => {
                               type="text"
                               id="school-admission-number"
                               className="form-control detail " 
-                              placeholder="Enter admission no"
+                              placeholder="Enter Application number"
                               ref={admissionNoRef}
                               value={registrationNo}
                               onChange={(e) =>
@@ -1014,7 +1014,7 @@ const AssignStudentMentor = () => {
                             type="text"
                             id="school-admission-number"
                             className="form-control detail"
-                            placeholder="Enter admission no"
+                            placeholder="Enter Application number"
                             ref={admissionNoRef}
                             value={registrationNo}
                             onChange={(e) => setRegistrationNo(e.target.value)}
@@ -1092,7 +1092,7 @@ const AssignStudentMentor = () => {
                       <tr>
                         <th>Sr.No</th>
                         <th>Student Name</th>
-                        <th>Admission No</th>
+                        <th>Application number</th>
                         <th>BarCode</th>
                         <th>Course</th>
                         <th>Section</th>

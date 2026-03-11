@@ -1165,7 +1165,7 @@ const StfAttendance = () => {
                         <th>Semester</th>
                         <th>Section</th>
                         <th>Roll No</th>
-                        <th>College Admission No</th>
+                        <th>College Application number</th>
                         <th>Student Name</th>
                         <th>Mark Attendance</th>
                         <th>BarCode</th>

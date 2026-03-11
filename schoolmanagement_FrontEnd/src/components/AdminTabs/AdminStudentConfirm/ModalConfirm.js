@@ -305,14 +305,14 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                       />
                     </div>
                     <div className="col-12 col-md-3 mb-2">
-                      <label className="form-label">Admission No</label>
+                      <label className="form-label">Application number</label>
                       <input
                         type="text"
                         name="admissionNo"
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Admission No"
+                        placeholder="Application number"
                       />
                     </div>
                     <div className="col-12 col-md-3 mb-2">
@@ -531,7 +531,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                       </div>
                       <div className="col-12 col-md-3 mb-2">
                         <label className="form-label">
-                          College Admission No
+                          College Application number
                         </label>
                         <input
                           type="text"
@@ -539,7 +539,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                           value={filters.schoolAdmissionNo}
                           onChange={handleInputChange}
                           className="form-control detail"
-                          placeholder="College Admission No"
+                          placeholder="College Application number"
                         />
                       </div>
                     </div>
@@ -551,8 +551,8 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                       <thead>
                         <tr>
                           <th>Student Name</th>
-                          <th>College Admission No</th>
-                          <th>Admission No</th>
+                          <th>College Application number</th>
+                          <th>Application number</th>
                           <th>Session</th>
                           <th>Course</th>
                           <th>Department</th>

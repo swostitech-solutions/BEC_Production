@@ -614,7 +614,7 @@ const AdmAttendanceEntry = () => {
                         <th>Section</th>
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
-                        <th>Admission No</th>
+                        <th>Application number</th>
                         <th>BarCode</th>
                         <th>Father Name</th>
                         <th>Message Type</th>
@@ -645,7 +645,7 @@ const AdmAttendanceEntry = () => {
                             {/* Registration No */}
                             <td>{row.registration_no}</td>
 
-                            {/* College Admission No */}
+                            {/* College Application number */}
                             <td>{row.college_admission_no}</td>
 
                             {/* Barcode */}

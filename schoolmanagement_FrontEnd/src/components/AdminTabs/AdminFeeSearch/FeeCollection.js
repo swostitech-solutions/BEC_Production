@@ -723,7 +723,7 @@
 //       [
 //         "Student Name",
 //         safe(data.student_name),
-//         "Admission No",
+//         "Application number",
 //         safe(data.admission_no),
 //       ],
 //       ["Course", safe(data.course_name), "Section", safe(data.section_name)],
@@ -1283,14 +1283,14 @@
 //                           htmlFor="school-admission-no"
 //                           className="form-label "
 //                         >
-//                           School Admission No
+//                           School Application number
 //                         </label>
 //                         <div className="d-flex align-items-center">
 //                           <input
 //                             type="text"
 //                             id="school-admission-no"
 //                             className="form-control detail"
-//                             placeholder="Enter school admission no"
+//                             placeholder="Enter school Application number"
 //                             value={selectedStudent.admissionNo || ""}
 //                             onChange={(e) =>
 //                               setSelectedStudent((prev) => ({
@@ -2811,7 +2811,7 @@ const FeeCollection = () => {
       [
         "Student Name",
         safe(data.student_name),
-        "Admission No",
+        "Application number",
         safe(data.admission_no),
       ],
       ["Course", safe(data.course_name), "Section", safe(data.section_name)],
@@ -3380,14 +3380,14 @@ const FeeCollection = () => {
                           htmlFor="school-admission-no"
                           className="form-label "
                         >
-                          School Admission No
+                          School Application number
                         </label>
                         <div className="d-flex align-items-center">
                           <input
                             type="text"
                             id="school-admission-no"
                             className="form-control detail"
-                            placeholder="Enter school admission no"
+                            placeholder="Enter school Application number"
                             value={selectedStudent.admissionNo || ""}
                             onChange={(e) =>
                               setSelectedStudent((prev) => ({

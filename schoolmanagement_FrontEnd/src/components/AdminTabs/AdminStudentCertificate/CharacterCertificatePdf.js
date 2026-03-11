@@ -79,7 +79,7 @@ const CharacterCertificate = () => {
 
     // Admission details
     doc.setFontSize(12).setFont("Helvetica", "normal");
-    doc.text(`Admission No.: ${admission_no}`, 10, 60);
+    doc.text(`Application number.: ${admission_no}`, 10, 60);
     doc.text(`Class: ${classname} (${sectionname})`, 105, 60, {
       align: "center",
     });

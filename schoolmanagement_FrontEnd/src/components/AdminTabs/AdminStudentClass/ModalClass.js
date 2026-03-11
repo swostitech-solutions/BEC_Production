@@ -323,7 +323,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         className="form-label"
                       >
                         {" "}
-                        Admission No{" "}
+                        Application number{" "}
                       </label>
                       <input
                         type="text"
@@ -331,7 +331,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Admission No"
+                        placeholder="Application number"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -590,7 +590,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         <tr>
                           <th>Student Name</th>
                           <th>ONMRC Registration No</th>
-                          <th>Admission No</th>
+                          <th>Application number</th>
                           <th>Session</th>
                           <th>Course</th>
                           <th>Department</th>

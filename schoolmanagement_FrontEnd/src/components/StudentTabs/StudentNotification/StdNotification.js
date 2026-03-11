@@ -77,7 +77,7 @@ const StudentProfileCard = ({ studentData, onClose }) => {
                       <tr>
                         <td><strong>Student Name</strong></td>
                         <td>{data.studentName}</td>
-                        <td><strong>Admission No</strong></td>
+                        <td><strong>Application number</strong></td>
                         <td>{data.admissionNo}</td>
                       </tr>
                       <tr>

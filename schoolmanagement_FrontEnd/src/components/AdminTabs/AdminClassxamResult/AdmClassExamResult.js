@@ -200,7 +200,7 @@ const AdmAttendanceEntry = () => {
                         <tr>
                           <th>Sr.No</th>
                           <th>Student Name</th>
-                          <th>School Admission No</th>
+                          <th>School Application number</th>
                           <th>Barcode</th>
                           <th>Class</th>
                           <th>Section</th>

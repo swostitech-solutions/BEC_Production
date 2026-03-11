@@ -232,7 +232,7 @@ const StudentProfileCard = ({ studentData, onClose }) => {
                                   display: "inline-block",
                                 }}
                               >
-                                Admission No:
+                                Application number:
                               </strong>{" "}
                               <span style={{ color: "#333" }}>
                                 {data.admissionNo}

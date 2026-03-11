@@ -272,7 +272,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         className="form-label"
                       >
                         {" "}
-                        Admission No{" "}
+                        Application number{" "}
                       </label>
                       <input
                         type="text"
@@ -280,7 +280,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Admission No"
+                        placeholder="Application number"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -346,7 +346,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         className="form-label"
                       >
                         {" "}
-                        School Admission No{" "}
+                        School Application number{" "}
                       </label>
                       <input
                         type="text"
@@ -354,7 +354,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.schoolAdmissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="School Admission No"
+                        placeholder="School Application number"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -476,8 +476,8 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                       <thead>
                         <tr>
                           <th>Student Name</th>
-                          <th>School Admission No</th>
-                          <th>Admission No</th>
+                          <th>School Application number</th>
+                          <th>Application number</th>
                           <th>Session</th>
                           <th>Course</th>
                           <th>Department</th>

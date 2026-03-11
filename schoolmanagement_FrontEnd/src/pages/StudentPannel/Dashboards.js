@@ -407,7 +407,7 @@ function Dashboard() {
                           </span>
                         </div>
                         <div style={{ marginBottom: "12px", fontSize: "14px" }}>
-                          <strong style={{ color: "#555", minWidth: "140px", display: "inline-block" }}>Admission No:</strong>{" "}
+                          <strong style={{ color: "#555", minWidth: "140px", display: "inline-block" }}>Application number:</strong>{" "}
                           <span style={{ color: "#333" }}>{basicDetails.admission_no || "-"}</span>
                         </div>
                         <div style={{ marginBottom: "12px", fontSize: "14px" }}>

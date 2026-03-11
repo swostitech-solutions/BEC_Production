@@ -837,7 +837,7 @@ const AdmBookMovements = () => {
                         style={{ minWidth: "250px" }}
                       >
                         <label htmlFor="admission-no" className="form-label">
-                          College Admission No
+                          College Application number
                         </label>
                         <div className="d-flex align-items-center">
                           <input
@@ -845,7 +845,7 @@ const AdmBookMovements = () => {
                             id="admission-no"
                             className="form-control detail"
                             value={addNo}
-                            placeholder="Enter college admission no"
+                            placeholder="Enter college Application number"
                             disabled
                             style={{ width: "100%" }}
                           />
@@ -1189,7 +1189,7 @@ const AdmBookMovements = () => {
                         <tr>
                           <th>Sr No</th>
                           <th>Name</th>
-                          <th>College Admission No</th>
+                          <th>College Application number</th>
                           <th>Student BarCode</th>
                           <th>Course</th>
                           <th>Section</th>
