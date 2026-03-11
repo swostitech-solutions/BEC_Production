@@ -181,7 +181,7 @@ const AddStudentExamData = () => {
                         Term: <span><strong>{student?.semester_name || "-"}</strong></span>
                       </p>
                       <p>
-                        Application number: <span>{student?.admission_no || "-"}</span>
+                        Admission No: <span>{student?.admission_no || "-"}</span>
                       </p>
                       <p>
                         Course: <span>{student?.course_name || "-"}</span>

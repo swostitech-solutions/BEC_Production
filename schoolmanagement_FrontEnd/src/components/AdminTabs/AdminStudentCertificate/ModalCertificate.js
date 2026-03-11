@@ -272,7 +272,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         className="form-label"
                       >
                         {" "}
-                        Application number{" "}
+                        Admission No{" "}
                       </label>
                       <input
                         type="text"
@@ -280,7 +280,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Application number"
+                        placeholder="Admission No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -346,7 +346,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         className="form-label"
                       >
                         {" "}
-                        School Application number{" "}
+                        School Admission No{" "}
                       </label>
                       <input
                         type="text"
@@ -354,7 +354,7 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.schoolAdmissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="School Application number"
+                        placeholder="School Admission No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -476,8 +476,8 @@ const ModalCertificate = ({ show, onSelectStudent, handleClose }) => {
                       <thead>
                         <tr>
                           <th>Student Name</th>
-                          <th>School Application number</th>
-                          <th>Application number</th>
+                          <th>School Admission No</th>
+                          <th>Admission No</th>
                           <th>Session</th>
                           <th>Course</th>
                           <th>Department</th>

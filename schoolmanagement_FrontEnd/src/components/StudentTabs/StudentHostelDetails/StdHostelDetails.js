@@ -226,8 +226,8 @@ function StdHostelDetails() {
                       <tr>
                         <th>Sr.No</th>
                         <th>Student Name</th>
-                        <th>Application number</th>
-                        <th>College Application number</th>
+                        <th>Admission No</th>
+                        <th>College Admission No</th>
                         <th>Barcode</th>
                         <th>Father Name</th>
                         <th>Mother Name</th>

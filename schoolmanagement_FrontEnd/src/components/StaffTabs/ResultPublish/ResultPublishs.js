@@ -158,7 +158,7 @@ const ResultPublishs = () => {
                       </div>
                       <div className="col-12 col-md-4 mb-1">
                         <label htmlFor="teacher" className="form-label">
-                          Application number<span style={{ color: "red" }}>*</span>
+                          Admission No<span style={{ color: "red" }}>*</span>
                         </label>
                         <input
                           type="text"
@@ -297,7 +297,7 @@ const ResultPublishs = () => {
                         <th>Class</th>
                         <th>Section</th>
                         <th>Student Name</th>
-                        <th>Application number</th>
+                        <th>Admission No</th>
                         <th>Roll No</th>
                         <th>Barcode</th>
                         <th>Father Name</th>

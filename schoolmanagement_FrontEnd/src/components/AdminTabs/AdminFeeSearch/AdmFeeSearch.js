@@ -1040,7 +1040,7 @@ const FeeSearchPage = () => {
                 : data.fee_semesters || "",
           ],
 
-          ["Application number", data.admission_no, "Amount", data.amount.toFixed(2)],
+          ["Admission No", data.admission_no, "Amount", data.amount.toFixed(2)],
           ["Class", `${data.course_name} - ${data.semester_name}`, "", ""],
         ];
 
@@ -1469,7 +1469,7 @@ const FeeSearchPage = () => {
                           <th>Course</th>
                           <th>Section</th>
                           <th>Bar Code No</th>
-                          <th>College Application number</th>
+                          <th>College Admission No</th>
                           <th>Receipt Date</th>
                           <th>Receipt Amount</th>
                           <th>Discount Amount</th>
@@ -1956,7 +1956,7 @@ const FeeSearchPage = () => {
                           <th>Class</th>
                           <th>Section</th>
                           <th>Bar Code No</th>
-                          <th>School Application number</th>
+                          <th>School Admission No</th>
                           <th>Receipt Date</th>
                           <th>Receipt Amount</th>
                           <th>Discount Amount</th>

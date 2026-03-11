@@ -547,7 +547,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                       </div>
                       <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="admissionNo" className="form-label">
-                          Application number
+                          Admission No
                         </label>
                         <input
                           type="text"
@@ -908,7 +908,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           <input
                             type="text"
                             className="form-control detail"
-                            placeholder="Search: name, Application number, session, course, barcode, etc..."
+                            placeholder="Search: name, admission no, session, course, barcode, etc..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                           />
@@ -938,7 +938,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           <th scope="col">Sl No.</th>
                           <th scope="col">Student Name</th>
                           <th scope="col">BPUT Registration Number</th>
-                          <th scope="col">Application number</th>
+                          <th scope="col">Admission No</th>
                           <th scope="col">Session</th>
                           <th scope="col">Course</th>
                           <th scope="col">Department</th>

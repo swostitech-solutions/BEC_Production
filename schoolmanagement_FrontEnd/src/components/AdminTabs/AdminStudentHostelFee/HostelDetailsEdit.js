@@ -504,7 +504,7 @@ const HostelEdit = ({
                   />
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label">Application number</label>
+                  <label className="form-label">Admission No</label>
                   <input
                     type="text"
                     className="form-control detail"

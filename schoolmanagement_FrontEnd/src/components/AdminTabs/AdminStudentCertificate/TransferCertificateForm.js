@@ -267,7 +267,7 @@
 //           <div className="col-md-6 d-flex align-items-center">
 //             <label className="form-label me-3" style={{ width: "200px" }}>
 //               {" "}
-//               School Application number.{" "}
+//               School Admission No.{" "}
 //             </label>
 //             <input
 //               type="text"
@@ -998,7 +998,7 @@ const TransferCertificateForm = () => {
                         style={{ width: "200px" }}
                       >
                         {" "}
-                        School Application number.{" "}
+                        School Admission No.{" "}
                       </label>
                       <input
                         type="text"

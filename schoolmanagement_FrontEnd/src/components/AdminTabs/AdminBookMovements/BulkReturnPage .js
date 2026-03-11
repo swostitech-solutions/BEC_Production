@@ -94,7 +94,7 @@ const LibraryTable = () => {
                       <th>Student/Teacher Name</th>
                       <th>Class</th>
                       <th>Section</th>
-                      <th>Application number</th>
+                      <th>Admission No</th>
                       <th>Issue Date</th>
                       <th>Return Date</th>
                       <th>Delete</th>

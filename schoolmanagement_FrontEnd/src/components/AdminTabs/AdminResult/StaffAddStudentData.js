@@ -168,7 +168,7 @@ const AddStudentExamData = () => {
                         Section: <span>{student?.section_name || "-"}</span>
                       </p>
                       <p>
-                        Application number:{" "}
+                        Admission No:{" "}
                         <span>{student?.admission_no || "-"}</span>
                       </p>
                     </Col>

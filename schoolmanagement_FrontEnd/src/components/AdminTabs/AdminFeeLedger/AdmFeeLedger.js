@@ -1143,7 +1143,7 @@ const AdmAttendanceEntry = () => {
       ["Student Name", data.studentname, "Session", data.session_code],
       ["Father Name", data.fathername, "Course", data.course_name],
       ["Mother Name", data.mothername, "Section", data.section_name],
-      ["Application number", data.admission_no, "Barcode", data.barcode],
+      ["Admission No", data.admission_no, "Barcode", data.barcode],
     ];
 
     doc.autoTable({
@@ -1569,7 +1569,7 @@ const AdmAttendanceEntry = () => {
                       <thead>
                         <tr>
                           <th>Student Name</th>
-                          <th>Application number</th>
+                          <th>Admission No</th>
                           <th>BarCode</th>
                           <th>Course</th>
                           <th>Section</th>

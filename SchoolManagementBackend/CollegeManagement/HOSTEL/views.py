@@ -404,7 +404,7 @@ class GetStudentHostelListAPIView(ListAPIView):
                             "college_admission_no":record.student.college_admission_no,
                             "registration_no":record.student.registration_no,
                             "barcode":record.student.barcode,
-                            # add key College Application number.Barcode,Semester
+                            # add key College Admission No.Barcode,Semester
                             "hostel_id": record.hostel.id,
                             "hostel_name": record.hostel.hostel_name,
                             "hostel_block_id": record.hostel_block.id,

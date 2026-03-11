@@ -266,12 +266,12 @@ const AdmMentorStudentDetails = () => {
                               } ${studentDetails?.last_name || ""}`.trim() ||
                               " "}
                           </td>
-                          <td className="fw-bold text-start">Application number</td>
+                          <td className="fw-bold text-start">Admission No</td>
                           <td className="text-start">
                             {studentDetails?.admission_no || " "}
                           </td>
                           <td className="fw-bold text-start">
-                            College Application number
+                            College Admission No
                           </td>
                           <td className="text-start">
                             {studentDetails?.college_admission_no || " "}

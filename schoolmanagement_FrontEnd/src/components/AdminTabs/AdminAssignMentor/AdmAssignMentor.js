@@ -418,7 +418,7 @@ const AdmAttendanceEntry = () => {
                         <th>Mentor Name</th>
                         <th>Current Count</th>
                         <th>Student Name</th>
-                        <th>Application number</th>
+                        <th>Admission No</th>
                         <th>BarCode</th>
                         <th>Course</th>
                         <th>Section</th>

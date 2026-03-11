@@ -794,7 +794,7 @@ const handleClearFilters = () => {
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
-                        Application number
+                        Admission No
                       </label>
                       <input
                         type="text"
@@ -802,7 +802,7 @@ const handleClearFilters = () => {
                         value={filters.admissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Application number"
+                        placeholder="Admission No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -952,13 +952,13 @@ const handleClearFilters = () => {
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
-                        College Application number
+                        College Admission No
                       </label>
                       <input
                         type="text"
                         name="schoolAdmissionNo"
                         className="form-control detail"
-                        placeholder="College Application number"
+                        placeholder="College Admission No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -973,7 +973,7 @@ const handleClearFilters = () => {
                             <tr>
                               <th>Student Name</th>
                               <th>ONMRC Registration No</th>
-                              <th>Application number</th>
+                              <th>Admission No</th>
                               <th>Session</th>
                               <th>Course</th>
                               <th>Department</th>

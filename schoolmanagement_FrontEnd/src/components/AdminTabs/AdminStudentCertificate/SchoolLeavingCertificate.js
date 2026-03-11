@@ -42,7 +42,7 @@ const SchoolLeavingCertificate = () => {
 
         const tcNumber = `${certificate.transfer_certificate_no_prefix}/${certificate.transfer_certificate_no_postfix}`;
         doc.setFontSize(10);
-        doc.text("Application number.: 8307246237", 10, 60);
+        doc.text("Admission No.: 8307246237", 10, 60);
         doc.text("SRN: ", 105, 60, { align: "center" });
         doc.text(`TC No.: ${tcNumber}`, 200, 60, { align: "right" });
 

@@ -46,7 +46,7 @@ function ExportToExcelButton() {
         "Issued On": item.tc_issued_date || "Not Issued",
         "Document No": item.transfer_certificate_no,
         "Student Name": item.studentname,
-        "School Application number": item.school_admission_no,
+        "School Admission No": item.school_admission_no,
         Class: item.classname,
         Section: item.sectionname,
         Reason: item.reason_for_tc || "N/A",

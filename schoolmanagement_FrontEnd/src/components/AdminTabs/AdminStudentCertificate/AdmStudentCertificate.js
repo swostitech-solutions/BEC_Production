@@ -505,7 +505,7 @@ const AdmAttendanceEntry = () => {
         "Issued On": item.tc_issued_date || "Not Issued",
         "Document No": item.transfer_certificate_no,
         "Student Name": item.studentname,
-        "School Application number": item.school_admission_no,
+        "School Admission No": item.school_admission_no,
         Section: item.sectionname,
         Reason: item.reason_for_tc || "N/A",
         Status: statusMap[item.status] || "Unknown",
@@ -670,14 +670,14 @@ const AdmAttendanceEntry = () => {
                       <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="admission-no" className="form-label">
                           {" "}
-                          Application number <span style={{ color: "red" }}>*</span>
+                          Admission No <span style={{ color: "red" }}>*</span>
                         </label>
                         <div className="d-flex align-items-center">
                           <input
                             type="text"
                             id="admission-no"
                             className="form-control detail"
-                            placeholder="Enter Application number"
+                            placeholder="Enter admission no"
                             ref={admissionNoRef}
                             disabled
                           />
@@ -944,7 +944,7 @@ const AdmAttendanceEntry = () => {
                         <th>Issued On</th>
                         <th>Document No</th>
                         <th>Student Name</th>
-                        <th>School Application number</th>
+                        <th>School Admission No</th>
                         <th>Course</th>
                         <th>Section</th>
                         <th>Reason</th>
@@ -985,7 +985,7 @@ const AdmAttendanceEntry = () => {
                             {/* Student Name */}
                             <td>{certificate.studentname}</td>
 
-                            {/* School Application number */}
+                            {/* School Admission No */}
                             <td>{certificate.admission_no}</td>
 
                             {/* Class / Course */}

@@ -957,7 +957,7 @@ const StudentPromotion = () => {
                                   />
                                 </th>
                                 <th>ONMRC Registration No</th>
-                                <th>Application number</th>
+                                <th>Admission No</th>
                                 <th>Name</th>
                               </tr>
                             </thead>
@@ -1132,7 +1132,7 @@ const StudentPromotion = () => {
                                   />
                                 </th>
                                 <th>ONMRC Registration No</th>
-                                <th>Application number</th>
+                                <th>Admission No</th>
                                 <th>Name</th>
                               </tr>
                             </thead>

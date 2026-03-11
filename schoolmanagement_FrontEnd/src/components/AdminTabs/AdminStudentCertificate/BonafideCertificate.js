@@ -264,7 +264,7 @@ const TransferCertificateForm = () => {
                         style={{ width: "200px" }}
                       >
                         {" "}
-                        School Application number.{" "}
+                        School Admission No.{" "}
                       </label>
                       <input
                         type="text"

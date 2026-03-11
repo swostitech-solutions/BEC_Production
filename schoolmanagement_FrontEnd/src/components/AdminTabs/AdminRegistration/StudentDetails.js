@@ -141,6 +141,7 @@ const AdmAttendanceEntry = ({
   const [filters, setFilters] = useState({});
   const [selectedBatch, setSelectedBatch] = useState("");
   const [errors, setErrors] = React.useState({
+    barcode: "",
     registration_no: "",
     school_admission_no: "",
     username: "",
@@ -412,6 +413,7 @@ const AdmAttendanceEntry = ({
     }
 
     const fieldsToValidate = [
+      "barcode",
       "registration_no",
       "school_admission_no",
       "username",
@@ -686,13 +688,13 @@ const AdmAttendanceEntry = ({
                   <div className="row flex-grow-1 mt-2 ">
                     <div className="col-12 col-md-4 mb-2 ">
                       <label htmlFor="admission-no" className="form-label">
-                        Application number<span style={{ color: "red" }}>*</span>{" "}
+                        Admission No<span style={{ color: "red" }}>*</span>{" "}
                       </label>
                       <input
                         type="text"
                         id="admission-no"
                         className="form-control detail"
-                        placeholder="Enter Application number"
+                        placeholder="Enter admission no"
                         name="last_name"
                         value={formData.admission_no}
                         onChange={handleInputChange}
@@ -1147,6 +1149,25 @@ const AdmAttendanceEntry = ({
                       )}
                     </div> */}
 
+                    <div className="col-12 col-md-4 mb-4">
+                      <label htmlFor="barcode" className="form-label">
+                        Barcode
+                      </label>
+                      <input
+                        type="text"
+                        id="barcode"
+                        className="form-control detail"
+                        placeholder="Enter barcode"
+                        name="barcode"
+                        value={formData.barcode}
+                        onChange={handleInputChange}
+                      // disabled
+                      />
+                      {errors.barcode && (
+                        <small style={{ color: "red" }}>{errors.barcode}</small>
+                      )}
+                    </div>
+
                     <div className="col-12 col-md-4 mb-2">
                       <label htmlFor="registration-no" className="form-label">
                         BPUT Registration Number
@@ -1170,13 +1191,13 @@ const AdmAttendanceEntry = ({
 
                     <div className="col-12 col-md-4 mb-2">
                       <label htmlFor="referred-by" className="form-label">
-                      Recommend by
+                        Referred By
                       </label>
                       <input
                         type="text"
                         id="referred-by"
                         className="form-control detail"
-                        placeholder="Enter Recommend By"
+                        placeholder="Enter Referred By"
                         name="referred_by"
                         value={formData.referred_by || ""}
                         onChange={handleInputChange}

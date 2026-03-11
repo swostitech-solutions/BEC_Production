@@ -16,6 +16,7 @@ const StudentRegistrationForm = () => {
         semester: 'Semester 8',
         admittedSection: 'A',
         rollNo: '',
+        barcode: '210136001',
         bputRegNo: '210136001',
         dateOfBirth: '03/11/2003',
         motherTongue: 'ODIA',
@@ -155,7 +156,7 @@ const StudentRegistrationForm = () => {
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-blue-700 mb-1">Application number*</label>
+                                <label className="block text-sm font-medium text-blue-700 mb-1">Admission No*</label>
                                 <input
                                     type="text"
                                     value={formData.admissionNo}
@@ -276,6 +277,15 @@ const StudentRegistrationForm = () => {
                                     type="text"
                                     value={formData.rollNo}
                                     onChange={(e) => handleInputChange('rollNo', e.target.value)}
+                                    className="w-full p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-blue-50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-blue-700 mb-1">Barcode</label>
+                                <input
+                                    type="text"
+                                    value={formData.barcode}
+                                    onChange={(e) => handleInputChange('barcode', e.target.value)}
                                     className="w-full p-2 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-blue-50"
                                 />
                             </div>

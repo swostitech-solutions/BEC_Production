@@ -205,7 +205,7 @@
 //                   }</td>
 //                 </tr>
 //                 <tr>
-//                   <td style="padding: 10px;"><strong>Application number:</strong></td>
+//                   <td style="padding: 10px;"><strong>Admission No:</strong></td>
 //                   <td style="padding: 10px;">${
 //                     result.receipt_data.admission_no
 //                   }</td>
@@ -471,7 +471,7 @@
 //                           <tr>
 //                             <th>Receipt No.</th>
 //                             <th>Student Name</th>
-//                             <th>School Application number</th>
+//                             <th>School Admission No</th>
 //                             <th>Class</th>
 //                             <th>Section</th>
 //                             <th>Receipt Amt.</th>
@@ -935,7 +935,7 @@ const AdmAttendanceEntry = () => {
       ["Receipt No", data.receipt_no || "-", "Academic Year", data.academic_year_code || "-"],
       ["Receipt Date", formatReceiptDate(data.receipt_date), "Section", data.section_name || "-"],
       ["Student Name", studentName, "Father's Name", data.father_name || "-"],
-      ["Application number", data.admission_no || "-", "Fee Period", feeSemesters],
+      ["Admission No", data.admission_no || "-", "Fee Period", feeSemesters],
       ["Course", data.course_name || "-", "Department", data.department_name || "-"],
       ["Semester", data.semester_name || "-", "Amount Paid", "Rs. " + Number(data.amount || 0).toFixed(2)],
     ];
@@ -1201,7 +1201,7 @@ const AdmAttendanceEntry = () => {
 
         doc.autoTable({
           startY: startY,
-          head: [["Sr.", "Receipt No.", "Student Name", "Application number", "Course", "Department", "Semester Name", "Amount"]],
+          head: [["Sr.", "Receipt No.", "Student Name", "Admission No", "Course", "Department", "Semester Name", "Amount"]],
           body: feeReceiptsTable,
           theme: "grid",
           styles: { fontSize: 8 },
@@ -1465,7 +1465,7 @@ const AdmAttendanceEntry = () => {
 
     doc.autoTable({
       startY: startY,
-      head: [["Sr.", "Receipt No.", "Student Name", "Application number", "Course", "Department", "Semester Name", "Amount"]],
+      head: [["Sr.", "Receipt No.", "Student Name", "Admission No", "Course", "Department", "Semester Name", "Amount"]],
       body: feeReceiptsTable,
       theme: "grid",
       styles: { fontSize: 8 },
@@ -1669,7 +1669,7 @@ const AdmAttendanceEntry = () => {
 
         doc.autoTable({
           startY: startY,
-          head: [["Sr.", "Receipt No.", "Student Name", "Application number", "Course", "Department", "Semester Name", "Amount"]],
+          head: [["Sr.", "Receipt No.", "Student Name", "Admission No", "Course", "Department", "Semester Name", "Amount"]],
           body: feeReceiptsTable,
           theme: "grid",
           styles: { fontSize: 8 },
@@ -1837,7 +1837,7 @@ const AdmAttendanceEntry = () => {
                             <tr>
                               <th>Receipt No.</th>
                               <th>Student Name</th>
-                              <th>Application number</th>
+                              <th>Admission No</th>
                               <th>Course</th>
                               <th>Department</th>
                               <th>Semester Name</th>

@@ -954,7 +954,7 @@ const IssuePage = () => {
                       </div>
                       <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="admission-no" className="form-label">
-                          Application number
+                          Admission No
                         </label>
                         <div className="d-flex align-items-center">
                           <input
@@ -962,7 +962,7 @@ const IssuePage = () => {
                             id="admission-no"
                             className="form-control detail"
                             value={addNo}
-                            placeholder="Enter Application number"
+                            placeholder="Enter admission no"
                           />
                         </div>
                       </div>

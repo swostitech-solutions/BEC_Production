@@ -166,7 +166,7 @@ const FeeDetails = () => {
     doc.text(`Class: ${row.course_name}`, 160, startY + 10);
     doc.text(`Student Name: ${row.student_name}`, 20, startY + 20);
     doc.text(`Section: ${row.section_name}`, 160, startY + 20);
-    doc.text(`Application number: ${row.college_admission_no}`, 20, startY + 30);
+    doc.text(`Admission No: ${row.college_admission_no}`, 20, startY + 30);
     doc.text(`Father Name: ${row.father_name || "Naresh"}`, 160, startY + 30);
     doc.text(`Fee Periods: ${row.semester_description}`, 20, startY + 40);
 
@@ -545,7 +545,7 @@ const FeeDetails = () => {
                   <td style="padding: 10px;">${result.receipt_data.father_name || ""}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 10px;"><strong>Application number:</strong></td>
+                  <td style="padding: 10px;"><strong>Admission No:</strong></td>
                   <td style="padding: 10px;">${result.receipt_data.admission_no || ""}</td>
                   <td style="padding: 10px;"><strong>Fee Period:</strong></td>
                   <td style="padding: 10px;">${feeSemesters}</td>
@@ -819,7 +819,7 @@ const FeeDetails = () => {
                           <th>Name</th>
                           <th>Class</th>
                           <th>Section</th>
-                          <th>School Application number</th>
+                          <th>School Admission No</th>
                           <th>Payment Method</th>
                           <th>Discount</th>
                           <th>Received Fees</th>

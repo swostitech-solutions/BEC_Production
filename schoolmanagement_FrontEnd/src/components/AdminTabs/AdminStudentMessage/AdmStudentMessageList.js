@@ -352,7 +352,7 @@ function SelectedStudentTable({}) {
     const barcode = filterState.barcode?.trim();
 
     if (!admissionNo && !barcode) {
-      alert("Please enter College Application number OR Barcode");
+      alert("Please enter College Admission No OR Barcode");
       return;
     }
 
@@ -648,7 +648,7 @@ function SelectedStudentTable({}) {
                             htmlFor="schoolAdmissionNo"
                             className="form-label"
                           >
-                            Application number
+                            Admission No
                           </label>
                           <input
                             type="text"
@@ -791,7 +791,7 @@ function SelectedStudentTable({}) {
                         >
                           Student Name
                         </th>
-                        <th>Application number</th>
+                        <th>Admission No</th>
                         <th>Barcode</th>
                         <th
                           style={{ paddingLeft: "50px", paddingRight: "50px" }}
