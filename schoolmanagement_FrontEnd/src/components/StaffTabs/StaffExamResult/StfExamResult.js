@@ -368,35 +368,23 @@ const StudentSearch = () => {
 
         if (Array.isArray(result)) {
           const sectionOptions = result.map((item) => ({
-            value:
-              item.id ||
-              item.section_id ||
-              item.section_code ||
-              item.section_name,
+            value: item.id || item.section_id,
             label: item.section_name || item.section_description || "Unnamed Section",
           }));
           setSections(sectionOptions);
-          setSelectedSection(sectionOptions[0] || null);
         } else if (result.message === "Success" && Array.isArray(result.data)) {
           const sectionOptions = result.data.map((item) => ({
-            value:
-              item.id ||
-              item.section_id ||
-              item.section_code ||
-              item.section_name,
+            value: item.id || item.section_id,
             label: item.section_name || item.section_description || "Unnamed Section",
           }));
           setSections(sectionOptions);
-          setSelectedSection(sectionOptions[0] || null);
         } else {
           console.warn("Unexpected API format:", result);
           setSections([]);
-          setSelectedSection(null);
         }
       } catch (error) {
         console.error("Error fetching sections:", error);
         setSections([]);
-        setSelectedSection(null);
       }
     };
 
@@ -772,8 +760,8 @@ const StudentSearch = () => {
                           value={selectedSection}
                           placeholder="Select Section"
                           onChange={setSelectedSection}
-                          isDisabled
-                          isClearable={false}
+                          isDisabled={!selectedSemester}
+                          isClearable
                         />
                       </div>
 

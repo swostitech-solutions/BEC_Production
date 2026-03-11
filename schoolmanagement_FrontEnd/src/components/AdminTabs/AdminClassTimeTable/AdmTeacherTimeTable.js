@@ -154,13 +154,11 @@ const AdmTeacherTimeTable = () => {
         value: section.id,
         label: section.section_description || section.section_code || section.section_name || section.sectionname || section.name,
       }));
-      setSectionOptions(options);
-      setSelectedSection(options[0] || null);
+      setSectionOptions([{ value: "", label: "Select Section" }, ...options]);
       console.log("Section options set:", options);
     } else {
       console.log("No Section data available yet");
-      setSectionOptions([]);
-      setSelectedSection(null);
+      setSectionOptions([{ value: "", label: "Select Section" }]);
     }
   }, [SectionList]);
 
@@ -501,10 +499,10 @@ const AdmTeacherTimeTable = () => {
                           className="detail"
                           classNamePrefix="section-dropdown"
                           placeholder="Select Section"
-                          isDisabled
+                          isDisabled={!selectedSemester}
                           value={selectedSection}
                           onChange={setSelectedSection}
-                          isClearable={false}
+                          isClearable
                         />
                       </div>
 

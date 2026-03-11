@@ -750,43 +750,31 @@ const AdmAttendanceEntry = () => {
         //  Handle both response types (array or object with data)
         if (Array.isArray(result)) {
           const sectionOptions = result.map((item) => ({
-            value:
-              item.id ||
-              item.section_id ||
-              item.section_code ||
-              item.section_name,
+            value: item.id || item.section_id,
             label:
               item.section_name ||
               item.section_description ||
               "Unnamed Section",
           }));
           setSections(sectionOptions);
-          setSelectedSection(sectionOptions[0] || null);
           console.log("Mapped Sections:", sectionOptions);
         } else if (result.message === "Success" && Array.isArray(result.data)) {
           const sectionOptions = result.data.map((item) => ({
-            value:
-              item.id ||
-              item.section_id ||
-              item.section_code ||
-              item.section_name,
+            value: item.id || item.section_id,
             label:
               item.section_name ||
               item.section_description ||
               "Unnamed Section",
           }));
           setSections(sectionOptions);
-          setSelectedSection(sectionOptions[0] || null);
           console.log("Mapped Sections:", sectionOptions);
         } else {
           console.warn("Unexpected API format:", result);
           setSections([]);
-          setSelectedSection(null);
         }
       } catch (error) {
         console.error("Error fetching sections:", error);
         setSections([]);
-        setSelectedSection(null);
       }
     };
 
@@ -1395,8 +1383,6 @@ const AdmAttendanceEntry = () => {
                         value={selectedSection || null}
                         onChange={setSelectedSection}
                         placeholder="Select Section"
-                        isDisabled
-                        isClearable={false}
                       />
                     </div>
                     <div className="col-12 col-md-3 mb-2">
