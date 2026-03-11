@@ -106,6 +106,52 @@ const AdmAttendanceEntry = () => {
     semesterId
   );
 
+  useEffect(() => {
+    if (!formData.semester) {
+      setFormData((prev) => {
+        if (!prev.addmitted_section) {
+          return prev;
+        }
+        return {
+          ...prev,
+          addmitted_section: "",
+          feeappfrom: "",
+          subject: "",
+          teacher: "",
+        };
+      });
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      return;
+    }
+
+    const matchedSection = SectionList.find(
+      (s) => Number(s.id) === Number(formData.addmitted_section)
+    );
+    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (Number(prev.addmitted_section) === Number(nextSectionId)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        addmitted_section: nextSectionId,
+        feeappfrom: "",
+        subject: "",
+        teacher: "",
+      };
+    });
+
+    localStorage.setItem("selectedStudentSectionId", String(nextSectionId));
+  }, [formData.semester, SectionList]);
+
   // ✅ Fetch Lecture List
   const {
     LectureList,
@@ -906,6 +952,10 @@ const AdmAttendanceEntry = () => {
                           setFormData((prev) => ({
                             ...prev,
                             semester: opt?.value || "",
+                            addmitted_section: "",
+                            feeappfrom: "",
+                            subject: "",
+                            teacher: "",
                           }))
                         }
                         placeholder={
@@ -925,6 +975,7 @@ const AdmAttendanceEntry = () => {
                       </label>
                       <Select
                         className="detail"
+                        isDisabled={true}
                         isLoading={loadingSections}
                         options={
                           SectionList?.map((s) => ({
@@ -950,19 +1001,17 @@ const AdmAttendanceEntry = () => {
                               }
                             : null
                         }
-                        onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            addmitted_section: opt?.value || "",
-                          }))
-                        }
+                        onChange={() => {}}
                         placeholder={
                           loadingSections
                             ? "Loading Sections..."
                             : errorSections
                             ? "Error loading sections"
-                            : "Select Section"
+                            : formData.semester
+                            ? "Section auto selected"
+                            : "Select Semester first"
                         }
+                        isClearable={false}
                       />
                     </div>
 

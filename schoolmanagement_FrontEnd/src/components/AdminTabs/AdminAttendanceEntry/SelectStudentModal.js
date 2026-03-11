@@ -107,6 +107,27 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
 
   const sectionLoading = false; // No API call needed
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection("");
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      return;
+    }
+
+    const hasSelected = SectionList.some(
+      (sec) => sec.value?.toString() === selectedSection?.toString()
+    );
+
+    if (hasSelected) {
+      return;
+    }
+
+    setSelectedSection(SectionList[0].value);
+  }, [selectedSemester, SectionList]);
+
   // Fetch Students Data when modal is shown
   useEffect(() => {
     if (!show) return; // Only fetch when modal is shown
@@ -384,10 +405,14 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             className="detail"
                             classNamePrefix="detail"
                             options={SectionList || []}
-                            onChange={(selectedOption) =>
-                              setSelectedSection(selectedOption?.value || "")
+                            onChange={() => {}}
+                            placeholder={
+                              !selectedSemester
+                                ? "Select Semester first"
+                                : SectionList.length > 0
+                                  ? "Section auto selected"
+                                  : "Loading Section..."
                             }
-                            placeholder="Select Section"
                             isLoading={sectionLoading}
                             value={
                               selectedSection
@@ -397,8 +422,8 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                                 }
                                 : null
                             }
-                            isDisabled={!selectedSemester}
-                            isClearable
+                            isDisabled={true}
+                            isClearable={false}
                           />
                         </div>
                         <div className="col-12 col-md-3 mb-2">

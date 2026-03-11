@@ -11,7 +11,7 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const ParentDetailsForm = ({ formData, setFormData }) => {
+const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
   const { countries, loadingCountries, errorCountries } = useFetchCountries();
   const { cities, loadingCities, errorCities } = useFetchCities(
     formData.present_country,
@@ -216,6 +216,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                       onChange={handleInputChange}
                       required
                     />
+                    {submitErrors.present_address && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.present_address}
+                      </small>
+                    )}
                   </div>
                   <div className="col-6 mb-2">
                     <label htmlFor="present_country" className="form-label">
@@ -263,6 +268,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                         })
                       }
                     />
+                    {submitErrors.present_country && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.present_country}
+                      </small>
+                    )}
                   </div>
 
                   <div className="col-6 mb-2">
@@ -304,6 +314,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                         })
                       }
                     />
+                    {submitErrors.present_state && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.present_state}
+                      </small>
+                    )}
                   </div>
 
                   <div className="col-6 mb-2">
@@ -345,6 +360,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                         })
                       }
                     />
+                    {submitErrors.present_city && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.present_city}
+                      </small>
+                    )}
                   </div>
 
                   <div className="col-6 mb-2">
@@ -368,6 +388,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                       maxLength={6}
                       required
                     />
+                    {submitErrors.present_pincode && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.present_pincode}
+                      </small>
+                    )}
                   </div>
                   <div className="col-6 mb-2">
                     <label htmlFor="present_phone_number" className="form-label">
@@ -441,6 +466,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                   onChange={handleInputChange}
                   required
                 />
+                {submitErrors.permanent_address && (
+                  <small style={{ color: "red" }}>
+                    {submitErrors.permanent_address}
+                  </small>
+                )}
               </div>
               <div className="col-6 mb-2">
                 <label htmlFor="permanent_country" className="form-label">
@@ -488,6 +518,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                     })
                   }
                 />
+                {submitErrors.permanent_country && (
+                  <small style={{ color: "red" }}>
+                    {submitErrors.permanent_country}
+                  </small>
+                )}
               </div>
               <div className="col-6 mb-2">
                 <label htmlFor="permanent_state" className="form-label">
@@ -528,6 +563,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                     })
                   }
                 />
+                {submitErrors.permanent_state && (
+                  <small style={{ color: "red" }}>
+                    {submitErrors.permanent_state}
+                  </small>
+                )}
               </div>
 
               <div className="col-6 mb-2">
@@ -569,6 +609,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                     })
                   }
                 />
+                {submitErrors.permanent_city && (
+                  <small style={{ color: "red" }}>
+                    {submitErrors.permanent_city}
+                  </small>
+                )}
               </div>
 
               <div className="col-6 mb-2">
@@ -593,6 +638,11 @@ const ParentDetailsForm = ({ formData, setFormData }) => {
                   maxLength={6}
                   required
                 />
+                {submitErrors.permanent_pincode && (
+                  <small style={{ color: "red" }}>
+                    {submitErrors.permanent_pincode}
+                  </small>
+                )}
               </div>
               <div className="col-6 mb-2">
                 <label htmlFor="permanent_phone_number" className="form-label">

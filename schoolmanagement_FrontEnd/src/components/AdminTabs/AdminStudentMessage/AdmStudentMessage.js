@@ -74,6 +74,31 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      setSelectedSection(null);
+      return;
+    }
+
+    const matchedSection = SectionList.find(
+      (s) => Number(s.id) === Number(selectedSection)
+    );
+    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setSelectedSection((prev) =>
+      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
+    );
+  }, [selectedSemester, SectionList]);
+
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -547,6 +572,7 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className=" detail"
+                          isLoading={loadingSec}
                           options={
                             SectionList?.map((s) => ({
                               value: s.id,
@@ -554,19 +580,27 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={
-                            SectionList?.some((s) => s.id == selectedSection)
+                            SectionList?.some(
+                              (s) => Number(s.id) === Number(selectedSection)
+                            )
                               ? {
                                   value: selectedSection,
                                   label: SectionList.find(
-                                    (s) => s.id == selectedSection
+                                    (s) => Number(s.id) === Number(selectedSection)
                                   )?.section_name,
                                 }
                               : null
                           }
-                          onChange={(opt) =>
-                            setSelectedSection(opt?.value || "")
+                          isDisabled={true}
+                          isClearable={false}
+                          onChange={() => {}}
+                          placeholder={
+                            !selectedSemester
+                              ? "Select Semester first"
+                              : SectionList?.length > 0
+                              ? "Section auto selected"
+                              : "Loading Section..."
                           }
-                          placeholder="Select Section"
                         />
                       </div>
 

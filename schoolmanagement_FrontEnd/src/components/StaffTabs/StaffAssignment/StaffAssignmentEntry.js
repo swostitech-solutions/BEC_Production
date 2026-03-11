@@ -113,6 +113,41 @@ const StaffAssignmentEntry = () => {
     semesterId
   );
 
+  useEffect(() => {
+    if (!formData.semester) {
+      setFormData((prev) => ({
+        ...prev,
+        addmitted_section: "",
+      }));
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      setFormData((prev) => ({
+        ...prev,
+        addmitted_section: "",
+      }));
+      return;
+    }
+
+    const matchedSection = SectionList.find(
+      (s) => Number(s.id) === Number(formData.addmitted_section)
+    );
+    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      addmitted_section:
+        Number(prev.addmitted_section) === Number(nextSectionId)
+          ? prev.addmitted_section
+          : Number(nextSectionId),
+    }));
+  }, [formData.semester, formData.addmitted_section, SectionList]);
+
   // ---- Lecture, Subject, and Professor dependent dropdowns ----
   const lectureParams = {
     organizationId,
@@ -1070,6 +1105,7 @@ const StaffAssignmentEntry = () => {
                             setFormData((prev) => ({
                               ...prev,
                               semester: opt?.value || "",
+                              addmitted_section: "",
                             }))
                           }
                           placeholder={
@@ -1114,18 +1150,19 @@ const StaffAssignmentEntry = () => {
                               }
                               : null
                           }
-                          onChange={(opt) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              addmitted_section: opt?.value || "",
-                            }))
-                          }
+                          isDisabled={true}
+                          isClearable={false}
+                          onChange={() => {}}
                           placeholder={
-                            loadingSections
-                              ? "Loading Sections..."
-                              : errorSections
-                                ? "Error loading sections"
-                                : "Select Section"
+                            !formData.semester
+                              ? "Select Semester first"
+                              : loadingSections
+                                ? "Loading Sections..."
+                                : errorSections
+                                  ? "Error loading sections"
+                                  : SectionList?.length > 0
+                                    ? "Section auto selected"
+                                    : "Loading Section..."
                           }
                         />
                       </div>

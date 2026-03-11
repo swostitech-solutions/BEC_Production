@@ -174,6 +174,29 @@ const StfLessonPlan = () => {
     }
   }, [SectionList]);
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) {
+      return;
+    }
+
+    const hasSelected = selectedSection?.value
+      ? sectionOptions.some(
+          (section) => Number(section.value) === Number(selectedSection.value)
+        )
+      : false;
+
+    if (hasSelected) {
+      return;
+    }
+
+    setSelectedSection(sectionOptions[0]);
+  }, [selectedSemester, sectionOptions]);
+
   // Fetch Teachers and auto-select the logged-in teacher
   useEffect(() => {
     const fetchMentors = async () => {
@@ -670,9 +693,17 @@ const StfLessonPlan = () => {
                           options={sectionOptions}
                           className="detail"
                           value={selectedSection}
-                          onChange={handleSectionChange}
-                          placeholder="Select Section"
+                          onChange={() => {}}
+                          placeholder={
+                            !selectedSemester
+                              ? "Select Semester first"
+                              : sectionOptions.length > 0
+                                ? "Section auto selected"
+                                : "Loading Section..."
+                          }
                           classNamePrefix="section-dropdown"
+                          isDisabled={true}
+                          isClearable={false}
                         />
                       </div>
 

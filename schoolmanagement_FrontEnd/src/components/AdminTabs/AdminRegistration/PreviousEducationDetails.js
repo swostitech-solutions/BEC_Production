@@ -1,8 +1,33 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { ApiUrl } from "../../../ApiUrl";
-import Select from "react-select";
-const PreviousEducationDetails = ({ formData, setFormData }) => {
+import React, { useEffect, useState } from "react";
+const PreviousEducationDetails = ({
+  formData,
+  setFormData,
+  submitErrors = {},
+}) => {
+  const [dateOrderErrors, setDateOrderErrors] = useState({});
+  const [rowErrors, setRowErrors] = useState({});
+  const [addRowError, setAddRowError] = useState("");
+
+  useEffect(() => {
+    if (!Array.isArray(formData.previousEducationDetails) || formData.previousEducationDetails.length === 0) {
+      setFormData((prev) => ({
+        ...prev,
+        previousEducationDetails: [
+          {
+            nameofschool: "",
+            location: "",
+            class_completed: "",
+            year_from: "",
+            year_to: "",
+            language_of_instruction: "",
+            transfer_certificate: "",
+            result: "",
+          },
+        ],
+      }));
+    }
+  }, [formData.previousEducationDetails, setFormData]);
+
   const previousEducation = formData.previousEducationDetails?.length
     ? formData.previousEducationDetails
     : [
@@ -23,7 +48,64 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
       previousEducationDetails: rows,
     }));
   };
+
+  const validateDateOrder = (row) => {
+    if (!row?.year_from || !row?.year_to) return "";
+    const fromDate = new Date(row.year_from);
+    const toDate = new Date(row.year_to);
+    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+      return "";
+    }
+    if (toDate < fromDate) {
+      return "Years Attended To must be greater than or equal to Years Attended From";
+    }
+    return "";
+  };
+
+  const validateRequiredFields = (row) => {
+    const errors = {};
+    if (!row?.nameofschool || String(row.nameofschool).trim() === "") {
+      errors.nameofschool = "This field is required";
+    }
+    if (!row?.year_from || String(row.year_from).trim() === "") {
+      errors.year_from = "This field is required";
+    }
+    if (!row?.year_to || String(row.year_to).trim() === "") {
+      errors.year_to = "This field is required";
+    }
+    return errors;
+  };
+
+  const validateRow = (row) => {
+    const errors = validateRequiredFields(row);
+    const dateError = validateDateOrder(row);
+    if (dateError) {
+      errors.year_to = dateError;
+    }
+    return errors;
+  };
+
   const handleAddRow = () => {
+    const updatedRowErrors = {};
+    let hasError = false;
+
+    previousEducation.forEach((row, index) => {
+      const errors = validateRow(row);
+      if (Object.keys(errors).length > 0) {
+        updatedRowErrors[index] = errors;
+        hasError = true;
+      }
+    });
+
+    setRowErrors(updatedRowErrors);
+
+    if (hasError) {
+      setAddRowError("Complete required fields before adding a new row.");
+      return;
+    }
+
+    setAddRowError("");
+
     const rows = [
       ...previousEducation,
       {
@@ -47,13 +129,75 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
       return;
     }
     const rows = previousEducation.filter((_, i) => i !== index);
+    const reorderedRowErrors = {};
+    Object.keys(rowErrors).forEach((key) => {
+      const rowIndex = Number(key);
+      if (rowIndex < index) {
+        reorderedRowErrors[rowIndex] = rowErrors[rowIndex];
+      }
+      if (rowIndex > index) {
+        reorderedRowErrors[rowIndex - 1] = rowErrors[rowIndex];
+      }
+    });
+
+    const reorderedDateErrors = {};
+    Object.keys(dateOrderErrors).forEach((key) => {
+      const rowIndex = Number(key);
+      if (rowIndex < index) {
+        reorderedDateErrors[rowIndex] = dateOrderErrors[rowIndex];
+      }
+      if (rowIndex > index) {
+        reorderedDateErrors[rowIndex - 1] = dateOrderErrors[rowIndex];
+      }
+    });
+
+    setRowErrors(reorderedRowErrors);
+    setDateOrderErrors(reorderedDateErrors);
     updateParent(rows);
   };
   const handleInputChange = (index, field, value) => {
     const rows = previousEducation.map((row, i) =>
       i === index ? { ...row, [field]: value } : row
     );
+    const rowError = validateDateOrder(rows[index]);
+    setDateOrderErrors((prev) => ({
+      ...prev,
+      [index]: rowError,
+    }));
+
+    const requiredErrors = validateRequiredFields(rows[index]);
+    setRowErrors((prev) => ({
+      ...prev,
+      [index]: requiredErrors,
+    }));
+
+    setAddRowError("");
     updateParent(rows);
+  };
+
+  const handleFieldBlur = (index, field) => {
+    const row = previousEducation[index] || {};
+    const value = row[field];
+
+    if (!value || String(value).trim() === "") {
+      setRowErrors((prev) => ({
+        ...prev,
+        [index]: {
+          ...(prev[index] || {}),
+          [field]: "This field is required",
+        },
+      }));
+      return;
+    }
+
+    setRowErrors((prev) => {
+      const next = { ...prev };
+      if (!next[index]) return next;
+      const nextRow = { ...next[index] };
+      delete nextRow[field];
+      next[index] = nextRow;
+      return next;
+    });
   };
   return (
     <div className="container-fluid form-container">
@@ -96,8 +240,20 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
                         ); // only letters & spaces
                         handleInputChange(index, "nameofschool", value);
                       }}
+                      onBlur={() => handleFieldBlur(index, "nameofschool")}
                       required
                     />
+                    {submitErrors.previousEducationDetails?.[index]?.nameofschool && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.previousEducationDetails[index].nameofschool}
+                      </small>
+                    )}
+                    {!submitErrors.previousEducationDetails?.[index]?.nameofschool &&
+                      rowErrors[index]?.nameofschool && (
+                        <small style={{ color: "red" }}>
+                          {rowErrors[index].nameofschool}
+                        </small>
+                      )}
                   </td>
                   {/* :white_check_mark: Location - Only letters and spaces */}
                   <td>
@@ -135,7 +291,19 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
                         if (year.length > 4) return;
                         handleInputChange(index, "year_from", value);
                       }}
+                      onBlur={() => handleFieldBlur(index, "year_from")}
                     />
+                    {submitErrors.previousEducationDetails?.[index]?.year_from && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.previousEducationDetails[index].year_from}
+                      </small>
+                    )}
+                    {!submitErrors.previousEducationDetails?.[index]?.year_from &&
+                      rowErrors[index]?.year_from && (
+                        <small style={{ color: "red" }}>
+                          {rowErrors[index].year_from}
+                        </small>
+                      )}
                   </td>
                   <td>
                     <input
@@ -147,22 +315,26 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
                         if (year.length > 4) return; // Restrict year typing
                         handleInputChange(index, "year_to", value);
                       }}
-                      onBlur={(e) => {
-                        const value = e.target.value;
-                        if (!value) return;
-                        const yearTo = value.split("-")[0];
-                        const fromDate = row?.year_from;
-                        if (!fromDate) return; // no comparison if from date not selected
-                        const yearFrom = fromDate.split("-")[0];
-                        // :no_entry_sign: Show message ONLY AFTER full date entered & field completed
-                        if (Number(yearTo) < Number(yearFrom)) {
-                          alert(
-                            "Year Attended To must be greater than or equal to Year Attended From"
-                          );
-                          handleInputChange(index, "year_to", "");
-                        }
-                      }}
+                      onBlur={() => handleFieldBlur(index, "year_to")}
                     />
+                    {submitErrors.previousEducationDetails?.[index]?.year_to && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.previousEducationDetails[index].year_to}
+                      </small>
+                    )}
+                    {!submitErrors.previousEducationDetails?.[index]?.year_to &&
+                      rowErrors[index]?.year_to && (
+                        <small style={{ color: "red" }}>
+                          {rowErrors[index].year_to}
+                        </small>
+                      )}
+                    {!submitErrors.previousEducationDetails?.[index]?.year_to &&
+                      !rowErrors[index]?.year_to &&
+                      dateOrderErrors[index] && (
+                        <small style={{ color: "red" }}>
+                          {dateOrderErrors[index]}
+                        </small>
+                      )}
                   </td>
                   {/* :white_check_mark: Language of Instruction - Only letters and spaces */}
                   <td>
@@ -227,6 +399,11 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
         </table>
       </div>
       <div className="d-flex justify-content-end">
+        {addRowError && (
+          <small style={{ color: "red", marginRight: "12px" }}>
+            {addRowError}
+          </small>
+        )}
         <button
           type="button"
           className="btn btn-primary"

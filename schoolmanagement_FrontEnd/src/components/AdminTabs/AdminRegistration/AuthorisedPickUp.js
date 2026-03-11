@@ -7,7 +7,7 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const AuthorisedPickUp = ({ formData, setFormData }) => {
+const AuthorisedPickUp = ({ formData, setFormData, submitErrors = {} }) => {
   const { id } = useParams(); // Get student ID from the URL
   const [errors, setErrors] = useState([]);
 
@@ -240,6 +240,18 @@ const AuthorisedPickUp = ({ formData, setFormData }) => {
                   }}
                   required
                 />
+                {submitErrors.authorizedpickup?.[index]?.name && (
+                  <span
+                    style={{
+                      color: "red",
+                      fontSize: "0.8em",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    {submitErrors.authorizedpickup[index].name}
+                  </span>
+                )}
               </td>
 
               {/* ✅ Relationship - Only alphabets and spaces */}
@@ -253,6 +265,18 @@ const AuthorisedPickUp = ({ formData, setFormData }) => {
                   }}
                   required
                 />
+                {submitErrors.authorizedpickup?.[index]?.relationship && (
+                  <span
+                    style={{
+                      color: "red",
+                      fontSize: "0.8em",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    {submitErrors.authorizedpickup[index].relationship}
+                  </span>
+                )}
               </td>
 
               {/* ✅ Mobile Number - Only digits, 10 max */}
@@ -279,6 +303,19 @@ const AuthorisedPickUp = ({ formData, setFormData }) => {
                     {errors[index].mobile}
                   </span>
                 )}
+                {!errors[index]?.mobile &&
+                  submitErrors.authorizedpickup?.[index]?.Mobile_Number && (
+                    <span
+                      style={{
+                        color: "red",
+                        fontSize: "0.8em",
+                        marginTop: "4px",
+                        display: "block",
+                      }}
+                    >
+                      {submitErrors.authorizedpickup[index].Mobile_Number}
+                    </span>
+                  )}
               </td>
 
               <td>
@@ -290,6 +327,18 @@ const AuthorisedPickUp = ({ formData, setFormData }) => {
                   }
                   required
                 />
+                {submitErrors.authorizedpickup?.[index]?.address && (
+                  <span
+                    style={{
+                      color: "red",
+                      fontSize: "0.8em",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    {submitErrors.authorizedpickup[index].address}
+                  </span>
+                )}
               </td>
 
               <td>
@@ -313,6 +362,19 @@ const AuthorisedPickUp = ({ formData, setFormData }) => {
                     {errors[index].email}
                   </span>
                 )}
+                {!errors[index]?.email &&
+                  submitErrors.authorizedpickup?.[index]?.email && (
+                    <span
+                      style={{
+                        color: "red",
+                        fontSize: "0.8em",
+                        marginTop: "4px",
+                        display: "block",
+                      }}
+                    >
+                      {submitErrors.authorizedpickup[index].email}
+                    </span>
+                  )}
               </td>
 
               <td>

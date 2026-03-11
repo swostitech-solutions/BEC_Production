@@ -391,6 +391,31 @@ const StudentSearch = () => {
     fetchSections();
   }, [selectedSession, selectedCourse, selectedDepartment, selectedAcademicYear, selectedSemester]);
 
+  useEffect(() => {
+    if (!selectedSemester?.value) {
+      setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sections) || sections.length === 0) {
+      setSelectedSection(null);
+      return;
+    }
+
+    const matchedSection = sections.find(
+      (section) => Number(section.value) === Number(selectedSection?.value)
+    );
+    const nextSection = matchedSection || sections[0];
+
+    if (!nextSection?.value) {
+      return;
+    }
+
+    setSelectedSection((prev) =>
+      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
+    );
+  }, [selectedSemester, sections, selectedSection]);
+
   // Fetch Term Options for the table dropdown
   useEffect(() => {
     const fetchTermOptions = async () => {
@@ -758,10 +783,16 @@ const StudentSearch = () => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          placeholder="Select Section"
-                          onChange={setSelectedSection}
-                          isDisabled={!selectedSemester}
-                          isClearable
+                          isDisabled={true}
+                          isClearable={false}
+                          onChange={() => {}}
+                          placeholder={
+                            !selectedSemester?.value
+                              ? "Select Semester first"
+                              : sections?.length > 0
+                              ? "Section auto selected"
+                              : "Loading Section..."
+                          }
                         />
                       </div>
 

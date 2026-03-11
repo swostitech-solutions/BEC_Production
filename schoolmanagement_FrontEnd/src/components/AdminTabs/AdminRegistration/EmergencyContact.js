@@ -8,7 +8,7 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const AdmOtherDetails = ({ formData, setFormData }) => {
+const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
   const { id } = useParams();
   const [errors, setErrors] = useState([]);
 
@@ -238,6 +238,18 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }}
                       required
                     />
+                    {submitErrors.emegencyContact?.[index]?.name && (
+                      <span
+                        style={{
+                          color: "red",
+                          fontSize: "0.8em",
+                          marginTop: "4px",
+                          display: "block",
+                        }}
+                      >
+                        {submitErrors.emegencyContact[index].name}
+                      </span>
+                    )}
                   </td>
 
                   {/* ✅ Relationship (only alphabets & spaces allowed) */}
@@ -254,6 +266,18 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }}
                       required
                     />
+                    {submitErrors.emegencyContact?.[index]?.relationship && (
+                      <span
+                        style={{
+                          color: "red",
+                          fontSize: "0.8em",
+                          marginTop: "4px",
+                          display: "block",
+                        }}
+                      >
+                        {submitErrors.emegencyContact[index].relationship}
+                      </span>
+                    )}
                   </td>
 
                   {/* ✅ Phone Number (only digits, 10 characters max) */}
@@ -280,6 +304,19 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                         {errors[index]}
                       </span>
                     )}
+                    {!errors[index] &&
+                      submitErrors.emegencyContact?.[index]?.Mobile_Number && (
+                        <span
+                          style={{
+                            color: "red",
+                            fontSize: "0.8em",
+                            marginTop: "4px",
+                            display: "block",
+                          }}
+                        >
+                          {submitErrors.emegencyContact[index].Mobile_Number}
+                        </span>
+                      )}
                   </td>
 
                   <td>

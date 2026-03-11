@@ -165,6 +165,29 @@ const AdmTeacherLessonPlan = () => {
     }
   }, [SectionList]);
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) {
+      return;
+    }
+
+    const hasSelected = selectedSection?.value
+      ? sectionOptions.some(
+          (section) => Number(section.value) === Number(selectedSection.value)
+        )
+      : false;
+
+    if (hasSelected) {
+      return;
+    }
+
+    setSelectedSection(sectionOptions[0]);
+  }, [selectedSemester, sectionOptions]);
+
   // Fetch Teachers
   useEffect(() => {
     const fetchMentors = async () => {
@@ -656,9 +679,17 @@ const AdmTeacherLessonPlan = () => {
                           options={sectionOptions}
                           className="detail"
                           value={selectedSection}
-                          onChange={handleSectionChange}
-                          placeholder="Select Section"
+                          onChange={() => {}}
+                          placeholder={
+                            !selectedSemester
+                              ? "Select Semester first"
+                              : sectionOptions.length > 0
+                                ? "Section auto selected"
+                                : "Loading Section..."
+                          }
                           classNamePrefix="section-dropdown"
+                          isDisabled={true}
+                          isClearable={false}
                         />
                       </div>
 

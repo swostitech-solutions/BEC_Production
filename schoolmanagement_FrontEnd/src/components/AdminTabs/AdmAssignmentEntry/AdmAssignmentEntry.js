@@ -1106,6 +1106,42 @@ const AdmAttendanceEntry = () => {
     }));
   };
 
+  useEffect(() => {
+    if (!formData.semester) {
+      setFormData((prev) => ({
+        ...prev,
+        addmitted_section: "",
+      }));
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      return;
+    }
+
+    const matchedSection = SectionList.find(
+      (s) => Number(s.id) === Number(formData.addmitted_section)
+    );
+    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (Number(prev.addmitted_section) === Number(nextSectionId)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        addmitted_section: nextSectionId,
+        lectureId: "",
+        subjectId: "",
+        professorId: "",
+      };
+    });
+  }, [formData.semester, SectionList]);
+
   return (
     <div className="container-fluid ">
       <div className="row">
@@ -1422,6 +1458,10 @@ const AdmAttendanceEntry = () => {
                             setFormData((prev) => ({
                               ...prev,
                               semester: opt?.value || "",
+                              addmitted_section: "",
+                              lectureId: "",
+                              subjectId: "",
+                              professorId: "",
                             }))
                           }
                           placeholder={
@@ -1441,7 +1481,7 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className="detail"
-                          // isDisabled={!formData.semester}
+                          isDisabled={true}
                           isLoading={loadingSections}
                           options={
                             SectionList?.map((s) => ({
@@ -1467,19 +1507,17 @@ const AdmAttendanceEntry = () => {
                               }
                               : null
                           }
-                          onChange={(opt) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              addmitted_section: opt?.value || "",
-                            }))
-                          }
+                            onChange={() => {}}
                           placeholder={
                             loadingSections
                               ? "Loading Sections..."
                               : errorSections
                                 ? "Error loading sections"
-                                : "Select Section"
+                                  : formData.semester
+                                    ? "Section auto selected"
+                                    : "Select Semester first"
                           }
+                            isClearable={false}
                         />
                       </div>
                       {/* Period Dropdown */}

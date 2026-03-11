@@ -555,14 +555,266 @@ export default function BasicTabs() {
       }
     });
 
+    const addressRequiredFields = [
+      "present_address",
+      "present_country",
+      "present_state",
+      "present_city",
+      "present_pincode",
+      "permanent_address",
+      "permanent_country",
+      "permanent_state",
+      "permanent_city",
+      "permanent_pincode",
+    ];
+
+    addressRequiredFields.forEach((key) => {
+      const fieldValue = formData[key];
+      if (!fieldValue || String(fieldValue).trim() === "") {
+        validationErrors[key] = "This field is required";
+      }
+    });
+
+    const guardianRequiredFields = [
+      "primary_guardian",
+      "father_name",
+      "father_profession",
+      "father_contact_number",
+      "mother_name",
+      "mother_profession",
+      "mother_contact_number",
+    ];
+
+    guardianRequiredFields.forEach((key) => {
+      const fieldValue = formData[key];
+      if (!fieldValue || String(fieldValue).trim() === "") {
+        validationErrors[key] = "This field is required";
+      }
+    });
+
+    if (!isEditMode) {
+      if (!formData.feeappfrom || String(formData.feeappfrom).trim() === "") {
+        validationErrors.feeappfrom = "This field is required";
+      }
+      if (!formData.feegroup || String(formData.feegroup).trim() === "") {
+        validationErrors.feegroup = "This field is required";
+      }
+    }
+
+    const siblingRows = Array.isArray(formData.sibilingsDetails)
+      ? formData.sibilingsDetails
+      : [];
+    const siblingErrors = [];
+    siblingRows.forEach((row, index) => {
+      const rowError = {};
+      if (!row?.admissionNo || String(row.admissionNo).trim() === "") {
+        rowError.admissionNo = "This field is required";
+      }
+      if (!row?.studentName || String(row.studentName).trim() === "") {
+        rowError.studentName = "This field is required";
+      }
+      if (!row?.class || String(row.class).trim() === "") {
+        rowError.class = "This field is required";
+      }
+      if (!row?.section || String(row.section).trim() === "") {
+        rowError.section = "This field is required";
+      }
+      if (Object.keys(rowError).length > 0) {
+        siblingErrors[index] = rowError;
+      }
+    });
+    if (siblingErrors.length > 0) {
+      validationErrors.sibilingsDetails = siblingErrors;
+    }
+
+    const emergencyRows = Array.isArray(formData.emegencyContact)
+      ? formData.emegencyContact
+      : [];
+    const emergencyErrors = [];
+    emergencyRows.forEach((row, index) => {
+      const rowError = {};
+      if (!row?.name || String(row.name).trim() === "") {
+        rowError.name = "This field is required";
+      }
+      if (!row?.relationship || String(row.relationship).trim() === "") {
+        rowError.relationship = "This field is required";
+      }
+      if (!row?.Mobile_Number || String(row.Mobile_Number).trim() === "") {
+        rowError.Mobile_Number = "This field is required";
+      }
+      if (Object.keys(rowError).length > 0) {
+        emergencyErrors[index] = rowError;
+      }
+    });
+    if (emergencyErrors.length > 0) {
+      validationErrors.emegencyContact = emergencyErrors;
+    }
+
+    const pickupRows = Array.isArray(formData.authorizedpickup)
+      ? formData.authorizedpickup
+      : [];
+    const pickupErrors = [];
+    pickupRows.forEach((row, index) => {
+      const rowError = {};
+      if (!row?.name || String(row.name).trim() === "") {
+        rowError.name = "This field is required";
+      }
+      if (!row?.relationship || String(row.relationship).trim() === "") {
+        rowError.relationship = "This field is required";
+      }
+      if (!row?.Mobile_Number || String(row.Mobile_Number).trim() === "") {
+        rowError.Mobile_Number = "This field is required";
+      }
+      if (!row?.address || String(row.address).trim() === "") {
+        rowError.address = "This field is required";
+      }
+      if (!row?.email || String(row.email).trim() === "") {
+        rowError.email = "This field is required";
+      }
+      if (Object.keys(rowError).length > 0) {
+        pickupErrors[index] = rowError;
+      }
+    });
+    if (pickupErrors.length > 0) {
+      validationErrors.authorizedpickup = pickupErrors;
+    }
+
+    const documentRows = Array.isArray(formData.documentsDetails)
+      ? formData.documentsDetails
+      : [];
+    const documentErrors = [];
+    documentRows.forEach((row, index) => {
+      const rowError = {};
+      if (!row?.document_type || String(row.document_type).trim() === "") {
+        rowError.document_type = "This field is required";
+      }
+      if (!row?.document_no || String(row.document_no).trim() === "") {
+        rowError.document_no = "This field is required";
+      }
+      const hasExistingPreview =
+        typeof row?.preview_url === "string" && row.preview_url.trim() !== "";
+      const hasDocument = row?.document_pic;
+      if (!hasExistingPreview && !hasDocument) {
+        rowError.document_pic = "This field is required";
+      }
+      if (Object.keys(rowError).length > 0) {
+        documentErrors[index] = rowError;
+      }
+    });
+    if (documentErrors.length > 0) {
+      validationErrors.documentsDetails = documentErrors;
+    }
+
+    const previousRows = Array.isArray(formData.previousEducationDetails)
+      ? formData.previousEducationDetails
+      : [];
+    const previousErrors = [];
+
+    if (previousRows.length === 0) {
+      previousErrors[0] = {
+        nameofschool: "This field is required",
+        year_from: "This field is required",
+        year_to: "This field is required",
+      };
+    }
+
+    previousRows.forEach((row, index) => {
+      const rowError = {};
+      if (!row?.nameofschool || String(row.nameofschool).trim() === "") {
+        rowError.nameofschool = "This field is required";
+      }
+      if (!row?.year_from || String(row.year_from).trim() === "") {
+        rowError.year_from = "This field is required";
+      }
+      if (!row?.year_to || String(row.year_to).trim() === "") {
+        rowError.year_to = "This field is required";
+      }
+      if (row?.year_from && row?.year_to) {
+        const fromDate = new Date(row.year_from);
+        const toDate = new Date(row.year_to);
+        if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime()) && toDate < fromDate) {
+          rowError.year_to =
+            "Years Attended To must be greater than or equal to Years Attended From";
+        }
+      }
+      if (Object.keys(rowError).length > 0) {
+        previousErrors[index] = rowError;
+      }
+    });
+    if (previousErrors.length > 0) {
+      validationErrors.previousEducationDetails = previousErrors;
+    }
+
     setErrors(validationErrors);
-    return Object.keys(validationErrors).length === 0;
+    return validationErrors;
+  };
+
+  const getFirstInvalidTabIndex = (validationErrors) => {
+    const tabByErrorKey = [
+      {
+        tab: 0,
+        keys: [
+          "first_name",
+          "last_name",
+          "batch",
+          "course",
+          "department",
+          "academic_year",
+          "semester",
+          "addmitted_section",
+          "admission_type",
+          "date_of_admission",
+          "doj",
+        ],
+      },
+      { tab: isEditMode ? null : 1, keys: ["feeappfrom", "feegroup"] },
+      {
+        tab: isEditMode ? 1 : 2,
+        keys: [
+          "present_address",
+          "present_country",
+          "present_state",
+          "present_city",
+          "present_pincode",
+          "permanent_address",
+          "permanent_country",
+          "permanent_state",
+          "permanent_city",
+          "permanent_pincode",
+        ],
+      },
+      {
+        tab: isEditMode ? 2 : 3,
+        keys: [
+          "primary_guardian",
+          "father_name",
+          "father_profession",
+          "father_contact_number",
+          "mother_name",
+          "mother_profession",
+          "mother_contact_number",
+        ],
+      },
+      { tab: isEditMode ? 3 : 4, keys: ["sibilingsDetails"] },
+      { tab: isEditMode ? 4 : 5, keys: ["emegencyContact"] },
+      { tab: isEditMode ? 5 : 6, keys: ["authorizedpickup"] },
+      { tab: isEditMode ? 6 : 7, keys: ["documentsDetails"] },
+      { tab: isEditMode ? 7 : 8, keys: ["previousEducationDetails"] },
+    ];
+
+    for (const { tab, keys } of tabByErrorKey) {
+      if (tab === null) continue;
+      if (keys.some((key) => Object.prototype.hasOwnProperty.call(validationErrors, key))) {
+        return tab;
+      }
+    }
+    return 0;
   };
 
   const handleSave = async () => {
-    const isValid = validateAllTabs();
-    if (!isValid) {
-      setValue(0);
+    const validationErrors = validateAllTabs();
+    if (Object.keys(validationErrors).length > 0) {
+      setValue(getFirstInvalidTabIndex(validationErrors));
       return;
     }
 
@@ -794,9 +1046,9 @@ export default function BasicTabs() {
   };
 
   const handleUpdate = async () => {
-    const isValid = validateAllTabs();
-    if (!isValid) {
-      setValue(0);
+    const validationErrors = validateAllTabs();
+    if (Object.keys(validationErrors).length > 0) {
+      setValue(getFirstInvalidTabIndex(validationErrors));
       return;
     }
 
@@ -1137,38 +1389,64 @@ export default function BasicTabs() {
             batch_id={formData.batch}
             course_id={formData.course}
             department_id={formData.department}
+            submitErrors={errors}
           />
         </CustomTabPanel>
       )}
 
       <CustomTabPanel value={value} index={isEditMode ? 1 : 2}>
-        <AdmPersonalDetails formData={formData} setFormData={setFormData} />
+        <AdmPersonalDetails
+          formData={formData}
+          setFormData={setFormData}
+          submitErrors={errors}
+        />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 2 : 3}>
-        <GuardianDetails formData={formData} setFormData={setFormData} />
+        <GuardianDetails
+          formData={formData}
+          setFormData={setFormData}
+          submitErrors={errors}
+        />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 3 : 4}>
-        <AdmOtherDetails formData={formData} setFormData={setFormData} />
+        <AdmOtherDetails
+          formData={formData}
+          setFormData={setFormData}
+          submitErrors={errors}
+        />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 4 : 5}>
-        <EmergencyContact formData={formData} setFormData={setFormData} />
+        <EmergencyContact
+          formData={formData}
+          setFormData={setFormData}
+          submitErrors={errors}
+        />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 5 : 6}>
-        <AuthorisedPickUp formData={formData} setFormData={setFormData} />
+        <AuthorisedPickUp
+          formData={formData}
+          setFormData={setFormData}
+          submitErrors={errors}
+        />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 6 : 7}>
-        <DocumentsSubmitted formData={formData} setFormData={setFormData} />
+        <DocumentsSubmitted
+          formData={formData}
+          setFormData={setFormData}
+          submitErrors={errors}
+        />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 7 : 8}>
         <PreviousEducationDetails
           formData={formData}
           setFormData={setFormData}
+          submitErrors={errors}
         />
       </CustomTabPanel>
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>

@@ -5,7 +5,7 @@ import { ApiUrl } from "../../../ApiUrl";
 import { Button } from "react-bootstrap";
 import Modal from "./Modal"; // Assuming you have a Modal component for selecting students
 
-const AdmOtherDetails = ({ formData, setFormData }) => {
+const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
   const { id } = useParams();
   const [showModal, setShowModal] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null); // To track which row is selected
@@ -242,6 +242,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }
                       readOnly
                     />
+                    {submitErrors.sibilingsDetails?.[index]?.admissionNo && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.sibilingsDetails[index].admissionNo}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <input
@@ -252,6 +257,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }
                       readOnly
                     />
+                    {submitErrors.sibilingsDetails?.[index]?.studentName && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.sibilingsDetails[index].studentName}
+                      </small>
+                    )}
                     <Button
                       style={{ marginLeft: "16px" }}
                       variant="primary"
@@ -269,6 +279,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }
                       readOnly
                     />
+                    {submitErrors.sibilingsDetails?.[index]?.class && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.sibilingsDetails[index].class}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <input
@@ -279,6 +294,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }
                       readOnly
                     />
+                    {submitErrors.sibilingsDetails?.[index]?.section && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.sibilingsDetails[index].section}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <Button

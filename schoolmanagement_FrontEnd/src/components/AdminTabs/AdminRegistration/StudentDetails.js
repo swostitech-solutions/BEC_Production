@@ -123,6 +123,41 @@ const AdmAttendanceEntry = ({
     selectedSemester // semester_id
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection("");
+      setFormData((prev) => ({
+        ...prev,
+        addmitted_section: "",
+      }));
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      return;
+    }
+
+    const matchingSection = SectionList.find(
+      (sec) => Number(sec.id) === Number(selectedSection),
+    );
+
+    const sectionToUse = matchingSection || SectionList[0];
+    const nextSectionId = sectionToUse?.id ? String(sectionToUse.id) : "";
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setSelectedSection(nextSectionId);
+    setFormData((prev) => ({
+      ...prev,
+      addmitted_section: nextSectionId,
+      feegroup: "",
+      feeappfrom: "",
+    }));
+    localStorage.setItem("selectedSectionId", nextSectionId);
+  }, [selectedSemester, SectionList]);
+
   const {
     genders,
     loading: genderLoading,
@@ -1044,9 +1079,11 @@ const AdmAttendanceEntry = ({
                         }
                         onChange={(opt) => {
                           setSelectedSemester(opt?.value || "");
+                          setSelectedSection("");
                           setFormData((prev) => ({
                             ...prev,
                             semester: opt?.value || "",
+                            addmitted_section: "",
                             feegroup: "",
                             feeappfrom: "",
                           }));
@@ -1073,33 +1110,35 @@ const AdmAttendanceEntry = ({
                       </label>
                       <Select
                         className=" detail"
-                        isDisabled={false}
+                        isDisabled={true}
                         value={
-                          SectionList?.find((s) => s.id === selectedSection)
+                          SectionList?.find(
+                            (s) => Number(s.id) === Number(selectedSection),
+                          )
                             ? {
                                 value: selectedSection,
                                 label: SectionList.find(
-                                  (s) => s.id === selectedSection,
+                                  (s) => Number(s.id) === Number(selectedSection),
                                 )?.section_name,
                               }
                             : null
                         }
-                        onChange={(opt) => {
-                          setSelectedSection(opt?.value || "");
-                          setFormData((prev) => ({
-                            ...prev,
-                            addmitted_section: opt?.value || "",
-                            feegroup: "",
-                            feeappfrom: "",
-                          }));
-                        }}
+                        onChange={() => {}}
                         options={
                           SectionList?.map((s) => ({
                             value: s.id,
                             label: s.section_name,
                           })) || []
                         }
-                        placeholder="Select Section"
+                        placeholder={
+                          sectionFilterLoading
+                            ? "Loading Section..."
+                            : selectedSemester
+                              ? "Section auto selected"
+                              : "Select Semester first"
+                        }
+                        isLoading={sectionFilterLoading}
+                        isClearable={false}
                       />
                       {submitErrors.addmitted_section && (
                         <small style={{ color: "red" }}>

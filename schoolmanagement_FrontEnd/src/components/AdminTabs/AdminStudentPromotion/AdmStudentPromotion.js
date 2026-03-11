@@ -178,6 +178,54 @@ const StudentPromotion = () => {
     toSemester
   );
 
+  useEffect(() => {
+    if (!fromSemester) {
+      setFromSection(null);
+      return;
+    }
+
+    if (!Array.isArray(fromSectionList) || fromSectionList.length === 0) {
+      return;
+    }
+
+    const matchedSection = fromSectionList.find(
+      (s) => Number(s.id) === Number(fromSection)
+    );
+    const nextSectionId = matchedSection?.id || fromSectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setFromSection((prev) =>
+      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
+    );
+  }, [fromSemester, fromSectionList]);
+
+  useEffect(() => {
+    if (!toSemester) {
+      setToSection(null);
+      return;
+    }
+
+    if (!Array.isArray(toSectionList) || toSectionList.length === 0) {
+      return;
+    }
+
+    const matchedSection = toSectionList.find(
+      (s) => Number(s.id) === Number(toSection)
+    );
+    const nextSectionId = matchedSection?.id || toSectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setToSection((prev) =>
+      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
+    );
+  }, [toSemester, toSectionList]);
+
   // ---------------------
 
   const [formData, setFormData] = useState({});
@@ -660,6 +708,7 @@ const StudentPromotion = () => {
                         <Select
                           className="detail"
                           isLoading={loadingSec}
+                          isDisabled={true}
                           options={
                             SectionList?.map((s) => ({
                               value: s.id,
@@ -676,8 +725,15 @@ const StudentPromotion = () => {
                                 }
                               : null
                           }
-                          onChange={(opt) => setFromSection(opt?.value || "")}
-                          placeholder="Select Section"
+                          onChange={() => {}}
+                          placeholder={
+                            !fromSemester
+                              ? "Select Semester first"
+                              : fromSectionList?.length > 0
+                              ? "Section auto selected"
+                              : "Loading Section..."
+                          }
+                          isClearable={false}
                         />
                       </Col>
                     </Row>
@@ -903,6 +959,7 @@ const StudentPromotion = () => {
                         <Select
                           className="detail"
                           isLoading={loadingSec}
+                          isDisabled={true}
                           options={
                             toSectionList?.map((s) => ({
                               value: Number(s.id),
@@ -919,10 +976,15 @@ const StudentPromotion = () => {
                                 }
                               : null
                           }
-                          onChange={(opt) => {
-                            setToSection(opt ? Number(opt.value) : null);
-                          }}
-                          placeholder="Select Section"
+                          onChange={() => {}}
+                          placeholder={
+                            !toSemester
+                              ? "Select Semester first"
+                              : toSectionList?.length > 0
+                              ? "Section auto selected"
+                              : "Loading Section..."
+                          }
+                          isClearable={false}
                         />
                       </Col>
                     </Row>

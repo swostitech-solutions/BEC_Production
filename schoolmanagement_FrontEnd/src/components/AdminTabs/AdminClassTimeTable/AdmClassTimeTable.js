@@ -251,13 +251,36 @@ const AdmAttendanceEntry = () => {
         value: section.id,
         label: section.section_description || section.section_code || section.section_name || section.sectionname || section.name,
       }));
-      setSectionOptions([{ value: "", label: "Select Section" }, ...options]);
+      setSectionOptions(options);
       console.log("Section options set:", options);
     } else {
       console.log("No Section data available yet");
-      setSectionOptions([{ value: "", label: "Select Section" }]);
+      setSectionOptions([]);
     }
   }, [SectionList]);
+
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) {
+      return;
+    }
+
+    const hasSelected = selectedSection?.value
+      ? sectionOptions.some(
+          (section) => Number(section.value) === Number(selectedSection.value)
+        )
+      : false;
+
+    if (hasSelected) {
+      return;
+    }
+
+    setSelectedSection(sectionOptions[0]);
+  }, [selectedSemester, sectionOptions]);
 
   useEffect(() => {
     const fetchMentors = async () => {
@@ -848,10 +871,17 @@ const AdmAttendanceEntry = () => {
                             options={sectionOptions}
                             className="detail"
                             classNamePrefix="section-dropdown"
-                            placeholder="Select Section"
-                            isDisabled={!selectedSemester}
+                            placeholder={
+                              !selectedSemester
+                                ? "Select Semester first"
+                                : sectionOptions.length > 0
+                                  ? "Section auto selected"
+                                  : "Loading Section..."
+                            }
+                            isDisabled={true}
                             value={selectedSection}
-                            onChange={setSelectedSection}
+                            onChange={() => {}}
+                            isClearable={false}
                           />
                         ),
                       },

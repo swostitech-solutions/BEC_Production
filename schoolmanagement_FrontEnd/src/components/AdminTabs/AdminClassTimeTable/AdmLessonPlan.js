@@ -221,6 +221,29 @@ const AdmLessonPlan = () => {
   }, [SectionList]);
 
   useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) {
+      return;
+    }
+
+    const hasSelected = selectedSection?.value
+      ? sectionOptions.some(
+          (section) => Number(section.value) === Number(selectedSection.value)
+        )
+      : false;
+
+    if (hasSelected) {
+      return;
+    }
+
+    setSelectedSection(sectionOptions[0]);
+  }, [selectedSemester, sectionOptions]);
+
+  useEffect(() => {
     const fetchMentors = async () => {
       try {
         const orgId = sessionStorage.getItem("organization_id");
@@ -601,9 +624,17 @@ const AdmLessonPlan = () => {
                           options={sectionOptions}
                           className="detail"
                           value={selectedSection}
-                          onChange={setSelectedSection}
-                          placeholder="Select Section"
+                          onChange={() => {}}
+                          placeholder={
+                            !selectedSemester
+                              ? "Select Semester first"
+                              : sectionOptions.length > 0
+                                ? "Section auto selected"
+                                : "Loading Section..."
+                          }
                           classNamePrefix="section-dropdown"
+                          isDisabled={true}
+                          isClearable={false}
                         />
                       </div>
 

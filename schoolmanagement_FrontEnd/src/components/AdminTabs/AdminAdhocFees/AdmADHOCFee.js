@@ -2640,6 +2640,34 @@ const AdmADHOCFee = () => {
     selectedSemesters,
   ]);
 
+  useEffect(() => {
+    const selectedSemesterIds = Object.keys(selectedSemesters).filter(
+      (id) => selectedSemesters[id]
+    );
+
+    if (selectedSemesterIds.length === 0 || !Array.isArray(sections) || sections.length === 0) {
+      setSelectedSections({});
+      setIsAllSectionsSelected(false);
+      return;
+    }
+
+    const autoSelected = {};
+    sections.forEach((section) => {
+      autoSelected[section.id] = true;
+    });
+
+    setSelectedSections((prev) => {
+      const prevKeys = Object.keys(prev).filter((key) => prev[key]);
+      const nextKeys = Object.keys(autoSelected);
+      const sameSelection =
+        prevKeys.length === nextKeys.length &&
+        nextKeys.every((key) => prev[key]);
+
+      return sameSelection ? prev : autoSelected;
+    });
+    setIsAllSectionsSelected(true);
+  }, [sections, selectedSemesters]);
+
   //  Checkbox Handlers
   const handleSectionChange = (sectionId) => {
     setSelectedSections((prevSelected) => {

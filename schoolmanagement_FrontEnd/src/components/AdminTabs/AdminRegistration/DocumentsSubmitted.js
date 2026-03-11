@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import "./AdmOtherDetails.css";
 import { ApiUrl } from "../../../ApiUrl";
 
-const AdmOtherDetails = ({ formData, setFormData }) => {
+const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
   const { id } = useParams();
   const [documentTypes, setDocumentTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -358,6 +358,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                         </option>
                       ))}
                     </select>
+                    {submitErrors.documentsDetails?.[index]?.document_type && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.documentsDetails[index].document_type}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <input
@@ -406,6 +411,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }}
                       required
                     />
+                    {submitErrors.documentsDetails?.[index]?.document_no && (
+                      <small style={{ color: "red" }}>
+                        {submitErrors.documentsDetails[index].document_no}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <input
@@ -416,6 +426,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       // }
                       onChange={(e) => handleFileChange(index, e)}
                     />
+                    {submitErrors.documentsDetails?.[index]?.document_pic && (
+                      <small style={{ color: "red", display: "block" }}>
+                        {submitErrors.documentsDetails[index].document_pic}
+                      </small>
+                    )}
                     {row.preview_url && (
                       <div className="mt-2">
                         <a

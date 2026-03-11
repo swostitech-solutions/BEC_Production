@@ -128,6 +128,31 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSection("");
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      setSelectedSection("");
+      return;
+    }
+
+    const matchedSection = SectionList.find(
+      (s) => Number(s.id) === Number(selectedSection)
+    );
+    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setSelectedSection((prev) =>
+      Number(prev) === Number(nextSectionId) ? prev : String(nextSectionId)
+    );
+  }, [selectedSemester, SectionList]);
+
   const handleClear = () => {
     setStudentName("");
     setStudentId("");
@@ -732,19 +757,27 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={
-                            SectionList?.find((s) => s.id === selectedSection)
+                            SectionList?.find(
+                              (s) => Number(s.id) === Number(selectedSection)
+                            )
                               ? {
                                   value: selectedSection,
                                   label: SectionList.find(
-                                    (s) => s.id === selectedSection
+                                    (s) => Number(s.id) === Number(selectedSection)
                                   )?.section_name,
                                 }
                               : null
                           }
-                          onChange={(opt) =>
-                            setSelectedSection(opt?.value || "")
+                          isDisabled={true}
+                          isClearable={false}
+                          onChange={() => {}}
+                          placeholder={
+                            !selectedSemester
+                              ? "Select Semester first"
+                              : SectionList?.length > 0
+                              ? "Section auto selected"
+                              : "Loading Section..."
                           }
-                          placeholder="Select Section"
                         />
                       </div>
 

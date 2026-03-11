@@ -77,6 +77,30 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
       selectedSemester              // semester_id
     );
   const [selectedSectionFiltered, setSelectedSectionFiltered] = useState(null);
+
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSelectedSectionFiltered(null);
+      setFilters((prev) => ({ ...prev, sectionId: "" }));
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      return;
+    }
+
+    const matchedSection = SectionList.find(
+      (sec) => Number(sec.id) === Number(selectedSectionFiltered)
+    );
+    const nextSectionId = matchedSection ? matchedSection.id : SectionList[0]?.id;
+
+    if (!nextSectionId) {
+      return;
+    }
+
+    setSelectedSectionFiltered(nextSectionId);
+    setFilters((prev) => ({ ...prev, sectionId: nextSectionId }));
+  }, [selectedSemester, SectionList]);
   const {
     branches: organizationBranches,
     loading: orgBranchLoading,
@@ -380,7 +404,8 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         onChange={(selectedOption) => {
                           const value = selectedOption ? selectedOption.value : "";
                           setSelectedSemester(value);
-                          setFilters((prev) => ({ ...prev, semesterId: value }));
+                          setSelectedSectionFiltered(null);
+                          setFilters((prev) => ({ ...prev, semesterId: value, sectionId: "" }));
                         }}
                       />
                     </div>
@@ -392,15 +417,14 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         id="section"
                         className="detail"
                         classNamePrefix="detail"
-                        placeholder={!selectedSemester ? "Select Semester first" : "Select Section"}
-                        isDisabled={
-                          !selectedOrganization ||
-                          !selectedSession ||
-                          !selectedCourse ||
-                          !selectedDepartment ||
-                          !selectedAcademicYear ||
-                          !selectedSemester
+                        placeholder={
+                          sectionFilterLoading
+                            ? "Loading Section..."
+                            : selectedSemester
+                              ? "Section auto selected"
+                              : "Select Semester first"
                         }
+                        isDisabled={true}
                         isLoading={sectionFilterLoading}
                         options={
                           SectionList.map((sec) => ({
@@ -414,11 +438,8 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             label: `${sec.section_name}`,
                           })).find((option) => option.value === selectedSectionFiltered) || null
                         }
-                        onChange={(selectedOption) => {
-                          const value = selectedOption ? selectedOption.value : "";
-                          setSelectedSectionFiltered(value);
-                          setFilters((prev) => ({ ...prev, sectionId: value }));
-                        }}
+                        onChange={() => {}}
+                        isClearable={false}
                       />
                     </div>
                   </div>
