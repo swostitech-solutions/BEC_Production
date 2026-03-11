@@ -150,7 +150,16 @@ const useFetchSectionByFilter = (
         if (mounted) {
           // ✅ The new API returns a direct array
           if (Array.isArray(result)) {
-            setSectionList(result);
+            setSectionList(
+              result.map((item) => ({
+                ...item,
+                id:
+                  item.id ||
+                  item.section_id ||
+                  item.section_code ||
+                  item.section_name,
+              }))
+            );
           } else {
             setSectionList([]);
           }

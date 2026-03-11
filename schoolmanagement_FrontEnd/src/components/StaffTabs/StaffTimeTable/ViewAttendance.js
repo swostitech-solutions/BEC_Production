@@ -154,11 +154,13 @@ const ViewAttendance = () => {
         value: section.id,
         label: section.section_description || section.section_code || section.section_name || section.sectionname || section.name,
       }));
-      setSectionOptions([{ value: "", label: "Select Section" }, ...options]);
+      setSectionOptions(options);
+      setSelectedSection(options[0] || null);
       console.log("Section options set:", options);
     } else {
       console.log("No Section data available yet");
-      setSectionOptions([{ value: "", label: "Select Section" }]);
+      setSectionOptions([]);
+      setSelectedSection(null);
     }
   }, [SectionList]);
 
@@ -479,10 +481,10 @@ const ViewAttendance = () => {
                           className="detail"
                           classNamePrefix="section-dropdown"
                           placeholder="Select Section"
-                          isDisabled={!selectedSemester}
+                          isDisabled
                           value={selectedSection}
                           onChange={setSelectedSection}
-                          isClearable
+                          isClearable={false}
                         />
                       </div>
 

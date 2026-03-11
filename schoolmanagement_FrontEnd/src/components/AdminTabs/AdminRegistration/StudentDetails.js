@@ -673,6 +673,33 @@ const AdmAttendanceEntry = ({
     };
   }, [OrganizationList, organizationBranches]);
 
+  useEffect(() => {
+    if (!Array.isArray(SectionList) || SectionList.length === 0) {
+      return;
+    }
+
+    const normalizedOptions = SectionList.map((s) => ({
+      value: s.id || s.section_id || s.section_code || s.section_name,
+      label: s.section_name || s.section_description || s.section_code || "Unnamed Section",
+    }));
+
+    const currentValue = String(selectedSection || "");
+    const hasCurrent = normalizedOptions.some(
+      (opt) => String(opt.value) === currentValue
+    );
+
+    if (!hasCurrent && normalizedOptions[0]?.value) {
+      const autoValue = normalizedOptions[0].value;
+      setSelectedSection(autoValue);
+      setFormData((prev) => ({
+        ...prev,
+        addmitted_section: autoValue,
+        feegroup: "",
+        feeappfrom: "",
+      }));
+    }
+  }, [SectionList, selectedSection, setFormData]);
+
   return (
     <div className="container-fluid ">
       <div className="row">
@@ -1052,19 +1079,31 @@ const AdmAttendanceEntry = ({
                       <label className="form-label">
                         Section<span style={{ color: "red" }}>*</span>
                       </label>
+                      {(() => {
+                        const sectionOptions =
+                          SectionList?.map((s) => ({
+                            value:
+                              s.id ||
+                              s.section_id ||
+                              s.section_code ||
+                              s.section_name,
+                            label:
+                              s.section_name ||
+                              s.section_description ||
+                              s.section_code ||
+                              "Unnamed Section",
+                          })) || [];
+
+                        const selectedOption =
+                          sectionOptions.find(
+                            (s) => String(s.value) === String(selectedSection)
+                          ) || null;
+
+                        return (
                       <Select
                         className=" detail"
-                        isDisabled={false}
-                        value={
-                          SectionList?.find((s) => s.id === selectedSection)
-                            ? {
-                              value: selectedSection,
-                              label: SectionList.find(
-                                (s) => s.id === selectedSection
-                              )?.section_name,
-                            }
-                            : null
-                        }
+                        isDisabled
+                        value={selectedOption}
                         onChange={(opt) => {
                           setSelectedSection(opt?.value || "");
                           setFormData((prev) => ({
@@ -1074,14 +1113,12 @@ const AdmAttendanceEntry = ({
                             feeappfrom: "",
                           }));
                         }}
-                        options={
-                          SectionList?.map((s) => ({
-                            value: s.id,
-                            label: s.section_name,
-                          })) || []
-                        }
+                        options={sectionOptions}
                         placeholder="Select Section"
+                        isClearable={false}
                       />
+                        );
+                      })()}
                       {submitErrors.addmitted_section && (
                         <small style={{ color: "red" }}>{submitErrors.addmitted_section}</small>
                       )}

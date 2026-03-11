@@ -214,9 +214,11 @@ const AdmLessonPlan = () => {
         label: section.section_description || section.section_code || section.sectionname || section.name,
       }));
       setSectionOptions(options);
+      setSelectedSection(options[0] || null);
       console.log("Section options set:", options);
     } else {
       setSectionOptions([]);
+      setSelectedSection(null);
     }
   }, [SectionList]);
 
@@ -604,6 +606,8 @@ const AdmLessonPlan = () => {
                           onChange={setSelectedSection}
                           placeholder="Select Section"
                           classNamePrefix="section-dropdown"
+                          isDisabled
+                          isClearable={false}
                         />
                       </div>
 
