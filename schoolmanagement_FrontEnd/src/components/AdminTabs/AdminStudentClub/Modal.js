@@ -366,7 +366,7 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
-                    <div className="col-12 col-md-3 mb-2">
+                    {/* <div className="col-12 col-md-3 mb-2">
                       <label
                         htmlFor="school-admission-no"
                         className="form-label"
@@ -383,7 +383,7 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                         placeholder="Student Barcode"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
-                    </div>
+                    </div> */}
                     {/* Batch */}
                     <div className="col-12 col-md-3 mb-2">
                       <label className="form-label">Session</label>
@@ -634,7 +634,7 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          <th>Student Barcode</th>
+                          {/* <th>Student Barcode</th> */}
                           <th>Actions</th>
                         </tr>
                       </thead>

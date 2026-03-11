@@ -806,7 +806,7 @@ const handleClearFilters = () => {
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
-                    <div className="col-12 col-md-3 mb-2">
+                    {/* <div className="col-12 col-md-3 mb-2">
                       <label
                         htmlFor="school-admission-no"
                         className="form-label"
@@ -822,7 +822,7 @@ const handleClearFilters = () => {
                         placeholder="Student Barcode"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }} // Inline style to set height and padding
                       />
-                    </div>
+                    </div> */}
 
                     {/* Session */}
                     <div className="col-12 col-md-3 mb-2">
@@ -982,7 +982,7 @@ const handleClearFilters = () => {
                               <th>Section</th>
                               <th>Father Name</th>
                               <th>Mother Name</th>
-                              <th>Student Barcode</th>
+                              {/* <th>Student Barcode</th> */}
                               <th>Actions</th>
                             </tr>
                           </thead>
@@ -1003,7 +1003,7 @@ const handleClearFilters = () => {
                                     <td>{s.section_name}</td>
                                     <td>{s.father_name}</td>
                                     <td>{s.mother_name}</td>
-                                    <td>{s.barcode}</td>
+                                    {/* <td>{s.barcode}</td> */}
                                     <td>
                                       <input
                                         type="radio"

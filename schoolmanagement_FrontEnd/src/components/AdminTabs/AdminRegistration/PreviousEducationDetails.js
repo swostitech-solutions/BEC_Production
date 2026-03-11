@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ApiUrl } from "../../../ApiUrl";
 import Select from "react-select";
-const PreviousEducationDetails = ({ formData, setFormData }) => {
+const PreviousEducationDetails = ({ formData, setFormData, submitErrors = {} }) => {
+  const [rowActionError, setRowActionError] = useState("");
   const previousEducation = formData.previousEducationDetails?.length
     ? formData.previousEducationDetails
     : [
@@ -43,11 +44,12 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
   const handleRemoveRow = (index) => {
     const row = previousEducation[index];
     if (!row?.isNew) {
-      alert("Only newly added rows can be removed.");
+      setRowActionError("Only newly added rows can be removed.");
       return;
     }
     const rows = previousEducation.filter((_, i) => i !== index);
     updateParent(rows);
+    setRowActionError("");
   };
   const handleInputChange = (index, field, value) => {
     const rows = previousEducation.map((row, i) =>
@@ -55,6 +57,10 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
     );
     updateParent(rows);
   };
+
+  const getSubmitFieldError = (index, field) =>
+    submitErrors[`previousEducationDetails.${index}.${field}`] || "";
+
   return (
     <div className="container-fluid form-container">
       <div className="table-responsive">
@@ -98,6 +104,11 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
                       }}
                       required
                     />
+                    {getSubmitFieldError(index, "nameofschool") && (
+                      <small style={{ color: "red", display: "block" }}>
+                        {getSubmitFieldError(index, "nameofschool")}
+                      </small>
+                    )}
                   </td>
                   {/* :white_check_mark: Location - Only letters and spaces */}
                   <td>
@@ -136,6 +147,11 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
                         handleInputChange(index, "year_from", value);
                       }}
                     />
+                    {getSubmitFieldError(index, "year_from") && (
+                      <small style={{ color: "red", display: "block" }}>
+                        {getSubmitFieldError(index, "year_from")}
+                      </small>
+                    )}
                   </td>
                   <td>
                     <input
@@ -154,15 +170,21 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
                         const fromDate = row?.year_from;
                         if (!fromDate) return; // no comparison if from date not selected
                         const yearFrom = fromDate.split("-")[0];
-                        // :no_entry_sign: Show message ONLY AFTER full date entered & field completed
                         if (Number(yearTo) < Number(yearFrom)) {
-                          alert(
+                          setRowActionError(
                             "Year Attended To must be greater than or equal to Year Attended From"
                           );
                           handleInputChange(index, "year_to", "");
+                        } else {
+                          setRowActionError("");
                         }
                       }}
                     />
+                    {getSubmitFieldError(index, "year_to") && (
+                      <small style={{ color: "red", display: "block" }}>
+                        {getSubmitFieldError(index, "year_to")}
+                      </small>
+                    )}
                   </td>
                   {/* :white_check_mark: Language of Instruction - Only letters and spaces */}
                   <td>
@@ -235,6 +257,11 @@ const PreviousEducationDetails = ({ formData, setFormData }) => {
           Add New Row
         </button>
       </div>
+      {rowActionError && (
+        <small style={{ color: "red", display: "block", marginTop: "6px" }}>
+          {rowActionError}
+        </small>
+      )}
     </div>
   );
 };

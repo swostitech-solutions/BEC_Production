@@ -8,9 +8,10 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const AdmOtherDetails = ({ formData, setFormData }) => {
+const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
   const { id } = useParams();
   const [errors, setErrors] = useState([]);
+  const [rowActionError, setRowActionError] = useState("");
 
   useEffect(() => {
     if (!formData.emegencyContact || formData.emegencyContact.length === 0) {
@@ -148,11 +149,13 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
     );
 
     if (incompleteContacts.length > 0) {
-      alert(
-        "Please fill in all required fields (Name, Relationship, Phone No) for emergency contacts before adding a new one."
+      setRowActionError(
+        "Please fill all required fields in the current row before adding a new one."
       );
       return; // Prevent adding a new row
     }
+
+    setRowActionError("");
 
     // If validation passes, add a new row
     setFormData((prevData) => ({
@@ -198,6 +201,9 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
     }));
   };
 
+  const getSubmitFieldError = (index, field) =>
+    submitErrors[`emegencyContact.${index}.${field}`] || "";
+
   return (
     <div className="container-fluid form-container">
       <div className="table-responsive">
@@ -238,6 +244,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }}
                       required
                     />
+                    {getSubmitFieldError(index, "name") && (
+                      <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
+                        {getSubmitFieldError(index, "name")}
+                      </span>
+                    )}
                   </td>
 
                   {/* ✅ Relationship (only alphabets & spaces allowed) */}
@@ -254,6 +265,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                       }}
                       required
                     />
+                    {getSubmitFieldError(index, "relationship") && (
+                      <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
+                        {getSubmitFieldError(index, "relationship")}
+                      </span>
+                    )}
                   </td>
 
                   {/* ✅ Phone Number (only digits, 10 characters max) */}
@@ -278,6 +294,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
                         }}
                       >
                         {errors[index]}
+                      </span>
+                    )}
+                    {getSubmitFieldError(index, "Mobile_Number") && (
+                      <span style={{ color: "red", fontSize: "0.8em", display: "block" }}>
+                        {getSubmitFieldError(index, "Mobile_Number")}
                       </span>
                     )}
                   </td>
@@ -309,6 +330,11 @@ const AdmOtherDetails = ({ formData, setFormData }) => {
           Add New Row
         </button>
       </div>
+      {rowActionError && (
+        <small style={{ color: "red", display: "block", marginTop: "6px" }}>
+          {rowActionError}
+        </small>
+      )}
     </div>
   );
 };

@@ -166,7 +166,7 @@ const ResultPublishs = () => {
                           className="form-control detail"
                         />
                       </div>
-                      <div className="col-12 col-md-4 mb-1">
+                      {/* <div className="col-12 col-md-4 mb-1">
                         <label htmlFor="class" className="form-label">
                           Student Barcode<span style={{ color: "red" }}>*</span>
                         </label>
@@ -175,7 +175,7 @@ const ResultPublishs = () => {
                           id="student-barcode"
                           className="form-control detail"
                         />
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">

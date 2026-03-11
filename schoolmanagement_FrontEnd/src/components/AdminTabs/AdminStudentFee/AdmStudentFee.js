@@ -880,7 +880,7 @@ const StudentFee = () => {
                         onSelectStudent={handleSelectStudent}
                       />
 
-                      <div className="col-12 col-md-4 mb-1">
+                      {/* <div className="col-12 col-md-4 mb-1">
                         <label htmlFor="student-barcode" className="form-label">
                           Student BarCode
                         </label>
@@ -900,7 +900,7 @@ const StudentFee = () => {
                             }
                           />
                         </div>
-                      </div>
+                      </div> */}
 
                       <div className="col-12 col-md-4 mb-1">
                         <label

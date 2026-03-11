@@ -748,7 +748,7 @@ const StudentSearch = () => {
                         />
                       </div>
 
-                      <div className="col-12 col-md-3 mb-4">
+                      {/* <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="student-barcode" className="form-label">
                           Student BarCode
                         </label>
@@ -759,7 +759,7 @@ const StudentSearch = () => {
                           value={formData.studentBarcode}
                           onChange={handleInputChange}
                         />
-                      </div>
+                      </div> */}
 
                       {/* Session Dropdown */}
                       <div className="col-12 col-md-3 mb-4">

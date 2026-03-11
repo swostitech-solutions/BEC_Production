@@ -268,7 +268,7 @@ const AdmIssueReturnReport = () => {
                         <th>Sr.No</th>
                         <th>Name</th>
                         <th>Application number</th>
-                        <th>Student BarCode</th>
+                        {/* <th>Student BarCode</th> */}
                         <th>Title</th>
                         <th>Author</th>
                         <th>Book Accession No</th>
@@ -288,7 +288,7 @@ const AdmIssueReturnReport = () => {
                             <td>{book.schoolBarcode}</td>
                             <td>{book.bookName}</td>
                             <td>{book.authorName}</td>
-                            <td>{book.barcode}</td>
+                            {/* <td>{book.barcode}</td> */}
                             <td>{book.issueDate}</td>
                             <td>{book.IssuesBy}</td>
                             <td>{book.returnDate}</td>

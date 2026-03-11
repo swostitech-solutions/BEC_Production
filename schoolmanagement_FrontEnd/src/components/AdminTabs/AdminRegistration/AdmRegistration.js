@@ -380,7 +380,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
       classId: "",
       section: "",
       admissionNo: "",
-      barcode: "",
+      // barcode: "",
       fatherName: "",
       motherName: "",
       gender: "",
@@ -559,7 +559,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           onChange={handleInputChange}
                         />
                       </div>
-                      <div className="col-12 col-md-3 mb-2">
+                      {/* <div className="col-12 col-md-3 mb-2">
                         <label htmlFor="barcode" className="form-label">
                           Student Barcode
                         </label>
@@ -572,7 +572,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           value={filters.barcode}
                           onChange={handleInputChange}
                         />
-                      </div>
+                      </div> */}
 
                       {/* 🔹 Session Dropdown */}
                       <div className="col-12 col-md-3 mb-2">

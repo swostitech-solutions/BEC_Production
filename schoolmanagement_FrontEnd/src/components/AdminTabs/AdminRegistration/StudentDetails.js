@@ -33,6 +33,7 @@ const AdmAttendanceEntry = ({
   setFormData,
   frontCover,
   setFrontCover,
+  submitErrors = {},
 }) => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -716,9 +717,9 @@ const AdmAttendanceEntry = ({
                           onChange={handleInputChange}
                           required
                         />
-                        {errors.first_name && (
+                        {(errors.first_name || submitErrors.first_name) && (
                           <small style={{ color: "red" }}>
-                            {errors.first_name}
+                            {errors.first_name || submitErrors.first_name}
                           </small>
                         )}
                         <input
@@ -744,9 +745,9 @@ const AdmAttendanceEntry = ({
                           value={formData.last_name}
                           onChange={handleInputChange}
                         />
-                        {errors.last_name && (
+                        {(errors.last_name || submitErrors.last_name) && (
                           <small style={{ color: "red" }}>
-                            {errors.last_name}
+                            {errors.last_name || submitErrors.last_name}
                           </small>
                         )}
                       </div>
@@ -801,6 +802,9 @@ const AdmAttendanceEntry = ({
                           })
                         }
                       />
+                      {submitErrors.gender && (
+                        <small style={{ color: "red" }}>{submitErrors.gender}</small>
+                      )}
                     </div>
 
                     {/* Organization */}
@@ -876,6 +880,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Session"
                       />
+                      {submitErrors.batch && (
+                        <small style={{ color: "red" }}>{submitErrors.batch}</small>
+                      )}
                     </div>
 
                     {/* Course */}
@@ -913,6 +920,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Course"
                       />
+                      {submitErrors.course && (
+                        <small style={{ color: "red" }}>{submitErrors.course}</small>
+                      )}
                     </div>
 
                     {/* Department */}
@@ -950,6 +960,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Department"
                       />
+                      {submitErrors.department && (
+                        <small style={{ color: "red" }}>{submitErrors.department}</small>
+                      )}
                     </div>
 
                     {/* Academic Year */}
@@ -989,6 +1002,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Academic Year"
                       />
+                      {submitErrors.academic_year && (
+                        <small style={{ color: "red" }}>{submitErrors.academic_year}</small>
+                      )}
                     </div>
 
                     {/* Semester */}
@@ -1026,6 +1042,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Semester"
                       />
+                      {submitErrors.semester && (
+                        <small style={{ color: "red" }}>{submitErrors.semester}</small>
+                      )}
                     </div>
 
                     {/* Section */}
@@ -1063,11 +1082,14 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Section"
                       />
+                      {submitErrors.addmitted_section && (
+                        <small style={{ color: "red" }}>{submitErrors.addmitted_section}</small>
+                      )}
                     </div>
 
                     <div className="col-12 col-md-4 mb-4">
                       <label htmlFor="date_of_admission" className="form-label">
-                        Date Of Admission{" "}
+                        Date Of Admission <span style={{ color: "red" }}>*</span>
                       </label>
                       <input
                         type="date"
@@ -1078,6 +1100,9 @@ const AdmAttendanceEntry = ({
                         onChange={handleInputChange}
                         disabled={isDisabled}
                       />
+                      {submitErrors.date_of_admission && (
+                        <small style={{ color: "red" }}>{submitErrors.date_of_admission}</small>
+                      )}
                     </div>
 
                     <div className="col-12 col-sm-6 col-md-4 mb-2">
@@ -1111,11 +1136,14 @@ const AdmAttendanceEntry = ({
                           })
                         }
                       />
+                      {submitErrors.admission_type && (
+                        <small style={{ color: "red" }}>{submitErrors.admission_type}</small>
+                      )}
                     </div>
 
                     <div className="col-12 col-md-4 mb-2">
                       <label htmlFor="doj" className="form-label">
-                        Date Of Join
+                        Date Of Join <span style={{ color: "red" }}>*</span>
                       </label>
                       <input
                         type="date"
@@ -1126,6 +1154,9 @@ const AdmAttendanceEntry = ({
                         onChange={handleInputChange}
                         disabled={isDisabled}
                       />
+                      {submitErrors.doj && (
+                        <small style={{ color: "red" }}>{submitErrors.doj}</small>
+                      )}
                     </div>
 
                     {/* <div className="col-12 col-md-4 mb-2">
@@ -1607,6 +1638,9 @@ const AdmAttendanceEntry = ({
                         onChange={handleInputChange}
                         disabled={isDisabled}
                       />
+                      {submitErrors.dob && (
+                        <small style={{ color: "red" }}>{submitErrors.dob}</small>
+                      )}
                     </div>
 
                     <div className="col-12 col-md-4 mb-2">
@@ -1653,9 +1687,9 @@ const AdmAttendanceEntry = ({
                         }}
                         maxLength={12}
                       />
-                      {errors.studentaadharno && (
+                      {(errors.studentaadharno || submitErrors.studentaadharno) && (
                         <small style={{ color: "red" }}>
-                          {errors.studentaadharno}
+                          {errors.studentaadharno || submitErrors.studentaadharno}
                         </small>
                       )}
                     </div>
@@ -1674,9 +1708,9 @@ const AdmAttendanceEntry = ({
                         onChange={handleInputChange}
                         disabled
                       />
-                      {errors.username && (
+                      {(errors.username || submitErrors.username) && (
                         <small style={{ color: "red" }}>
-                          {errors.username}
+                          {errors.username || submitErrors.username}
                         </small>
                       )}
                     </div>

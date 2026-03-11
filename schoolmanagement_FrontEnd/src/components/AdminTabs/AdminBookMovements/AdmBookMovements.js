@@ -852,7 +852,7 @@ const AdmBookMovements = () => {
                         </div>
                       </div>
 
-                      <div
+                      {/* <div
                         className="col-12 col-md-3 mb-1"
                         style={{ minWidth: "250px" }}
                       >
@@ -870,7 +870,7 @@ const AdmBookMovements = () => {
                             style={{ width: "100%" }}
                           />
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* Session Dropdown */}
                       <div className="col-md-3" style={{ minWidth: "250px" }}>
@@ -1190,7 +1190,7 @@ const AdmBookMovements = () => {
                           <th>Sr No</th>
                           <th>Name</th>
                           <th>College Application number</th>
-                          <th>Student BarCode</th>
+                          {/* <th>Student BarCode</th> */}
                           <th>Course</th>
                           <th>Section</th>
                           <th>Book</th>

@@ -334,7 +334,7 @@ const AdmAttendanceEntry = () => {
   const fromClassRef = useRef(null);
   const toClassRef = useRef(null);
   const admissionNoRef = useRef(null);
-  const barcodeRef = useRef(null);
+  // const barcodeRef = useRef(null);
   const smsToRef = useRef(null);
 
 
@@ -346,7 +346,7 @@ const AdmAttendanceEntry = () => {
     if (fromClassRef.current) fromClassRef.current.value = "";
     if (toClassRef.current) toClassRef.current.value = "";
     if (admissionNoRef.current) admissionNoRef.current.value = "";
-    if (barcodeRef.current) barcodeRef.current.value = "";
+    // if (barcodeRef.current) barcodeRef.current.value = "";
     if (smsToRef.current) smsToRef.current.checked = false;
   };
   const [show, setShow] = useState(false);
@@ -518,7 +518,7 @@ const AdmAttendanceEntry = () => {
                         />
                       </div>
 
-                      <div className="col-12 col-md-3 mb-1">
+                      {/* <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="barcode" className="form-label">
                           Barcode
                         </label>
@@ -529,7 +529,7 @@ const AdmAttendanceEntry = () => {
                           placeholder="Enter barcode"
                           ref={barcodeRef}
                         />
-                      </div>
+                      </div> */}
                       <div className="col-12 col-md-3 mb-1">
                         <span className="me-3" style={{ fontWeight: "700" }}>
                           Send SMS to:
@@ -613,7 +613,7 @@ const AdmAttendanceEntry = () => {
                         <th>Section</th>
                         <th>Roll No</th>
                         <th>School Application number</th>
-                        <th>BarCode</th>
+                        {/* <th>BarCode</th> */}
                         <th>Student Name</th>
                         <th>Primary Guardian</th>
                         <th>Father Mobile No</th>

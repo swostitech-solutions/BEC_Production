@@ -168,7 +168,7 @@ const AdmAttendanceEntry = () => {
   const fromClassRef = useRef(null);
   const toClassRef = useRef(null);
   const admissionNoRef = useRef(null);
-  const barcodeRef = useRef(null);
+  // const barcodeRef = useRef(null);
   const smsToRef = useRef(null);
   const [periods, setPeriods] = useState([]);
 
@@ -1283,7 +1283,7 @@ const AdmAttendanceEntry = () => {
                         <th>Application number</th>
                         <th>Student Name</th>
                         <th>Mark Attendance</th>
-                        <th>BarCode</th>
+                        {/* <th>BarCode</th> */}
                         <th>Primary Guardian</th>
                         <th>Father Mobile No</th>
                         <th>Mother Mobile No</th>
@@ -1328,7 +1328,7 @@ const AdmAttendanceEntry = () => {
                                 <option value="A">Absent</option>
                               </select>
                             </td>
-                            <td>{student.barcode}</td>
+                            {/* <td>{student.barcode}</td> */}
                             <td>{student.primary_guardian}</td>
                             <td>
                               <input
