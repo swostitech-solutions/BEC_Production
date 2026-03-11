@@ -748,7 +748,7 @@ const StudentSearch = () => {
                         />
                       </div>
 
-                      <div className="col-12 col-md-3 mb-4">
+                      {/* <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="student-barcode" className="form-label">
                           Student BarCode
                         </label>
@@ -759,7 +759,7 @@ const StudentSearch = () => {
                           value={formData.studentBarcode}
                           onChange={handleInputChange}
                         />
-                      </div>
+                      </div> */}
 
                       {/* Session Dropdown */}
                       <div className="col-12 col-md-3 mb-4">
@@ -948,7 +948,7 @@ const StudentSearch = () => {
                         <th>Course</th>
                         <th>Section</th>
                         <th>Student Name</th>
-                        <th>BarCode</th>
+                        {/* <th>BarCode</th> */}
                         <th>Father Name</th>
                         <th>Mother Name</th>
                         <th>Select Semester</th>
@@ -964,7 +964,7 @@ const StudentSearch = () => {
                             <td>{student.course_name}</td>
                             <td>{student.section_name}</td>
                             <td>{student.full_name}</td>
-                            <td>{student.barcode || "-"}</td>
+                            {/* <td>{student.barcode || "-"}</td> */}
                             <td>{student.father_name || "-"}</td>
                             <td>{student.mother_name || "-"}</td>
                             <td>

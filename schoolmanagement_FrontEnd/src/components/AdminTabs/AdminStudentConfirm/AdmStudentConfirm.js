@@ -328,7 +328,7 @@ const AdmAttendanceEntry = () => {
           studentname: s.student_name,
           admission_no: s.admission_no,
           college_admission_no: s.college_admission_no,
-          barcode: s.barcode,
+          // barcode: s.barcode,
           fatherName: s.fatherName,
           motherName: s.motherName,
           student_status: s.student_status,
@@ -453,7 +453,7 @@ const AdmAttendanceEntry = () => {
             studentname: s.student_name,
             admission_no: s.admission_no,
             college_admission_no: s.college_admission_no,
-            barcode: s.barcode,
+            // barcode: s.barcode,
             fatherName: s.fatherName,
             motherName: s.motherName,
             student_status: s.student_status,
@@ -527,7 +527,7 @@ const AdmAttendanceEntry = () => {
       student_name: data.student_name,
       admission_no: data.admission_no,
       college_admission_no: data.college_admission_no,
-      barcode: data.barcode,
+      // barcode: data.barcode,
       batch: data.batch_code,
       course: data.course_name,
       department: data.department_description,
@@ -855,7 +855,7 @@ const AdmAttendanceEntry = () => {
       student_name: basic.first_name,
       admission_no: basic.admission_no,
       college_admission_no: basic.school_admission_no,
-      barcode: basic.barcode,
+      // barcode: basic.barcode,
       batch: academic.batch_id,
       course: academic.course_id,
       department: academic.department_id,
@@ -1238,7 +1238,7 @@ const AdmAttendanceEntry = () => {
                             studentId: student.studentId,
                             student_name: student.studentname,
                             admission_no: student.admission_no,
-                            barcode: student.barcode,
+                            // barcode: student.barcode,
                             batch: student.batch_code,
                             course: student.course_name,
                             department: student.department_description,
@@ -1642,7 +1642,7 @@ const AdmAttendanceEntry = () => {
                       disabled
                     />
                   </div>
-                  <div className="col-12 col-md-3 mb-2">
+                  {/* <div className="col-12 col-md-3 mb-2">
                     <label className="form-label">Student Barcode</label>
                     <input
                       type="text"
@@ -1650,7 +1650,7 @@ const AdmAttendanceEntry = () => {
                       value={selectedStudent.barcode}
                       disabled
                     />
-                  </div>
+                  </div> */}
                   <div className="col-12 col-md-3 mb-2">
                     <label className="form-label">Father Name</label>
                     <input

@@ -344,7 +344,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         placeholder="Admission No"
                       />
                     </div>
-                    <div className="col-3">
+                    {/* <div className="col-3">
                       <label
                         htmlFor="school-admission-no"
                         className="form-label"
@@ -360,7 +360,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         onChange={handleInputChange}
                         placeholder="Barcode"
                       />
-                    </div>
+                    </div> */}
                     <div className="col-3">
                       <label className="form-label">Session</label>
                       <Select
@@ -620,7 +620,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          <th>Student Barcode</th>
+                          {/* <th>Student Barcode</th> */}
                         </tr>
                       </thead>
                       <tbody>
@@ -645,7 +645,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                               <td>{student.section_name}</td>
                               <td>{student.father_name}</td>
                               <td>{student.mother_name}</td>
-                              <td>{student.barcode}</td>
+                              {/* <td>{student.barcode}</td> */}
                             </tr>
                           );
                         })}

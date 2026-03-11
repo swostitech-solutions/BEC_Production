@@ -684,7 +684,7 @@ const AdmAttendanceEntry = () => {
                         </div>
                       </div>
 
-                      <div className="col-12 col-md-3 mb-1">
+                      {/* <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="student-barcode" className="form-label">
                           Student BarCode<span style={{ color: "red" }}>*</span>
                         </label>
@@ -698,7 +698,7 @@ const AdmAttendanceEntry = () => {
                             disabled
                           />
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* Batch */}
                       <div className="col-12 col-md-3 mb-2">

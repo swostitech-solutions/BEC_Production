@@ -290,7 +290,7 @@ const TransferCertificateForm = () => {
                     </div>
                   </div>
                   <div className="row mb-3">
-                    <div className="col-md-6 d-flex align-items-center">
+                    {/* <div className="col-md-6 d-flex align-items-center">
                       <label
                         className="form-label me-3"
                         style={{ width: "200px" }}
@@ -304,7 +304,7 @@ const TransferCertificateForm = () => {
                         disabled
                         defaultValue={formData.barcode || ""}
                       />
-                    </div>
+                    </div> */}
                     <div className="col-md-6 d-flex align-items-center">
                       <label
                         className="form-label me-3"
