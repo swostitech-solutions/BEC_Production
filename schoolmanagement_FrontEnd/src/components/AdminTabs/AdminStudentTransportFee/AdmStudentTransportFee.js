@@ -29,6 +29,7 @@ const AdmAttendanceEntry = () => {
   const branchId = localStorage.getItem("branchId");
   const academicyearId = localStorage.getItem("academicSessionId");
   const [showUnpaidFee, setShowUnpaidFee] = useState(false);
+  const [pageMessage, setPageMessage] = useState("");
     // State for Academic Year dropdown
     const [academicYears, setAcademicYears] = useState([]);
     const [selectedAcademicYear, setSelectedAcademicYear] = useState(null);
@@ -95,6 +96,7 @@ const AdmAttendanceEntry = () => {
 
    // Student Details
    setStudentDetails(null);
+  setPageMessage("");
 
    // Modal reset (if needed)
    // setShowModal(false);
@@ -915,7 +917,7 @@ const handleSearch = async () => {
 
   const exportToExcel = () => {
   if (!transportData || transportData.length === 0) {
-    alert("No data available to export.");
+    setPageMessage("Error: No data available to export.");
     return;
   }
 
@@ -937,6 +939,7 @@ const handleSearch = async () => {
   XLSX.utils.book_append_sheet(workbook, worksheet, "Transport Data");
 
   XLSX.writeFile(workbook, "TransportData.xlsx");
+  setPageMessage("Transport data exported successfully.");
 };
 
 
@@ -948,17 +951,17 @@ const fetchViewPDF = async (student_id, fee_applied_from) => {
     const token = localStorage.getItem("accessToken");
 
     if (!student_id) {
-      alert("Student ID missing!");
+      setPageMessage("Error: Student ID missing!");
       return;
     }
 
     if (!fee_applied_from) {
-      alert("Fee Applied From is missing!");
+      setPageMessage("Error: Fee Applied From is missing!");
       return;
     }
 
     if (!organization_id || !branch_id ) {
-      alert("Organization / Branch  is missing!");
+      setPageMessage("Error: Organization / Branch is missing!");
       return;
     }
 
@@ -979,10 +982,11 @@ const fetchViewPDF = async (student_id, fee_applied_from) => {
     if (result.message === "success") {
       generatePDF(result.data);
     } else {
-      alert(result.message || "Failed to fetch PDF data");
+      setPageMessage(`Error: ${result.message || "Failed to fetch PDF data"}`);
     }
   } catch (error) {
     console.error("Error fetching PDF:", error);
+    setPageMessage("Error: Failed to fetch PDF data.");
   }
 };
 
@@ -1161,6 +1165,13 @@ const generatePDF = (data) => {
                     Close
                   </button>
                 </div>
+                {pageMessage && (
+                  <div
+                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {pageMessage}
+                  </div>
+                )}
               </div>
 
               {/* SearchFeild */}

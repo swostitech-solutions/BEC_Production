@@ -12,6 +12,7 @@ const AdmIssueReturnReport = () => {
   const [toDate, setToDate] = useState("");
   const [registrationNo, setRegistrationNo] = useState("");
   const [filterFlag, setFilterFlag] = useState("A"); // Default to "All"
+  const [pageMessage, setPageMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
@@ -48,6 +49,7 @@ const AdmIssueReturnReport = () => {
 
   // Handle the Search button click
   const handleSearch = () => {
+    setPageMessage("");
     setCurrentPage(0); // Reset to first page when searching
     fetchData();
   };
@@ -55,7 +57,7 @@ const AdmIssueReturnReport = () => {
   // Function to export table data to an Excel file
   const handleExportToExcel = () => {
     if (tableData.length === 0) {
-      alert("No data available to export.");
+      setPageMessage("Error: No data available to export.");
       return;
     }
 
@@ -65,6 +67,7 @@ const AdmIssueReturnReport = () => {
 
     // Export the workbook to an Excel file
     XLSX.writeFile(wb, "Issue_Return_Report.xlsx");
+    setPageMessage("Issue return report exported successfully.");
   };
 
 
@@ -75,10 +78,12 @@ const AdmIssueReturnReport = () => {
     setFilterFlag("A"); // Reset to "All"
     setTableData([]); // Clear table data
     setCurrentPage(0); // Reset pagination
+    setPageMessage("");
   };
 
   // Handle filter change and auto-trigger search
   const handleFilterChange = (value) => {
+    setPageMessage("");
     setFilterFlag(value);
     setCurrentPage(0); // Reset to first page
     // Auto-trigger search after a short delay to ensure state is updated
@@ -156,6 +161,13 @@ const AdmIssueReturnReport = () => {
                     Close
                   </button>
                 </div>
+                {pageMessage && (
+                  <div
+                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {pageMessage}
+                  </div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2">

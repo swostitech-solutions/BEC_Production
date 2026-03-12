@@ -2604,6 +2604,16 @@ const FeeCollection = () => {
     const login_id = Number(sessionStorage.getItem("userId"));
     const student_id = Number(selectedStudentId);
 
+    if (!student_id || Number.isNaN(student_id)) {
+      alert("First choose the student.");
+      return;
+    }
+
+    if (!selectedPaymentMethodId) {
+      alert("Payment method is required.");
+      return;
+    }
+
     const receipt_date = dateRef.current.value;
     const reference_date = selectedDate.toISOString().slice(0, 10);
 

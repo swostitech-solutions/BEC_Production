@@ -8,6 +8,7 @@ const AdmNewMOU = () => {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [mouDetails, setMouDetails] = useState("");
   const [errors, setErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   const fileInputRef = useRef(null);
 
@@ -33,12 +34,12 @@ const AdmNewMOU = () => {
     setMouDetails("");
     setUploadedFile(null);
     setErrors({});
+    setStatusMessage("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSave = async () => {
     if (!validateFields()) {
-      alert("Please fill all required fields.");
       return;
     }
 
@@ -46,9 +47,11 @@ const AdmNewMOU = () => {
       const userId = sessionStorage.getItem("userId") || "1";
 
       if (!orgId || !branchId || !userId) {
-        alert("Missing required details. Please check storage values.");
+        setStatusMessage("Error: Missing required details. Please check storage values.");
         return;
       }
+
+      setStatusMessage("");
 
       const formData = new FormData();
       formData.append("created_by", userId);
@@ -67,17 +70,17 @@ const AdmNewMOU = () => {
       const responseData = await response.json();
 
       if (response.ok) {
-        alert("MOU saved successfully!");
+        setStatusMessage("MOU saved successfully!");
         navigate("/admin/mou-list");
       } else {
         const errorMsg = responseData.error
           ? JSON.stringify(responseData.error)
           : "Unknown error";
-        alert(`Failed to save MOU: ${errorMsg}`);
+        setStatusMessage(`Error: Failed to save MOU: ${errorMsg}`);
       }
     } catch (error) {
       console.error("Error saving MOU data:", error);
-      alert("An error occurred while saving MOU.");
+      setStatusMessage("Error: An error occurred while saving MOU.");
     }
   };
 
@@ -131,6 +134,13 @@ const AdmNewMOU = () => {
                 >
                   Close
                 </button>
+                {statusMessage && (
+                  <div
+                    className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {statusMessage}
+                  </div>
+                )}
               </div>
 
               {/* Form Section */}
@@ -162,7 +172,10 @@ const AdmNewMOU = () => {
                           className="form-control detail"
                           placeholder="Enter MOU details"
                           value={mouDetails}
-                          onChange={(e) => setMouDetails(e.target.value)}
+                          onChange={(e) => {
+                            setMouDetails(e.target.value);
+                            setErrors((prev) => ({ ...prev, mouDetails: "" }));
+                          }}
                         />
                         {errors.mouDetails && (
                           <small className="text-danger">
@@ -185,7 +198,10 @@ const AdmNewMOU = () => {
                           type="file"
                           className="form-control detail"
                           accept="*/*"
-                          onChange={(e) => setUploadedFile(e.target.files[0])}
+                          onChange={(e) => {
+                            setUploadedFile(e.target.files[0]);
+                            setErrors((prev) => ({ ...prev, uploadedFile: "" }));
+                          }}
                           ref={fileInputRef}
                         />
                         {errors.uploadedFile && (

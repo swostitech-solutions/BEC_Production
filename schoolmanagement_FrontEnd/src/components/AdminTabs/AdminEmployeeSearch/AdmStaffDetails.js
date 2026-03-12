@@ -44,8 +44,106 @@ export default function BasicTabs() {
   const [languageData, setLanguageData] = useState(null);
   const [addressFormData, setAddressFormData] = useState(null);
   const [basicInfoData, setBasicInfoData] = useState(null);
+  const [basicInfoRequiredErrors, setBasicInfoRequiredErrors] = useState({});
+  const [addressRequiredErrors, setAddressRequiredErrors] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  const validateBasicInfoRequiredFields = (data) => {
+    const validationErrors = {};
+    const requiredFields = [
+      "employeeCode",
+      "firstName",
+      "lastName",
+      "dob",
+      "nationality",
+      "religion",
+      "gender",
+      "motherTongue",
+      "employeeType",
+      "status",
+      "phoneNumber",
+    ];
+
+    requiredFields.forEach((field) => {
+      const value = data?.[field];
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        (typeof value === "string" && value.trim() === "");
+
+      if (isEmpty) {
+        validationErrors[field] = "This field is required";
+      }
+    });
+
+    return validationErrors;
+  };
+
+  const clearBasicInfoFieldError = (field) => {
+    setBasicInfoRequiredErrors((prev) => {
+      if (!prev[field]) return prev;
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
+  };
+
+  const validateAddressRequiredFields = (data) => {
+    const validationErrors = {};
+    const formValues = data?.formValues || {};
+
+    const requiredFieldRules = [
+      { key: "residenceAddress", value: formValues.residenceAddress },
+      { key: "selectedCountry", value: data?.selectedCountry?.value },
+      { key: "selectedState", value: data?.selectedState?.value },
+      { key: "selectedResidenceDistrict", value: data?.selectedResidenceDistrict?.value },
+      { key: "residencePincode", value: formValues.residencePincode },
+      { key: "permanentAddress", value: formValues.permanentAddress },
+      { key: "selectedPermanentCountry", value: data?.selectedPermanentCountry?.value },
+      { key: "selectedPermanentState", value: data?.selectedPermanentState?.value },
+      { key: "selectedPermanentDistrict", value: data?.selectedPermanentDistrict?.value },
+      { key: "permanentPincode", value: formValues.permanentPincode },
+    ];
+
+    requiredFieldRules.forEach(({ key, value }) => {
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        (typeof value === "string" && value.trim() === "");
+
+      if (isEmpty) {
+        validationErrors[key] = "This field is required";
+      }
+    });
+
+    if (
+      formValues.residencePincode &&
+      String(formValues.residencePincode).trim() !== "" &&
+      String(formValues.residencePincode).length !== 6
+    ) {
+      validationErrors.residencePincode = "Pincode must be exactly 6 digits";
+    }
+
+    if (
+      formValues.permanentPincode &&
+      String(formValues.permanentPincode).trim() !== "" &&
+      String(formValues.permanentPincode).length !== 6
+    ) {
+      validationErrors.permanentPincode = "Pincode must be exactly 6 digits";
+    }
+
+    return validationErrors;
+  };
+
+  const clearAddressFieldError = (field) => {
+    setAddressRequiredErrors((prev) => {
+      if (!prev[field]) return prev;
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
+  };
 
   // Fetch metadata lists for mapping
   const { bloodGroups } = useFetchBloodGroups();
@@ -261,11 +359,23 @@ export default function BasicTabs() {
     const orgId = localStorage.getItem("orgId");
     const branchId = localStorage.getItem("branchId");
 
-    // Validation: Basic Info is required
-    if (!basicInfoData) {
-      alert("❌ Please complete the Staff Basic Info tab first!");
+    const basicInfoValidationErrors = validateBasicInfoRequiredFields(basicInfoData);
+    if (Object.keys(basicInfoValidationErrors).length > 0) {
+      setBasicInfoRequiredErrors(basicInfoValidationErrors);
+      setValue(0);
       return;
     }
+
+    setBasicInfoRequiredErrors({});
+
+    const addressValidationErrors = validateAddressRequiredFields(addressFormData);
+    if (Object.keys(addressValidationErrors).length > 0) {
+      setAddressRequiredErrors(addressValidationErrors);
+      setValue(1);
+      return;
+    }
+
+    setAddressRequiredErrors({});
 
     if (!userId) {
       alert("❌ User session expired. Please login again.");
@@ -681,6 +791,24 @@ export default function BasicTabs() {
       alert("❌ User session expired. Please login again.");
       return;
     }
+
+    const basicInfoValidationErrors = validateBasicInfoRequiredFields(basicInfoData);
+    if (Object.keys(basicInfoValidationErrors).length > 0) {
+      setBasicInfoRequiredErrors(basicInfoValidationErrors);
+      setValue(0);
+      return;
+    }
+
+    setBasicInfoRequiredErrors({});
+
+    const addressValidationErrors = validateAddressRequiredFields(addressFormData);
+    if (Object.keys(addressValidationErrors).length > 0) {
+      setAddressRequiredErrors(addressValidationErrors);
+      setValue(1);
+      return;
+    }
+
+    setAddressRequiredErrors({});
 
     console.log("=== 💾 Starting UPDATE Existing Staff (PUT) - VERSION 3.0 FIXED ===");
     console.log("📊 Current State Data:", {
@@ -1136,10 +1264,25 @@ export default function BasicTabs() {
       </Tabs>
 
       <CustomTabPanel value={value} index={0}>
-        <StaffBasicInfo goToTab={goToTab} setAddressDetails={setAddressDetails} setBasicInfoDataInParent={setBasicInfoData} basicInfoData={basicInfoData} />
+        <StaffBasicInfo
+          goToTab={goToTab}
+          setAddressDetails={setAddressDetails}
+          setBasicInfoDataInParent={setBasicInfoData}
+          basicInfoData={basicInfoData}
+          externalRequiredFieldErrors={basicInfoRequiredErrors}
+          onClearRequiredFieldError={clearBasicInfoFieldError}
+        />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
-        <AdmAddress goToTab={goToTab} addressDetails={addressDetails} setDocumentDetailsInParent={setDocumentDetails} setAddressFormDataInParent={setAddressFormData} addressFormData={addressFormData} />
+        <AdmAddress
+          goToTab={goToTab}
+          addressDetails={addressDetails}
+          setDocumentDetailsInParent={setDocumentDetails}
+          setAddressFormDataInParent={setAddressFormData}
+          addressFormData={addressFormData}
+          externalAddressFieldErrors={addressRequiredErrors}
+          onClearAddressFieldError={clearAddressFieldError}
+        />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={2}>
         <DocumentDetails goToTab={goToTab} documentDetails={documentDetails} setRelationDetailsInParent={setRelationDetails} setDocumentDetails={setDocumentDetails} />

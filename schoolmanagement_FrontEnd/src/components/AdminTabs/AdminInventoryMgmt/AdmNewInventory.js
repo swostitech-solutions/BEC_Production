@@ -3,13 +3,14 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import Select from "react-select";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { ApiUrl } from "../../../ApiUrl";
 
 const AdmNewInventory = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   // Check if we're in edit mode
   const editMode = location.state?.editMode || false;
@@ -149,6 +150,7 @@ const AdmNewInventory = () => {
   const handleCategoryChange = (selectedOption) => {
     const categoryId = selectedOption?.value || "";
     setFormData({ ...formData, category: categoryId, sub_category: "" });
+    setErrors((prev) => ({ ...prev, category: "", sub_category: "" }));
 
     if (categoryId) {
       fetchSubCategories(categoryId);
@@ -160,53 +162,42 @@ const AdmNewInventory = () => {
   // Handle input changes
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
+    setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   // Handle Save
   const handleSave = async () => {
-    // Validation
-    if (!formData.purchase_date) {
-      toast.error("Please select a purchase date");
-      return;
-    }
-    if (!formData.category) {
-      toast.error("Please select a category");
-      return;
-    }
-    if (!formData.sub_category) {
-      toast.error("Please select a sub-category");
-      return;
-    }
-    if (!formData.item_name.trim()) {
-      toast.error("Please enter item name");
-      return;
-    }
+    const newErrors = {};
+    if (!formData.purchase_date) newErrors.purchase_date = "Purchase Date is required.";
+    if (!formData.category) newErrors.category = "Inventory Category is required.";
+    if (!formData.sub_category) newErrors.sub_category = "Inventory Sub-Category is required.";
+    if (!formData.item_name.trim()) newErrors.item_name = "Item Name is required.";
     if (!formData.item_value || parseFloat(formData.item_value) < 0) {
-      toast.error("Please enter a valid item value");
-      return;
+      newErrors.item_value = "Enter a valid Value.";
     }
     if (!formData.quantity || parseInt(formData.quantity) < 0) {
-      toast.error("Please enter a valid quantity");
-      return;
+      newErrors.quantity = "Enter a valid Quantity.";
     }
-    if (!formData.inventory_type) {
-      toast.error("Please select inventory type");
-      return;
-    }
-    if (!formData.status) {
-      toast.error("Please enter asset code");
+    if (!formData.inventory_type) newErrors.inventory_type = "Inventory Type is required.";
+    if (!formData.status.trim()) newErrors.status = "Asset Code No is required.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
+    setStatusMessage("");
+
     // Validate required IDs
     if (!orgId || !branchId) {
-      toast.error("Organization and Branch information is missing. Please log in again.");
+      setStatusMessage("Error: Organization and Branch information is missing. Please log in again.");
       console.error("Missing:", { orgId, branchId });
       return;
     }
 
     if (!userId) {
-      toast.error("User information is missing. Please log in again.");
+      setStatusMessage("Error: User information is missing. Please log in again.");
       console.error("Missing userId:", userId);
       return;
     }
@@ -273,20 +264,18 @@ const AdmNewInventory = () => {
           ? "Inventory Item updated successfully!"
           : "Inventory Item added successfully!";
 
-        alert(successMessage);
-        toast.success(
-          response.data.message ||
-          (editMode ? "Inventory Item updated successfully" : "Inventory Item added successfully")
-        );
+        setStatusMessage(response.data.message || successMessage);
         handleClear();
         // Navigate to search page
         setTimeout(() => {
           navigate("/admin/inventory-search");
         }, 1500);
       } else {
-        toast.error(
-          response.data.message ||
-          (editMode ? "Failed to update inventory item" : "Failed to add inventory item")
+        setStatusMessage(
+          `Error: ${
+            response.data.message ||
+            (editMode ? "Failed to update inventory item" : "Failed to add inventory item")
+          }`
         );
       }
     } catch (error) {
@@ -310,7 +299,7 @@ const AdmNewInventory = () => {
         }
       }
 
-      toast.error(errorMessage);
+      setStatusMessage(`Error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -328,6 +317,8 @@ const AdmNewInventory = () => {
       status: "",  // Asset Code No
     });
     setFilteredSubCategories(subCategories);
+    setErrors({});
+    setStatusMessage("");
   };
 
   const handleClose = () => {
@@ -379,6 +370,11 @@ const AdmNewInventory = () => {
                     Close
                   </button>
                 </div>
+                {statusMessage && (
+                  <div className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}>
+                    {statusMessage}
+                  </div>
+                )}
               </div>
 
               {/* Field data */}
@@ -400,6 +396,7 @@ const AdmNewInventory = () => {
                             handleInputChange("purchase_date", e.target.value)
                           }
                         />
+                        {errors.purchase_date && <div className="text-danger small mt-1">{errors.purchase_date}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -433,6 +430,7 @@ const AdmNewInventory = () => {
                           onChange={handleCategoryChange}
                           placeholder="Select"
                         />
+                        {errors.category && <div className="text-danger small mt-1">{errors.category}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -471,6 +469,7 @@ const AdmNewInventory = () => {
                           }
                           placeholder="Select"
                         />
+                        {errors.sub_category && <div className="text-danger small mt-1">{errors.sub_category}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -487,6 +486,7 @@ const AdmNewInventory = () => {
                             handleInputChange("item_name", e.target.value)
                           }
                         />
+                        {errors.item_name && <div className="text-danger small mt-1">{errors.item_name}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -505,6 +505,7 @@ const AdmNewInventory = () => {
                           min="0"
                           step="0.01"
                         />
+                        {errors.item_value && <div className="text-danger small mt-1">{errors.item_value}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -522,6 +523,7 @@ const AdmNewInventory = () => {
                           }
                           min="0"
                         />
+                        {errors.quantity && <div className="text-danger small mt-1">{errors.quantity}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -548,6 +550,7 @@ const AdmNewInventory = () => {
                           }
                           placeholder="Select"
                         />
+                        {errors.inventory_type && <div className="text-danger small mt-1">{errors.inventory_type}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -564,6 +567,7 @@ const AdmNewInventory = () => {
                             handleInputChange("status", e.target.value)
                           }
                         />
+                        {errors.status && <div className="text-danger small mt-1">{errors.status}</div>}
                       </div>
                     </div>
                   </div>

@@ -48,6 +48,7 @@ const AdmAttendanceEntry = () => {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [semesterList, setSemesterList] = useState([]);
+  const [pageMessage, setPageMessage] = useState("");
 
   const [selectedStudentAcademic, setSelectedStudentAcademic] = useState(null);
 
@@ -66,6 +67,7 @@ const AdmAttendanceEntry = () => {
     setFeePeriod("");
     setHostelData([]);
     setShowUnpaidFee(false);
+    setPageMessage("");
   };
 
   const handleClose = () => {
@@ -699,9 +701,10 @@ const AdmAttendanceEntry = () => {
       !selectedSemester?.value ||
       !selectedSection?.value
     ) {
-      alert("Please select all required fields (*) before searching.");
+      setPageMessage("Error: Please select all required fields (*) before searching.");
       return;
     }
+    setPageMessage("");
     setLoading(true);
 
     const organization_id = sessionStorage.getItem("organization_id");
@@ -766,7 +769,7 @@ const AdmAttendanceEntry = () => {
 
   const exportToExcel = () => {
     if (hostelData.length === 0) {
-      alert("No data available to export.");
+      setPageMessage("Error: No data available to export.");
       return;
     }
 
@@ -789,6 +792,7 @@ const AdmAttendanceEntry = () => {
 
     // Save the Excel file
     XLSX.writeFile(workbook, "HostelData.xlsx");
+    setPageMessage("Hostel data exported successfully.");
   };
 
   const fetchViewPDF = async (student_id, feePeriod) => {
@@ -825,10 +829,11 @@ const AdmAttendanceEntry = () => {
               }
         );
       } else {
-        alert("No record found for PDF view");
+        setPageMessage("Error: No record found for PDF view.");
       }
     } catch (error) {
       console.error("Fetch PDF Error:", error);
+      setPageMessage("Error: Failed to fetch PDF data.");
     }
   };
 
@@ -1006,6 +1011,13 @@ const AdmAttendanceEntry = () => {
                     Close
                   </button>
                 </div>
+                {pageMessage && (
+                  <div
+                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {pageMessage}
+                  </div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2">

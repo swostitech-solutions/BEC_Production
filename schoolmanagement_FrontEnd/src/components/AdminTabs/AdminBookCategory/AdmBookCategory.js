@@ -14,6 +14,7 @@ const BookCategoryMaster = () => {
   const [subCategory, setSubCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState({});
   const [loadingSubCategories, setLoadingSubCategories] = useState(false);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [editingSubCategoryId, setEditingSubCategoryId] = useState(null);
@@ -122,8 +123,15 @@ const BookCategoryMaster = () => {
       setMessage("Error: Unauthorized - Missing access token.");
       return;
     }
-    if (!subCategory) {
-      setMessage("Error: Sub-category name cannot be empty.");
+    const subErrors = {};
+    if (!selectedCategoryId) {
+      subErrors.selectedCategory = "Please select a category.";
+    }
+    if (!subCategory || !subCategory.trim()) {
+      subErrors.subCategory = "Sub-category name is required.";
+    }
+    if (Object.keys(subErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...subErrors }));
       return;
     }
     const data = {
@@ -150,9 +158,6 @@ const BookCategoryMaster = () => {
             body: JSON.stringify(data),
           }
         );
-        if (response.ok) {
-          alert("Sub-category updated successfully!");
-        }
       } else {
         // Create new sub-category
         response = await fetch(
@@ -166,13 +171,11 @@ const BookCategoryMaster = () => {
             body: JSON.stringify(data),
           }
         );
-        if (response.ok) {
-          alert("Sub-category created successfully!");
-        }
       }
       const result = await response.json();
       if (response.ok) {
-        setMessage(result.message);
+        setMessage(editingSubCategoryId ? "Sub-category updated successfully!" : "Sub-category created successfully!");
+        setErrors({});
         setSubCategory("");
         setEditingSubCategoryId(null); // Clear edit mode after saving
         // Refresh all categories and subcategories to show complete list
@@ -231,18 +234,19 @@ const BookCategoryMaster = () => {
       return;
     }
 
+    const catErrors = {};
     if (!categoryName || categoryName.trim() === "") {
-      setMessage("Error: Category name cannot be empty.");
-      return;
-    }
-
-    if (
+      catErrors.categoryName = "Category name is required.";
+    } else if (
       (categories || []).some(
         (category) =>
-          category.category_name?.toLowerCase() === categoryName?.toLowerCase()
+          category.category_name?.toLowerCase() === categoryName.trim().toLowerCase()
       )
     ) {
-      alert("Category already exists.");
+      catErrors.categoryName = "Category already exists.";
+    }
+    if (Object.keys(catErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...catErrors }));
       return;
     }
 
@@ -276,12 +280,12 @@ const BookCategoryMaster = () => {
       const result = await response.json();
 
       if (response.ok) {
-        alert("Category created successfully!");
+        setMessage("Category created successfully!");
+        setErrors({});
         fetchCategories();
         // Refresh all categories and subcategories to show complete list in table
         await fetchAllCategoriesWithSubCategories();
         setCategoryName("");
-        setMessage("");
       } else {
         setMessage("Error: " + (result.message || "Failed to create category"));
       }
@@ -326,12 +330,26 @@ const BookCategoryMaster = () => {
             <label style={{ fontWeight: "bold" }}>Enter Category</label>
             <input
               type="text"
-              className="form-control"
+              className={`form-control ${errors.categoryName ? "is-invalid" : ""}`}
               value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
+              onChange={(e) => {
+                setCategoryName(e.target.value);
+                setErrors((prev) => ({ ...prev, categoryName: "" }));
+                setMessage("");
+              }}
             />
+            {errors.categoryName && (
+              <div className="invalid-feedback">{errors.categoryName}</div>
+            )}
           </div>
           <div className="col-md-2 mb-0">
+            {message && (
+              <div
+                className={`mt-2 small ${message.startsWith("Error") ? "text-danger" : "text-success"}`}
+              >
+                {message}
+              </div>
+            )}
             <button className="btn btn-primary mt-3" onClick={handleSave}>
               Save
             </button>
@@ -357,6 +375,7 @@ const BookCategoryMaster = () => {
                   target: { value: selectedOption?.value || "" },
                 };
                 handleCategoryChange(event);
+                setErrors((prev) => ({ ...prev, selectedCategory: "" }));
               }}
               value={
                 selectedCategoryId
@@ -371,6 +390,9 @@ const BookCategoryMaster = () => {
               }
 
             />
+            {errors.selectedCategory && (
+              <div className="text-danger small mt-1">{errors.selectedCategory}</div>
+            )}
           </div>
         </div>
         <div className="row mt-3">
@@ -378,12 +400,26 @@ const BookCategoryMaster = () => {
             <label style={{ fontWeight: "bold" }}>Sub-Category</label>
             <input
               type="text"
-              className="form-control"
+              className={`form-control ${errors.subCategory ? "is-invalid" : ""}`}
               value={subCategory}
-              onChange={(e) => setSubCategory(e.target.value)}
+              onChange={(e) => {
+                setSubCategory(e.target.value);
+                setErrors((prev) => ({ ...prev, subCategory: "" }));
+                setMessage("");
+              }}
             />
+            {errors.subCategory && (
+              <div className="invalid-feedback">{errors.subCategory}</div>
+            )}
           </div>
           <div className="col-md-2 mb-0">
+            {message && (
+              <div
+                className={`mt-2 small ${message.startsWith("Error") ? "text-danger" : "text-success"}`}
+              >
+                {message}
+              </div>
+            )}
             <button
               className="btn btn-primary mt-3"
               onClick={handleSaveSubCategory}

@@ -39,6 +39,7 @@ const AdmStudentHostelCreate = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
   const [show, setShow] = useState(false);
+  const [formMessage, setFormMessage] = useState("");
 
   const handleShow = () => setShow(true);
   const handleClose = () => setShow(false);
@@ -1060,6 +1061,7 @@ const AdmStudentHostelCreate = () => {
     setFloorList([]);
     setRoomList([]);
     setBedList([]);
+    setFormMessage("");
   };
 
   const handleSave = async () => {
@@ -1070,7 +1072,7 @@ const AdmStudentHostelCreate = () => {
       const created_by = Number(localStorage.getItem("user_id")) || 1;
 
       if (!studentId) {
-        alert("Please select a student.");
+        setFormMessage("Error: Please select a student.");
         return;
       }
       if (
@@ -1081,9 +1083,11 @@ const AdmStudentHostelCreate = () => {
         !selectedRoom?.value ||
         !selectedBed?.value
       ) {
-        alert("Please select all hostel fields.");
+        setFormMessage("Error: Please select all hostel fields.");
         return;
       }
+
+      setFormMessage("");
 
       // ===== CHOICE SEMESTER IDS =====
       let choice_semesters = [];
@@ -1126,15 +1130,15 @@ const AdmStudentHostelCreate = () => {
       console.log("API Save Response:", result);
 
       if (result?.message?.toLowerCase() === "success") {
-        alert("✅ Hostel Assigned Successfully!");
         // Reset form after success
         resetForm();
+        setFormMessage("Hostel assigned successfully!");
       } else {
-        alert("Failed to Assign Hostel");
+        setFormMessage("Error: Failed to assign hostel.");
       }
     } catch (error) {
       console.error("Error in handleSave:", error);
-      alert("Error while saving hostel data");
+      setFormMessage("Error: Error while saving hostel data.");
     }
   };
 
@@ -1183,6 +1187,13 @@ const AdmStudentHostelCreate = () => {
                     Close
                   </button>
                 </div>
+                {formMessage && (
+                  <div
+                    className={`mt-2 small ${formMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {formMessage}
+                  </div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2 mt-2">

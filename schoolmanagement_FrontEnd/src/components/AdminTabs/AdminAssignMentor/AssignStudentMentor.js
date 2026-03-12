@@ -23,6 +23,8 @@ const AssignStudentMentor = () => {
   const [registrationNo, setRegistrationNo] = useState("");
   const [barcode, setBarcode] = useState("");
   const [students, setStudents] = useState([]);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
   // const [selectedStudents, setSelectedStudents] = useState([]);
   const navigate = useNavigate();
   const dateRef = useRef(null);
@@ -202,15 +204,23 @@ const AssignStudentMentor = () => {
     if (admissionNoRef.current) admissionNoRef.current.value = "";
     if (barcodeRef.current) barcodeRef.current.value = "";
     if (smsToRef.current) smsToRef.current.checked = false;
+    setFieldErrors({});
+    setStatusMessage("");
   };
 
   const handleSelectStudent = async (selectedStudentsFromModal) => {
     // Make mentor selection compulsory
     if (!selectedMentor || !selectedMentor.value) {
-      alert("Please select a mentor first before adding students.");
+      setFieldErrors((prev) => ({
+        ...prev,
+        mentor: "Please select a mentor first before adding students.",
+      }));
       handleClose(); // Close the modal
       return;
     }
+
+    setFieldErrors((prev) => ({ ...prev, mentor: "" }));
+    setStatusMessage("");
 
     // Handle both single student and array of students
     const studentsArray = Array.isArray(selectedStudentsFromModal) 
@@ -295,7 +305,7 @@ const AssignStudentMentor = () => {
         console.log("Delete Response:", result);
 
         if (response.ok && result.message?.toLowerCase().includes("success")) {
-          alert("Assignment deleted successfully!");
+          setStatusMessage("Assignment deleted successfully!");
           // Remove from UI
           setStudents((prev) => 
             prev.filter((s) => {
@@ -304,11 +314,11 @@ const AssignStudentMentor = () => {
             })
           );
         } else {
-          alert(`Failed to delete assignment: ${result.message || result.error || "Unknown error"}`);
+          setStatusMessage(`Error: Failed to delete assignment: ${result.message || result.error || "Unknown error"}`);
         }
       } catch (error) {
         console.error("Error deleting assignment:", error);
-        alert("An error occurred while deleting the assignment: " + error.message);
+        setStatusMessage("Error: An error occurred while deleting the assignment: " + error.message);
       }
     } else {
       // Just remove from local state (not yet assigned)
@@ -535,9 +545,15 @@ const AssignStudentMentor = () => {
   // Search for existing assignments of the selected mentor
   const handleSearch = async () => {
     if (!selectedMentor || !selectedMentor.value) {
-      alert("Please select a mentor to search for their assigned students.");
+      setFieldErrors((prev) => ({
+        ...prev,
+        mentor: "Please select a mentor to search for assigned students.",
+      }));
       return;
     }
+
+    setFieldErrors((prev) => ({ ...prev, mentor: "" }));
+    setStatusMessage("");
 
     const orgId = sessionStorage.getItem("organization_id");
     const branchId = sessionStorage.getItem("branch_id");
@@ -591,29 +607,38 @@ const AssignStudentMentor = () => {
         } else {
           setStudents([]);
           setStudentName("");
-          alert("No students assigned to this mentor yet.");
+          setStatusMessage("No students assigned to this mentor yet.");
         }
       } else {
         setStudents([]);
-        alert("No data found for the selected mentor.");
+        setStatusMessage("Error: No data found for the selected mentor.");
       }
     } catch (error) {
       console.error("Error searching for mentor assignments:", error);
-      alert("Failed to search for mentor assignments.");
+      setStatusMessage("Error: Failed to search for mentor assignments.");
     }
   };
 
   const fetchStudentDetails = async () => {
     // Make mentor selection compulsory
     if (!selectedMentor || !selectedMentor.value) {
-      alert("Please select a mentor first before adding students.");
+      setFieldErrors((prev) => ({
+        ...prev,
+        mentor: "Please select a mentor first before adding students.",
+      }));
       return;
     }
 
     if (!registrationNo && !barcode) {
-      alert("Please enter at least one value (Registration No or Barcode).");
+      setFieldErrors((prev) => ({
+        ...prev,
+        searchInput: "Please enter at least one value (Registration No or Barcode).",
+      }));
       return;
     }
+
+    setFieldErrors((prev) => ({ ...prev, mentor: "", searchInput: "" }));
+    setStatusMessage("");
 
     try {
       const organization_id = sessionStorage.getItem("organization_id");
@@ -621,7 +646,7 @@ const AssignStudentMentor = () => {
       const token = localStorage.getItem("accessToken");
 
       if (!organization_id || !branch_id) {
-        alert("Missing organization or branch information. Please refresh the page.");
+        setStatusMessage("Error: Missing organization or branch information. Please refresh the page.");
         return;
       }
 
@@ -695,7 +720,7 @@ const AssignStudentMentor = () => {
           );
 
           if (newStudents.length === 0) {
-            alert("Student(s) already added to the list.");
+            setStatusMessage("Error: Student(s) already added to the list.");
             return prev;
           }
 
@@ -711,7 +736,7 @@ const AssignStudentMentor = () => {
           return merged;
         });
       } else {
-        alert("Student not found. Please check the Registration No or Barcode.");
+        setStatusMessage("Error: Student not found. Please check the Registration No or Barcode.");
         // Clear input fields
         setRegistrationNo("");
         setBarcode("");
@@ -720,7 +745,7 @@ const AssignStudentMentor = () => {
       }
     } catch (error) {
       console.error("Error fetching student details:", error);
-      alert("Failed to fetch student details. Please try again.");
+      setStatusMessage("Error: Failed to fetch student details. Please try again.");
     }
   };
 
@@ -733,7 +758,7 @@ const AssignStudentMentor = () => {
     const academicYearId = localStorage.getItem("academicSessionId");
 
     if (!selectedMentor || !selectedMentor.value) {
-      alert("Please select a mentor.");
+      setFieldErrors((prev) => ({ ...prev, mentor: "Please select a mentor." }));
       return;
     }
 
@@ -742,7 +767,7 @@ const AssignStudentMentor = () => {
       students.length > 0 ? students : selectedStudents;
 
     if (allSelectedStudents.length === 0) {
-      alert("Please select at least one student.");
+      setFieldErrors((prev) => ({ ...prev, students: "Please select at least one student." }));
       return;
     }
 
@@ -759,13 +784,16 @@ const AssignStudentMentor = () => {
       .filter(Boolean);
 
     if (studentIds.length === 0) {
-      alert("No valid students found. Check console for details.");
+      setFieldErrors((prev) => ({ ...prev, students: "No valid students found." }));
       console.log(
         "All Selected Students (For Debugging):",
         allSelectedStudents
       );
       return;
     }
+
+    setFieldErrors((prev) => ({ ...prev, mentor: "", students: "" }));
+    setStatusMessage("");
 
     // Payload Construction
     const payload = {
@@ -809,28 +837,28 @@ const AssignStudentMentor = () => {
         } else {
           alertMessage = result.reason || "All students are already assigned to this mentor or invalid student IDs.";
         }
-        
-        alert(alertMessage);
+
+        setStatusMessage(`Error: ${alertMessage}`);
       } else if (result.message === "Already Exists") {
-        alert(
-          "Mentor already assigned to one or more of the selected students."
+        setStatusMessage(
+          "Error: Mentor already assigned to one or more of the selected students."
         );
       } else if (
         result.message === "Success" ||
         result.message === "success" ||
         result.message === "Saved Successfully"
       ) {
-        alert("Students assigned successfully!");
+        setStatusMessage("Students assigned successfully!");
 
         // Clear the students table after successful assignment
         setStudents([]);
         setStudentName("");
       } else {
-        alert(`Unexpected response: ${result.message}`);
+        setStatusMessage(`Error: Unexpected response: ${result.message}`);
       }
     } catch (error) {
       console.error("Assignment failed:", error);
-      alert("Failed to assign students.");
+      setStatusMessage("Error: Failed to assign students.");
     }
   };
 
@@ -909,10 +937,17 @@ const AssignStudentMentor = () => {
                           options={mentors}
                           className="detail"
                           value={selectedMentor}
-                          onChange={setSelectedMentor}
+                          onChange={(option) => {
+                            setSelectedMentor(option);
+                            setFieldErrors((prev) => ({ ...prev, mentor: "" }));
+                            setStatusMessage("");
+                          }}
                           placeholder="Select Mentor"
                           classNamePrefix="mentor-dropdown"
                         />
+                        {fieldErrors.mentor && (
+                          <div className="text-danger small mt-1">{fieldErrors.mentor}</div>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3 mt-4">
@@ -1017,7 +1052,11 @@ const AssignStudentMentor = () => {
                             placeholder="Enter admission no"
                             ref={admissionNoRef}
                             value={registrationNo}
-                            onChange={(e) => setRegistrationNo(e.target.value)}
+                            onChange={(e) => {
+                              setRegistrationNo(e.target.value);
+                              setFieldErrors((prev) => ({ ...prev, searchInput: "" }));
+                              setStatusMessage("");
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 fetchStudentDetails();
@@ -1025,6 +1064,9 @@ const AssignStudentMentor = () => {
                             }}
                             disabled={!selectedMentor || !selectedMentor.value}
                           />
+                          {fieldErrors.searchInput && (
+                            <div className="text-danger small mt-1">{fieldErrors.searchInput}</div>
+                          )}
                         </div>
 
                         {/* <div className="col-12 col-md-4 mb-3">
@@ -1188,7 +1230,17 @@ const AssignStudentMentor = () => {
                     </tbody>
                   </table>
                 </div>
-             
+                {fieldErrors.students && (
+                  <div className="text-danger small mt-2">{fieldErrors.students}</div>
+                )}
+                {statusMessage && (
+                  <div
+                    className={`small mt-2 ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                    style={{ whiteSpace: "pre-line" }}
+                  >
+                    {statusMessage}
+                  </div>
+                )}
               </div>
             </div>
           </div>

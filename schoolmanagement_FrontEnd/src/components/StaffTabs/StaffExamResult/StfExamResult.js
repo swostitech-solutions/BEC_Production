@@ -35,6 +35,7 @@ const StudentSearch = () => {
   const [studentData, setStudentData] = useState([]);
   const [termOptions, setTermOptions] = useState([]);
   const [selectedTerms, setSelectedTerms] = useState({});
+  const [validationMessage, setValidationMessage] = useState("");
 
   const [isViewClicked, setIsViewClicked] = useState(false);
   const navigate = useNavigate();
@@ -467,9 +468,11 @@ const StudentSearch = () => {
 
     const classId = selectedCourse?.value;
     if (!classId) {
-      alert("Please select a Course.");
+      setValidationMessage("Error: Please select a Course.");
       return;
     }
+
+    setValidationMessage("");
 
     const queryParams = new URLSearchParams({
       academic_year_id: academicSessionId,
@@ -525,6 +528,7 @@ const StudentSearch = () => {
     setStudentData([]);
     setSelectedTerms({});
     setIsViewClicked(false);
+    setValidationMessage("");
   };
 
   const handleClose = () => {
@@ -541,9 +545,10 @@ const StudentSearch = () => {
   const handleAddDataClick = (student) => {
     const selectedTermId = selectedTerms[student.student_course_id];
     if (!selectedTermId) {
-      alert("Please select a Term first.");
+      setValidationMessage("Error: Please select a Term first.");
       return;
     }
+    setValidationMessage("");
     const selectedTermOption = termOptions.find((t) => t.value === parseInt(selectedTermId));
     navigate("/staff/add-student-data", {
       state: {
@@ -559,9 +564,10 @@ const StudentSearch = () => {
   const handleViewReport = (student) => {
     const selectedTermId = selectedTerms[student.student_course_id];
     if (!selectedTermId) {
-      alert("Please select a Term first.");
+      setValidationMessage("Error: Please select a Term first.");
       return;
     }
+    setValidationMessage("");
     const selectedTermOption = termOptions.find((t) => t.value === parseInt(selectedTermId));
     navigate("/staff/view-student-report", {
       state: {
@@ -618,6 +624,9 @@ const StudentSearch = () => {
                     Close
                   </button>
                 </div>
+                {validationMessage && (
+                  <div className="mt-2 small text-danger">{validationMessage}</div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2">
@@ -700,6 +709,7 @@ const StudentSearch = () => {
                           placeholder="Select Course"
                           onChange={(option) => {
                             setSelectedCourse(option);
+                            setValidationMessage("");
                             setSelectedDepartment(null);
                             setSelectedAcademicYear(null);
                             setSelectedSemester(null);
@@ -766,6 +776,7 @@ const StudentSearch = () => {
                           placeholder="Select Semester"
                           onChange={(option) => {
                             setSelectedSemester(option);
+                            setValidationMessage("");
                             setSelectedSection(null);
                           }}
                           isDisabled={!selectedAcademicYear}

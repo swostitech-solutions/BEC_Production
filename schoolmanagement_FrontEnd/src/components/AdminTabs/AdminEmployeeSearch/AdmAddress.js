@@ -11,10 +11,19 @@ const ParentDetailsForm = ({
   setDocumentDetailsInParent,
   setAddressFormDataInParent,
   addressFormData, // Data from parent to restore on tab return
+  externalAddressFieldErrors = {},
+  onClearAddressFieldError,
 }) => {
   // State to store form values - initialize from parent data if available
   // Validation errors for phone fields
   const [phoneErrors, setPhoneErrors] = useState({ residencePhone: "", permanentPhone: "" });
+  const displayAddressFieldErrors = externalAddressFieldErrors || {};
+
+  const clearAddressFieldError = (field) => {
+    if (onClearAddressFieldError) {
+      onClearAddressFieldError(field);
+    }
+  };
 
   const [formValues, setFormValues] = useState(() => {
     if (addressFormData && addressFormData.formValues) {
@@ -453,6 +462,8 @@ const ParentDetailsForm = ({
   const handleInputChange = (e) => {
     const { id, value } = e.target;
 
+    clearAddressFieldError(id);
+
     // Validation for Pincode
     if (id === "residencePincode" || id === "permanentPincode") {
       if (value.length > 6) return; // Do not allow more than 6 digits
@@ -491,6 +502,12 @@ const ParentDetailsForm = ({
 
   // Handle checkbox change
   const handleCheckboxChange = () => {
+    clearAddressFieldError("permanentAddress");
+    clearAddressFieldError("selectedPermanentCountry");
+    clearAddressFieldError("selectedPermanentState");
+    clearAddressFieldError("selectedPermanentDistrict");
+    clearAddressFieldError("permanentPincode");
+
     setFormValues((prevValues) => {
       const isChecked = !prevValues.sameAsResidence;
 
@@ -805,6 +822,11 @@ const ParentDetailsForm = ({
                     value={formValues.residenceAddress}
                     onChange={handleInputChange}
                   />
+                  {displayAddressFieldErrors.residenceAddress && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.residenceAddress}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -820,10 +842,16 @@ const ParentDetailsForm = ({
                       label: country.country_name,
                     }))}
                     value={selectedCountry}
-                    onChange={(selectedOption) =>
-                      setSelectedCountry(selectedOption)
-                    }
+                    onChange={(selectedOption) => {
+                      setSelectedCountry(selectedOption);
+                      clearAddressFieldError("selectedCountry");
+                    }}
                   />
+                  {displayAddressFieldErrors.selectedCountry && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.selectedCountry}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -838,12 +866,18 @@ const ParentDetailsForm = ({
                       value: state.id,
                       label: state.state_name,
                     }))}
-                    onChange={(selectedOption) =>
-                      setSelectedState(selectedOption)
-                    }
+                    onChange={(selectedOption) => {
+                      setSelectedState(selectedOption);
+                      clearAddressFieldError("selectedState");
+                    }}
                     value={selectedState}
                     isDisabled={!selectedCountry} // Disable if no country is selected
                   />
+                  {displayAddressFieldErrors.selectedState && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.selectedState}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -858,12 +892,18 @@ const ParentDetailsForm = ({
                       value: city.id,
                       label: city.city_name,
                     }))}
-                    onChange={(selectedOption) =>
-                      setSelectedResidenceDistrict(selectedOption)
-                    }
+                    onChange={(selectedOption) => {
+                      setSelectedResidenceDistrict(selectedOption);
+                      clearAddressFieldError("selectedResidenceDistrict");
+                    }}
                     value={selectedResidenceDistrict}
                     isDisabled={!selectedState}
                   />
+                  {displayAddressFieldErrors.selectedResidenceDistrict && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.selectedResidenceDistrict}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -878,6 +918,11 @@ const ParentDetailsForm = ({
                     value={formValues.residencePincode}
                     onChange={handleInputChange}
                   />
+                  {displayAddressFieldErrors.residencePincode && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.residencePincode}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -940,6 +985,11 @@ const ParentDetailsForm = ({
                     onChange={handleInputChange}
                     disabled={formValues.sameAsResidence}
                   />
+                  {displayAddressFieldErrors.permanentAddress && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.permanentAddress}
+                    </div>
+                  )}
                 </div>
                 <div className="col-6 mb-2">
                   <label htmlFor="country" className="form-label">
@@ -954,11 +1004,17 @@ const ParentDetailsForm = ({
                       label: country.country_name,
                     }))}
                     value={selectedPermanentCountry}
-                    onChange={(selectedOption) =>
-                      setSelectedPermanentCountry(selectedOption)
-                    }
+                    onChange={(selectedOption) => {
+                      setSelectedPermanentCountry(selectedOption);
+                      clearAddressFieldError("selectedPermanentCountry");
+                    }}
                     isDisabled={formValues.sameAsResidence}
                   />
+                  {displayAddressFieldErrors.selectedPermanentCountry && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.selectedPermanentCountry}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -973,12 +1029,18 @@ const ParentDetailsForm = ({
                       value: state.id,
                       label: state.state_name,
                     }))}
-                    onChange={(selectedOption) =>
-                      setSelectedPermanentState(selectedOption)
-                    }
+                    onChange={(selectedOption) => {
+                      setSelectedPermanentState(selectedOption);
+                      clearAddressFieldError("selectedPermanentState");
+                    }}
                     value={selectedPermanentState}
                     isDisabled={!selectedPermanentCountry || formValues.sameAsResidence}
                   />
+                  {displayAddressFieldErrors.selectedPermanentState && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.selectedPermanentState}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -993,12 +1055,18 @@ const ParentDetailsForm = ({
                       value: city.id,
                       label: city.city_name,
                     }))}
-                    onChange={(selectedOption) =>
-                      setSelectedPermanentDistrict(selectedOption)
-                    }
+                    onChange={(selectedOption) => {
+                      setSelectedPermanentDistrict(selectedOption);
+                      clearAddressFieldError("selectedPermanentDistrict");
+                    }}
                     value={selectedPermanentDistrict}
                     isDisabled={!selectedPermanentState || formValues.sameAsResidence}
                   />
+                  {displayAddressFieldErrors.selectedPermanentDistrict && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.selectedPermanentDistrict}
+                    </div>
+                  )}
                 </div>
 
                 <div className="col-6 mb-2">
@@ -1014,6 +1082,11 @@ const ParentDetailsForm = ({
                     onChange={handleInputChange}
                     disabled={formValues.sameAsResidence}
                   />
+                  {displayAddressFieldErrors.permanentPincode && (
+                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                      {displayAddressFieldErrors.permanentPincode}
+                    </div>
+                  )}
                 </div>
                 <div className="col-6 mb-2">
                   <label htmlFor="permanentPhone" className="form-label">

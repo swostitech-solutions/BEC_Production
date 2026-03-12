@@ -44,6 +44,9 @@ const AdmLessonPlan = () => {
   const [selectedSubject, setSelectedSubject] = useState(null);
 
   const [topicOptions, setTopicOptions] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [rowErrors, setRowErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   // Custom Hooks with dependencies
   const { BatchList, loading: loadingBatch } = useFetchSessionList(organizationId, branchId);
@@ -115,6 +118,9 @@ const AdmLessonPlan = () => {
     setSelectedSubject(null);
     setSelectedMentor(null);
     setRows([{ lectureNo: "", moduleNo: "", topic: "", proposedDate: "" }]);
+    setErrors({});
+    setRowErrors({});
+    setStatusMessage("");
   };
 
   const handleAddRow = () => {
@@ -128,6 +134,13 @@ const AdmLessonPlan = () => {
     const updatedRows = [...rows];
     updatedRows[index][field] = value;
     setRows(updatedRows);
+    setRowErrors((prev) => ({
+      ...prev,
+      [index]: {
+        ...(prev[index] || {}),
+        [field]: "",
+      },
+    }));
   };
 
   // Populate Session dropdown
@@ -392,19 +405,52 @@ const AdmLessonPlan = () => {
     const branchId = sessionStorage.getItem("branch_id");
     const userId = sessionStorage.getItem("userId");
 
-    if (!selectedSession || !selectedCourse || !selectedBranch || !selectedAcademicYear ||
-      !selectedSemester || !selectedSection || !selectedSubject || !selectedMentor) {
-      alert("Please select all required fields (Teacher, Session, Course, Branch, Academic Year, Semester, Section, Subject).");
+    const newErrors = {};
+    if (!selectedMentor) newErrors.teacher = "Teacher is required.";
+    if (!selectedSession) newErrors.session = "Session is required.";
+    if (!selectedCourse) newErrors.course = "Course is required.";
+    if (!selectedBranch) newErrors.branch = "Department is required.";
+    if (!selectedAcademicYear) newErrors.academicYear = "Academic Year is required.";
+    if (!selectedSemester) newErrors.semester = "Semester is required.";
+    if (!selectedSection) newErrors.section = "Section is required.";
+    if (!selectedSubject) newErrors.subject = "Subject is required.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    // Filter only rows with required fields (including topic)
+    setErrors({});
+    setStatusMessage("");
+
+    const newRowErrors = {};
+    rows.forEach((row, index) => {
+      const hasAnyValue = row.lectureNo || row.moduleNo || row.topic || row.proposedDate;
+      if (hasAnyValue || rows.length === 1) {
+        const rowError = {};
+        if (!row.lectureNo) rowError.lectureNo = "Lecture No is required.";
+        if (!row.moduleNo) rowError.moduleNo = "Module No is required.";
+        if (!row.topic) rowError.topic = "Topic is required.";
+        if (!row.proposedDate) rowError.proposedDate = "Proposed Date is required.";
+        if (Object.keys(rowError).length > 0) {
+          newRowErrors[index] = rowError;
+        }
+      }
+    });
+
+    if (Object.keys(newRowErrors).length > 0) {
+      setRowErrors(newRowErrors);
+      return;
+    }
+
+    setRowErrors({});
+
     const validRows = rows.filter(
       (row) => row.lectureNo && row.moduleNo && row.topic && row.proposedDate
     );
 
     if (validRows.length === 0) {
-      alert("Please enter at least one complete row with all fields (Lecture No, Module No, Topic, Proposed Date).");
+      setStatusMessage("Error: Please enter at least one complete row.");
       return;
     }
 
@@ -447,7 +493,7 @@ const AdmLessonPlan = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
-        alert(`Failed to create lesson plan. Server error: ${response.status}`);
+        setStatusMessage(`Error: Failed to create lesson plan. Server error: ${response.status}`);
         return;
       }
 
@@ -455,7 +501,7 @@ const AdmLessonPlan = () => {
       console.log("Save Response:", result);
 
       if (result.message === "success" || result.message?.toLowerCase().includes("successfully")) {
-        alert("Lesson Plan Created Successfully!");
+        setStatusMessage("Lesson Plan Created Successfully!");
 
         // Reset the form
         setSelectedSession(null);
@@ -468,11 +514,11 @@ const AdmLessonPlan = () => {
         setSelectedMentor(null);
         setRows([{ lectureNo: "", moduleNo: "", topic: "", proposedDate: "" }]);
       } else {
-        alert("Failed to create lesson plan: " + (result.error || result.message || "Unknown error"));
+        setStatusMessage("Error: Failed to create lesson plan: " + (result.error || result.message || "Unknown error"));
       }
     } catch (error) {
       console.error("Error saving lesson plan:", error);
-      alert("Error saving lesson plan: " + error.message);
+      setStatusMessage("Error: Error saving lesson plan: " + error.message);
     }
   };
 
@@ -520,6 +566,11 @@ const AdmLessonPlan = () => {
                     Close
                   </button>
                 </div>
+                {statusMessage && (
+                  <div className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}>
+                    {statusMessage}
+                  </div>
+                )}
               </div>
               <div className="row mt-3 mx-2">
                 <div className="col-12 custom-section-box">
@@ -534,10 +585,14 @@ const AdmLessonPlan = () => {
                           options={mentors}
                           className="detail"
                           value={selectedMentor}
-                          onChange={setSelectedMentor}
+                          onChange={(option) => {
+                            setSelectedMentor(option);
+                            setErrors((prev) => ({ ...prev, teacher: "" }));
+                          }}
                           placeholder="Select Teacher"
                           classNamePrefix="teacher-dropdown"
                         />
+                        {errors.teacher && <div className="text-danger small mt-1">{errors.teacher}</div>}
                       </div>
 
                       <div className="col-md-3 mb-3">
@@ -549,10 +604,14 @@ const AdmLessonPlan = () => {
                           options={sessionOptions}
                           className="detail"
                           value={selectedSession}
-                          onChange={setSelectedSession}
+                          onChange={(option) => {
+                            setSelectedSession(option);
+                            setErrors((prev) => ({ ...prev, session: "" }));
+                          }}
                           placeholder="Select Session"
                           classNamePrefix="session-dropdown"
                         />
+                        {errors.session && <div className="text-danger small mt-1">{errors.session}</div>}
                       </div>
 
                       <div className="col-md-3 mb-3">
@@ -564,10 +623,14 @@ const AdmLessonPlan = () => {
                           options={courseOptions}
                           className="detail"
                           value={selectedCourse}
-                          onChange={setSelectedCourse}
+                          onChange={(option) => {
+                            setSelectedCourse(option);
+                            setErrors((prev) => ({ ...prev, course: "" }));
+                          }}
                           placeholder="Select Course"
                           classNamePrefix="course-dropdown"
                         />
+                        {errors.course && <div className="text-danger small mt-1">{errors.course}</div>}
                       </div>
 
                       <div className="col-md-3 mb-3">
@@ -579,10 +642,14 @@ const AdmLessonPlan = () => {
                           options={branchOptions}
                           className="detail"
                           value={selectedBranch}
-                          onChange={setSelectedBranch}
+                          onChange={(option) => {
+                            setSelectedBranch(option);
+                            setErrors((prev) => ({ ...prev, branch: "" }));
+                          }}
                           placeholder="Select Branch"
                           classNamePrefix="branch-dropdown"
                         />
+                        {errors.branch && <div className="text-danger small mt-1">{errors.branch}</div>}
                       </div>
 
                       <div className="col-md-3 mb-3">
@@ -594,10 +661,14 @@ const AdmLessonPlan = () => {
                           options={academicYearOptions}
                           className="detail"
                           value={selectedAcademicYear}
-                          onChange={setSelectedAcademicYear}
+                          onChange={(option) => {
+                            setSelectedAcademicYear(option);
+                            setErrors((prev) => ({ ...prev, academicYear: "" }));
+                          }}
                           placeholder="Select Academic Year"
                           classNamePrefix="academic-year-dropdown"
                         />
+                        {errors.academicYear && <div className="text-danger small mt-1">{errors.academicYear}</div>}
                       </div>
 
                       <div className="col-md-3 mb-3">
@@ -609,10 +680,14 @@ const AdmLessonPlan = () => {
                           options={semesterOptions}
                           className="detail"
                           value={selectedSemester}
-                          onChange={setSelectedSemester}
+                          onChange={(option) => {
+                            setSelectedSemester(option);
+                            setErrors((prev) => ({ ...prev, semester: "" }));
+                          }}
                           placeholder="Select Semester"
                           classNamePrefix="semester-dropdown"
                         />
+                        {errors.semester && <div className="text-danger small mt-1">{errors.semester}</div>}
                       </div>
 
                       <div className="col-md-3 mb-3">
@@ -636,6 +711,7 @@ const AdmLessonPlan = () => {
                           isDisabled={true}
                           isClearable={false}
                         />
+                        {errors.section && <div className="text-danger small mt-1">{errors.section}</div>}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -647,10 +723,14 @@ const AdmLessonPlan = () => {
                           options={subjectOptions}
                           className="detail"
                           value={selectedSubject}
-                          onChange={setSelectedSubject}
+                          onChange={(option) => {
+                            setSelectedSubject(option);
+                            setErrors((prev) => ({ ...prev, subject: "" }));
+                          }}
                           placeholder="Select Subject"
                           classNamePrefix="subject-dropdown"
                         />
+                        {errors.subject && <div className="text-danger small mt-1">{errors.subject}</div>}
                       </div>
                     </div>
                   </div>
@@ -681,6 +761,9 @@ const AdmLessonPlan = () => {
                                 handleChange(index, "lectureNo", e.target.value)
                               }
                             />
+                            {rowErrors[index]?.lectureNo && (
+                              <div className="text-danger small mt-1">{rowErrors[index].lectureNo}</div>
+                            )}
                           </td>
                           <td>
                             <input
@@ -691,6 +774,9 @@ const AdmLessonPlan = () => {
                                 handleChange(index, "moduleNo", e.target.value)
                               }
                             />
+                            {rowErrors[index]?.moduleNo && (
+                              <div className="text-danger small mt-1">{rowErrors[index].moduleNo}</div>
+                            )}
                           </td>
                           {/* <td>
                             <select
@@ -724,6 +810,9 @@ const AdmLessonPlan = () => {
                                 </option>
                               ))}
                             </select>
+                            {rowErrors[index]?.topic && (
+                              <div className="text-danger small mt-1">{rowErrors[index].topic}</div>
+                            )}
                           </td>
 
                           <td>
@@ -739,6 +828,9 @@ const AdmLessonPlan = () => {
                                 )
                               }
                             />
+                            {rowErrors[index]?.proposedDate && (
+                              <div className="text-danger small mt-1">{rowErrors[index].proposedDate}</div>
+                            )}
                           </td>
                           <td>
                             {index === rows.length - 1 && (

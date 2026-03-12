@@ -17,6 +17,8 @@ const AdmAttendanceEntry = () => {
   const [selectedCommunicatedWith, setSelectedCommunicatedWith] =
     useState(null);
   const [selectedCommunicatedVia, setSelectedCommunicatedVia] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   const handleClear = () => {
     setSelectedDate("");
@@ -26,6 +28,8 @@ const AdmAttendanceEntry = () => {
     setSelectedCommunicatedVia(null);
     setCommunicationDetails("");
     setRemarks("");
+    setFieldErrors({});
+    setStatusMessage("");
   };
 
   useEffect(() => {
@@ -98,7 +102,7 @@ const AdmAttendanceEntry = () => {
         }
       } catch (error) {
         console.error("Error fetching students:", error);
-        alert("Failed to fetch students. Please try again.");
+        setStatusMessage("Error: Failed to fetch students. Please try again.");
         setStudents([]);
       }
     };
@@ -128,16 +132,23 @@ const AdmAttendanceEntry = () => {
 
   const handleSave = async () => {
     // Validation
-    if (
-      !selectedDate ||
-      !selectedMentor ||
-      !selectedStudent ||
-      !selectedCommunicatedWith ||
-      !selectedCommunicatedVia
-    ) {
-      alert("Please fill all required fields.");
+    const newFieldErrors = {};
+    if (!selectedDate) newFieldErrors.selectedDate = "Date is required.";
+    if (!selectedMentor) newFieldErrors.selectedMentor = "Mentor is required.";
+    if (!selectedStudent) newFieldErrors.selectedStudent = "Student is required.";
+    if (!selectedCommunicatedWith) {
+      newFieldErrors.selectedCommunicatedWith = "Communicated With is required.";
+    }
+    if (!selectedCommunicatedVia) {
+      newFieldErrors.selectedCommunicatedVia = "Communicated Via is required.";
+    }
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
       return;
     }
+
+    setFieldErrors({});
+    setStatusMessage("");
 
     // Get required IDs - check localStorage first (as user mentioned org and batch are stored there)
     const orgId = parseInt(
@@ -179,7 +190,7 @@ const AdmAttendanceEntry = () => {
 
     // Validate required fields
     if (!orgId || orgId === 0) {
-      alert("Missing organization information. Please ensure you are properly logged in.");
+      setStatusMessage("Error: Missing organization information. Please ensure you are properly logged in.");
       console.error("Organization ID not found. Available keys:", {
         sessionStorage: sessionStorage.getItem("organization_id"),
         localStorage: localStorage.getItem("organization_id") || localStorage.getItem("orgId")
@@ -188,7 +199,7 @@ const AdmAttendanceEntry = () => {
     }
 
     if (!branchId || branchId === 0) {
-      alert("Missing branch/batch information. Please ensure you are properly logged in.");
+      setStatusMessage("Error: Missing branch/batch information. Please ensure you are properly logged in.");
       console.error("Branch ID not found. Available keys:", {
         sessionStorage: sessionStorage.getItem("branch_id"),
         localStorage: localStorage.getItem("branch_id") || localStorage.getItem("branchId") || localStorage.getItem("batch_id")
@@ -197,7 +208,7 @@ const AdmAttendanceEntry = () => {
     }
 
     if (!academicYearId || academicYearId === 0) {
-      alert("Missing academic year information. Please select a student first.");
+      setStatusMessage("Error: Missing academic year information. Please select a student first.");
       console.error("Academic Year ID not found. Student data:", selectedStudent);
       return;
     }
@@ -239,15 +250,15 @@ const AdmAttendanceEntry = () => {
       const data = await response.json();
 
       if (response.ok && data.message?.toLowerCase().includes("success")) {
-        alert("Communication record saved successfully!");
         // Clear the form
         handleClear();
+        setStatusMessage("Communication record saved successfully!");
       } else {
-        alert(`Error: ${data.message || data.error || "Something went wrong!"}`);
+        setStatusMessage(`Error: ${data.message || data.error || "Something went wrong!"}`);
       }
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Failed to save data: " + error.message);
+      setStatusMessage("Error: Failed to save data: " + error.message);
     }
   };
 
@@ -316,9 +327,15 @@ const AdmAttendanceEntry = () => {
                           id="date"
                           className="form-control detail"
                           value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
+                          onChange={(e) => {
+                            setSelectedDate(e.target.value);
+                            setFieldErrors((prev) => ({ ...prev, selectedDate: "" }));
+                          }}
                           placeholder="Select date"
                         />
+                        {fieldErrors.selectedDate && (
+                          <div className="text-danger small mt-1">{fieldErrors.selectedDate}</div>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-4">
@@ -330,10 +347,16 @@ const AdmAttendanceEntry = () => {
                           options={mentors}
                           className="detail"
                           value={selectedMentor}
-                          onChange={setSelectedMentor}
+                          onChange={(option) => {
+                            setSelectedMentor(option);
+                            setFieldErrors((prev) => ({ ...prev, selectedMentor: "" }));
+                          }}
                           placeholder="Select Mentor"
                           classNamePrefix="mentor-dropdown"
                         />
+                        {fieldErrors.selectedMentor && (
+                          <div className="text-danger small mt-1">{fieldErrors.selectedMentor}</div>
+                        )}
                       </div>
                       {/* Student Dropdown (Appears only if mentor is selected) */}
                       <div className="col-12 col-md-3 mb-4">
@@ -348,8 +371,14 @@ const AdmAttendanceEntry = () => {
                           placeholder="Select Student"
                           isDisabled={!selectedMentor} // Disables dropdown until a mentor is selected
                           value={selectedStudent}
-                          onChange={setSelectedStudent}
+                          onChange={(option) => {
+                            setSelectedStudent(option);
+                            setFieldErrors((prev) => ({ ...prev, selectedStudent: "" }));
+                          }}
                         />
+                        {fieldErrors.selectedStudent && (
+                          <div className="text-danger small mt-1">{fieldErrors.selectedStudent}</div>
+                        )}
                       </div>
                       {/* Communicated With Dropdown */}
                       <div className="col-12 col-md-3 mb-4 ">
@@ -365,9 +394,15 @@ const AdmAttendanceEntry = () => {
                           className="flex-grow-1 detail"
                           options={communicatedWithOptions}
                           value={selectedCommunicatedWith}
-                          onChange={setSelectedCommunicatedWith}
+                          onChange={(option) => {
+                            setSelectedCommunicatedWith(option);
+                            setFieldErrors((prev) => ({ ...prev, selectedCommunicatedWith: "" }));
+                          }}
                           placeholder="Select "
                         />
+                        {fieldErrors.selectedCommunicatedWith && (
+                          <div className="text-danger small mt-1">{fieldErrors.selectedCommunicatedWith}</div>
+                        )}
                       </div>
 
                       {/* Communicated Via Dropdown */}
@@ -385,8 +420,14 @@ const AdmAttendanceEntry = () => {
                           options={communicatedViaOptions}
                           placeholder="Select"
                           value={selectedCommunicatedVia}
-                          onChange={setSelectedCommunicatedVia}
+                          onChange={(option) => {
+                            setSelectedCommunicatedVia(option);
+                            setFieldErrors((prev) => ({ ...prev, selectedCommunicatedVia: "" }));
+                          }}
                         />
+                        {fieldErrors.selectedCommunicatedVia && (
+                          <div className="text-danger small mt-1">{fieldErrors.selectedCommunicatedVia}</div>
+                        )}
                       </div>
                       {/* Communication Details Input Field */}
                       <div className="col-12 col-md-6 mb-4 ">
@@ -430,6 +471,13 @@ const AdmAttendanceEntry = () => {
                           placeholder="Enter any additional remarks..."
                         />
                       </div>
+                      {statusMessage && (
+                        <div
+                          className={`col-12 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                        >
+                          {statusMessage}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

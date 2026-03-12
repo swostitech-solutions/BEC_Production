@@ -37,6 +37,8 @@ const AdmTeacherLessonPlan = () => {
   const [lessonPlanData, setLessonPlanData] = useState([]);
   const [updatedData, setUpdatedData] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState({});  // Track files by row index
+  const [rowErrors, setRowErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   // Custom Hooks with dependencies (matching Lesson Plan page exactly)
   const { BatchList, loading: loadingBatch } = useFetchSessionList(organizationId, branchId);
@@ -360,6 +362,13 @@ const AdmTeacherLessonPlan = () => {
     setUpdatedData((prevData) =>
       prevData.map((row, i) => (i === index ? { ...row, [field]: value } : row))
     );
+    setRowErrors((prev) => ({
+      ...prev,
+      [index]: {
+        ...(prev[index] || {}),
+        [field]: "",
+      },
+    }));
   };
 
   // Handle file selection
@@ -378,17 +387,25 @@ const AdmTeacherLessonPlan = () => {
 
     const { lecture_plan_id, taught_date, percentage_completed, remarks } = rowData;
 
-    if (!taught_date || !percentage_completed || !remarks) {
-      alert("Please fill in all fields (Taught Date, % Course Coverage, Remarks) before updating.");
+    const newRowError = {};
+    if (!taught_date) newRowError.taught_date = "Taught Date is required.";
+    if (!percentage_completed) newRowError.percentage_completed = "% Course Coverage is required.";
+    if (!remarks) newRowError.remarks = "Remarks is required.";
+
+    if (Object.keys(newRowError).length > 0) {
+      setRowErrors((prev) => ({ ...prev, [index]: newRowError }));
       return;
     }
+
+    setRowErrors((prev) => ({ ...prev, [index]: {} }));
+    setStatusMessage("");
 
     const userId = sessionStorage.getItem("userId");
     const orgId = sessionStorage.getItem("organization_id");
     const branchId = sessionStorage.getItem("branch_id");
 
     if (!userId) {
-      alert("User not logged in. Please log in again.");
+      setStatusMessage("Error: User not logged in. Please log in again.");
       return;
     }
 
@@ -430,7 +447,7 @@ const AdmTeacherLessonPlan = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Update API Error Response:", errorText);
-        alert(`Failed to update. Server error: ${response.status}`);
+        setStatusMessage(`Error: Failed to update. Server error: ${response.status}`);
         return;
       }
 
@@ -438,7 +455,7 @@ const AdmTeacherLessonPlan = () => {
       console.log("Update Response:", result);
 
       if (result.message === "success") {
-        alert("Lesson plan updated successfully!");
+        setStatusMessage("Lesson plan updated successfully!");
 
         // Refresh the lesson plan data
         const apiUrl = `${ApiUrl.apiurl}LECTURE_PLAN/GetProfessorLecturePlanList/?organization_id=${orgId}&branch_id=${branchId}&batch_id=${selectedSession.value}&course_id=${selectedCourse.value}&department_id=${selectedBranch.value}&academic_year_id=${selectedAcademicYear.value}&semester_id=${selectedSemester.value}&section_id=${selectedSection.value}&professor_id=${selectedMentor.value}&subject_id=${selectedSubject.value}`;
@@ -466,11 +483,11 @@ const AdmTeacherLessonPlan = () => {
           }
         }
       } else {
-        alert("Failed to update: " + (result.error || result.message || "Unknown error"));
+        setStatusMessage("Error: Failed to update: " + (result.error || result.message || "Unknown error"));
       }
     } catch (error) {
       console.error("Error updating lesson plan:", error);
-      alert("Error updating lesson plan: " + error.message);
+      setStatusMessage("Error: Error updating lesson plan: " + error.message);
     }
   };
 
@@ -486,6 +503,8 @@ const AdmTeacherLessonPlan = () => {
     setSelectedMentor(null);
     setLessonPlanData([]);
     setUpdatedData([]);
+    setRowErrors({});
+    setStatusMessage("");
   };
 
   // Handle Close button - navigate to dashboard
@@ -574,6 +593,11 @@ const AdmTeacherLessonPlan = () => {
                     Close
                   </button>
                 </div>
+                {statusMessage && (
+                  <div className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}>
+                    {statusMessage}
+                  </div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2">
@@ -749,6 +773,9 @@ const AdmTeacherLessonPlan = () => {
                                   )
                                 }
                               />
+                              {rowErrors[index]?.taught_date && (
+                                <div className="text-danger small mt-1">{rowErrors[index].taught_date}</div>
+                              )}
                             </td>
                             <td>
                               <input
@@ -763,6 +790,9 @@ const AdmTeacherLessonPlan = () => {
                                   )
                                 }
                               />
+                              {rowErrors[index]?.percentage_completed && (
+                                <div className="text-danger small mt-1">{rowErrors[index].percentage_completed}</div>
+                              )}
                             </td>
                             <td>
                               <input
@@ -777,6 +807,9 @@ const AdmTeacherLessonPlan = () => {
                                   )
                                 }
                               />
+                              {rowErrors[index]?.remarks && (
+                                <div className="text-danger small mt-1">{rowErrors[index].remarks}</div>
+                              )}
                             </td>
                             <td>
                               <input

@@ -5134,6 +5134,11 @@ const BookForm = () => {
     let isValid = true;
     const newErrors = {};
 
+    if (!bookDetails.type) {
+      newErrors.type = "Book/Journal is required";
+      isValid = false;
+    }
+
     if (!bookDetails.book_code) {
       newErrors.book_code = "Book Code is required";
       isValid = false;
@@ -5147,11 +5152,11 @@ const BookForm = () => {
       isValid = false;
     }
     if (!bookCategory) {
-      newErrors.book_category_Id = "Book Category is required";
+      newErrors.bookCategory = "Book Category is required";
       isValid = false;
     }
     if (!bookSubCategory) {
-      newErrors.book_sub_category_Id = "Book Sub-Category is required";
+      newErrors.bookSubCategory = "Book Sub-Category is required";
       isValid = false;
     }
     if (!bookDetails.total_no_of_copies) {
@@ -5346,14 +5351,16 @@ const BookForm = () => {
     const academicYearId = parseInt(localStorage.getItem("academicSessionId"));
     const loginId = parseInt(sessionStorage.getItem("userId"));
 
-    if (!bookDetails?.book_code || !bookDetails?.book_name) {
-      alert("Book Code and Book Name are required.");
+    if (!validateFields()) {
+      setError("Error: Please fill all mandatory fields.");
       return;
     }
 
+    setError("");
+
     // Check if accession rows exist
     if (!accessionRows || accessionRows.length === 0) {
-      alert("Please add at least one accession row with barcode details.");
+      setError("Error: Please add at least one accession row with barcode details.");
       return;
     }
 
@@ -5362,7 +5369,7 @@ const BookForm = () => {
     // Check for empty status in barcode rows (with null safety)
     const hasBlankStatus = accessionRows.some((row) => !row.status || (row.status && row.status.trim() === ""));
     if (hasBlankStatus) {
-      alert("Please select a status for all barcode rows.");
+      setError("Error: Please select a status for all barcode rows.");
       return;
     }
 
@@ -5374,7 +5381,7 @@ const BookForm = () => {
 
       // Check if all barcodes are filled
       if (barcodeList.length !== accessionRows.length) {
-        alert("Please fill all barcode fields or enable auto-generate.");
+        setError("Error: Please fill all barcode fields or enable auto-generate.");
         return;
       }
 
@@ -5389,16 +5396,16 @@ const BookForm = () => {
         const validationData = await validationResponse.json();
 
         if (validationResponse.ok && validationData.exists) {
-          alert("Some of the entered barcodes already exist. Please check.");
+          setError("Error: Some of the entered barcodes already exist. Please check.");
           return;
         } else if (!validationResponse.ok) {
-          alert("Failed to validate barcodes.");
+          setError("Error: Failed to validate barcodes.");
           console.error("Validation Error:", validationData);
           return;
         }
       } catch (error) {
         console.error("Barcode validation error:", error);
-        alert("An error occurred while validating barcodes.");
+        setError("Error: An error occurred while validating barcodes.");
         return;
       }
     }
@@ -5448,7 +5455,7 @@ const BookForm = () => {
       }));
 
     if (!libraryBookBarcodeDetails.length) {
-      alert("At least one barcode detail with barcode number is required.");
+      setError("Error: At least one barcode detail with barcode number is required.");
       return;
     }
 
@@ -5474,7 +5481,7 @@ const BookForm = () => {
       }));
 
     if (!librarypurchesDetails.length) {
-      alert("Please add at least one purchase detail with number of copies.");
+      setError("Error: Please add at least one purchase detail with number of copies.");
       return;
     }
 
@@ -5517,20 +5524,20 @@ const BookForm = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(
-          isUpdate ? "Book updated successfully!" : "Book saved successfully!"
-        );
         // Clear form data after successful save (both create and update)
         handleClear();
+        setError(
+          isUpdate ? "Book updated successfully!" : "Book saved successfully!"
+        );
       } else {
-        alert(
-          isUpdate ? "Failed to update the book." : "Failed to save the book."
+        setError(
+          `Error: ${isUpdate ? "Failed to update the book." : "Failed to save the book."}`
         );
         console.error("Error response from server:", data);
       }
     } catch (error) {
       console.error("Error submitting book:", error);
-      alert("An error occurred while saving the book.");
+      setError("Error: An error occurred while saving the book.");
     }
   };
 
@@ -5597,6 +5604,13 @@ const BookForm = () => {
                     Close
                   </button>
                 </div>
+                {error && (
+                  <div
+                    className={`mt-2 small ${error.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {error}
+                  </div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2">

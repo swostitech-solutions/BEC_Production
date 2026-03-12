@@ -13,6 +13,7 @@ const AdmAttendanceEntry = () => {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showStudentModal, setShowStudentModal] = useState(false);
+  const [pageMessage, setPageMessage] = useState("");
   
   const navigate = useNavigate();
   const orgId = sessionStorage.getItem("organization_id");
@@ -129,6 +130,7 @@ const AdmAttendanceEntry = () => {
   }, [selectedMentor, orgId, branchId, academicYearId]);
 
   const handleSearch = async () => {
+    setPageMessage("");
     const mentorId = selectedMentor ? selectedMentor.value : "";
     const studentId = selectedStudent ? selectedStudent.value : "";
 
@@ -170,6 +172,7 @@ const AdmAttendanceEntry = () => {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      setPageMessage("Error: Failed to fetch mentor assignment data.");
       setTableData([]);
     }
   };
@@ -179,6 +182,7 @@ const AdmAttendanceEntry = () => {
     setSelectedStudent(null);
     setStudents([]);
     setTableData([]);
+    setPageMessage("");
   };
 
   // Handle student selection from modal
@@ -228,7 +232,7 @@ const AdmAttendanceEntry = () => {
     if (!confirmation) return;
 
     if (!assignmentId) {
-      alert("Assignment ID is missing. Cannot delete assignment.");
+      setPageMessage("Error: Assignment ID is missing. Cannot delete assignment.");
       return;
     }
 
@@ -250,7 +254,7 @@ const AdmAttendanceEntry = () => {
       console.log("Delete Response:", result);
 
       if (response.ok && result.message?.toLowerCase().includes("success")) {
-        alert("Assignment deleted successfully!");
+        setPageMessage("Assignment deleted successfully!");
 
         // Refresh the table by removing the deleted student from the UI
         setTableData((prevData) => {
@@ -272,13 +276,13 @@ const AdmAttendanceEntry = () => {
         // Optionally refresh the search to get updated data
         // handleSearch();
       } else {
-        alert(
-          `Failed to delete assignment: ${result.message || result.error || "Unknown error"}`
+        setPageMessage(
+          `Error: Failed to delete assignment: ${result.message || result.error || "Unknown error"}`
         );
       }
     } catch (error) {
       console.error("Error deleting assignment:", error);
-      alert("An error occurred while deleting the assignment: " + error.message);
+      setPageMessage("Error: An error occurred while deleting the assignment: " + error.message);
     }
   };
 
@@ -334,6 +338,13 @@ const AdmAttendanceEntry = () => {
                     Close
                   </button>
                 </div>
+                {pageMessage && (
+                  <div
+                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {pageMessage}
+                  </div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2">

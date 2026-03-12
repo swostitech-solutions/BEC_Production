@@ -68,6 +68,8 @@ const AdmAttendanceEntry = () => {
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -213,6 +215,8 @@ const AdmAttendanceEntry = () => {
 
     // Hide Table if needed
     setShowTable(false);
+    setErrors({});
+    setStatusMessage("");
   };
 
 
@@ -534,22 +538,25 @@ const AdmAttendanceEntry = () => {
     const brnchId = sessionStorage.getItem("branch_id");
     const createdBy = sessionStorage.getItem("userId");
 
-    //  Validation
-    if (
-      !selectedMentor ||
-      !selectedSession ||
-      !selectedCourse ||
-      !selectedBranch ||
-      !selectedAcademicYear ||
-      !selectedSemester ||
-      !selectedSection ||
-      !selectedSubject ||
-      !selectedPeriod ||
-      selectedDays.length === 0
-    ) {
-      alert("Please fill all required fields including Period/Lecture.");
+    const newErrors = {};
+    if (!selectedMentor) newErrors.teacher = "Teacher is required.";
+    if (!selectedSession) newErrors.session = "Session is required.";
+    if (!selectedCourse) newErrors.course = "Course is required.";
+    if (!selectedBranch) newErrors.branch = "Department is required.";
+    if (!selectedAcademicYear) newErrors.academicYear = "Academic Year is required.";
+    if (!selectedSemester) newErrors.semester = "Semester is required.";
+    if (!selectedSection) newErrors.section = "Section is required.";
+    if (!selectedSubject) newErrors.subject = "Subject is required.";
+    if (!selectedPeriod) newErrors.period = "Period is required.";
+    if (selectedDays.length === 0) newErrors.days = "Select at least one day.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
+    setErrors({});
+    setStatusMessage("");
 
     //  Request Body
     const requestBody = {
@@ -588,29 +595,30 @@ const AdmAttendanceEntry = () => {
             data.success === true ||
             data.message?.toLowerCase().includes("success"))
         ) {
-          alert("Time Table Entry Saved Successfully!");
+          setStatusMessage("Time Table Entry Saved Successfully!");
           handleDisplay(); // refresh table
           return;
         }
 
         //  FAILURE WITH MESSAGE
         if (data.message) {
-          alert(data.message);
+          setStatusMessage(`Error: ${data.message}`);
           return;
         }
 
         //  UNKNOWN FAILURE
-        alert("Something went wrong. Please try again.");
+        setStatusMessage("Error: Something went wrong. Please try again.");
       })
       .catch((error) => {
         console.error(" Error saving Time Table Entry:", error);
-        alert("Error saving Time Table Entry.");
+        setStatusMessage("Error: Error saving Time Table Entry.");
       });
   };
 
   
   
   const handleDayChange = (day) => {
+    setErrors((prev) => ({ ...prev, days: "" }));
     setSelectedDays((prevDays) =>
       prevDays.includes(day)
         ? prevDays.filter((d) => d !== day)
@@ -770,6 +778,11 @@ const AdmAttendanceEntry = () => {
                     Close
                   </button>
                 </div>
+                {statusMessage && (
+                  <div className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}>
+                    {statusMessage}
+                  </div>
+                )}
               </div>
 
               <div className="row mt-3 mx-2">
@@ -785,7 +798,10 @@ const AdmAttendanceEntry = () => {
                             options={mentors}
                             className="detail"
                             value={selectedMentor}
-                            onChange={setSelectedMentor}
+                            onChange={(option) => {
+                              setSelectedMentor(option);
+                              setErrors((prev) => ({ ...prev, teacher: "" }));
+                            }}
                             placeholder="Select Mentor"
                             classNamePrefix="mentor-dropdown"
                           />
@@ -801,7 +817,10 @@ const AdmAttendanceEntry = () => {
                             classNamePrefix="session-dropdown"
                             placeholder="Select Session"
                             value={selectedSession}
-                            onChange={setSelectedSession}
+                            onChange={(option) => {
+                              setSelectedSession(option);
+                              setErrors((prev) => ({ ...prev, session: "" }));
+                            }}
                           />
                         ),
                       },
@@ -815,7 +834,10 @@ const AdmAttendanceEntry = () => {
                             classNamePrefix="course-dropdown"
                             placeholder="Select Course"
                             value={selectedCourse}
-                            onChange={setSelectedCourse}
+                            onChange={(option) => {
+                              setSelectedCourse(option);
+                              setErrors((prev) => ({ ...prev, course: "" }));
+                            }}
                           />
                         ),
                       },
@@ -829,7 +851,10 @@ const AdmAttendanceEntry = () => {
                             classNamePrefix="branch-dropdown"
                             placeholder="Select Branch"
                             value={selectedBranch}
-                            onChange={setSelectedBranch}
+                            onChange={(option) => {
+                              setSelectedBranch(option);
+                              setErrors((prev) => ({ ...prev, branch: "" }));
+                            }}
                           />
                         ),
                       },
@@ -843,7 +868,10 @@ const AdmAttendanceEntry = () => {
                             classNamePrefix="academic-year-dropdown"
                             placeholder="Select Academic Year"
                             value={selectedAcademicYear}
-                            onChange={setSelectedAcademicYear}
+                            onChange={(option) => {
+                              setSelectedAcademicYear(option);
+                              setErrors((prev) => ({ ...prev, academicYear: "" }));
+                            }}
                           />
                         ),
                       },
@@ -858,7 +886,10 @@ const AdmAttendanceEntry = () => {
                             placeholder="Select Semester"
                             isDisabled={!selectedAcademicYear}
                             value={selectedSemester}
-                            onChange={setSelectedSemester}
+                            onChange={(option) => {
+                              setSelectedSemester(option);
+                              setErrors((prev) => ({ ...prev, semester: "" }));
+                            }}
                           />
                         ),
                       },
@@ -896,7 +927,10 @@ const AdmAttendanceEntry = () => {
                             placeholder="Select Subject"
                             isDisabled={!selectedSection}
                             value={selectedSubject}
-                            onChange={setSelectedSubject}
+                            onChange={(option) => {
+                              setSelectedSubject(option);
+                              setErrors((prev) => ({ ...prev, subject: "" }));
+                            }}
                           />
                         ),
                       },
@@ -910,7 +944,10 @@ const AdmAttendanceEntry = () => {
                             classNamePrefix="period-dropdown"
                             placeholder="Select Period"
                             value={selectedPeriod}
-                            onChange={setSelectedPeriod}
+                            onChange={(option) => {
+                              setSelectedPeriod(option);
+                              setErrors((prev) => ({ ...prev, period: "" }));
+                            }}
                           />
                         ),
                       },
@@ -931,6 +968,7 @@ const AdmAttendanceEntry = () => {
                               ))}
                             </Form.Select>
                           )}
+                          {errors[field.id] && <div className="text-danger small mt-1">{errors[field.id]}</div>}
                         </Form.Group>
                       </Col>
                     ))}
@@ -951,6 +989,7 @@ const AdmAttendanceEntry = () => {
                             />
                           ))}
                         </div>
+                        {errors.days && <div className="text-danger small mt-1">{errors.days}</div>}
                       </Form.Group>
                     </Col>
                   </Row>

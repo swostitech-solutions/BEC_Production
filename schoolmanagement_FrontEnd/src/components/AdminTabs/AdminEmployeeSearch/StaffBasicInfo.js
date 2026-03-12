@@ -9,7 +9,14 @@ import useFetchLanguages from "../../hooks/useFetchLanguages";
 import { ApiUrl } from "../../../ApiUrl";
 import { useLocation } from "react-router-dom";
 
-const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basicInfoData }) => {
+const StaffInfo = ({
+  goToTab,
+  setAddressDetails,
+  setBasicInfoDataInParent,
+  basicInfoData,
+  externalRequiredFieldErrors = {},
+  onClearRequiredFieldError,
+}) => {
   // const [frontCover, setFrontCover] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,6 +69,31 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
   // Validation errors for phone fields
   const [phoneNumberError, setPhoneNumberError] = useState("");
   const [emergencyContactError, setEmergencyContactError] = useState("");
+  const [requiredFieldErrors, setRequiredFieldErrors] = useState({});
+  const [formErrorMessage, setFormErrorMessage] = useState("");
+  const displayRequiredFieldErrors = {
+    ...requiredFieldErrors,
+    ...externalRequiredFieldErrors,
+  };
+
+  const handleRequiredFieldChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    setFormErrorMessage("");
+
+    setRequiredFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
+
+    if (onClearRequiredFieldError) {
+      onClearRequiredFieldError(field);
+    }
+  };
 
   // Initialize frontCover from basicInfoData if available (must be a valid image URL)
   const [frontCover, setFrontCover] = useState(() => {
@@ -292,19 +324,39 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
 
   const handleNext = async () => {
     const requiredFields = [
+      "employeeCode",
+      "firstName",
+      "lastName",
       "dob",
-      "bloodGroup",
       "nationality",
       "religion",
+      "gender",
       "motherTongue",
       "employeeType",
+      "status",
+      "phoneNumber",
     ];
-    const missingFields = requiredFields.filter((field) => !formData[field]);
 
-    if (missingFields.length > 0) {
-      alert(`Please fill in: ${missingFields.join(", ")}`);
+    const validationErrors = {};
+    requiredFields.forEach((field) => {
+      const value = formData[field];
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        (typeof value === "string" && value.trim() === "");
+
+      if (isEmpty) {
+        validationErrors[field] = "This field is required";
+      }
+    });
+
+    if (Object.keys(validationErrors).length > 0) {
+      setRequiredFieldErrors(validationErrors);
       return;
     }
+
+    setRequiredFieldErrors({});
+    setFormErrorMessage("");
 
     try {
       // Data is already synced to parent via useEffect - no need for sessionStorage
@@ -351,8 +403,7 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
       goToTab(1);
     } catch (error) {
       console.error("Error in handleNext:", error);
-      alert("Error while proceeding to next tab: " + error.message);
-      goToTab(1); // Proceed anyway if error occurs
+      setFormErrorMessage("Error while proceeding to next tab: " + error.message);
     }
   };
 
@@ -364,6 +415,11 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
       <div className="row">
         <div className="col-12">
           <div className="card-body">
+            {formErrorMessage && (
+              <div className="alert alert-danger" role="alert">
+                {formErrorMessage}
+              </div>
+            )}
             <div className="row  mx-2">
               <div className="col-12 custom-section-box">
                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
@@ -381,13 +437,15 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           placeholder="Enter employee code"
                           value={formData.employeeCode}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              employeeCode: e.target.value,
-                            })
+                            handleRequiredFieldChange("employeeCode", e.target.value)
                           }
                         />
                       </div>
+                      {displayRequiredFieldErrors.employeeCode && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.employeeCode}
+                        </div>
+                      )}
                     </div>
 
                     {/* NUID field hidden as per client request — field is optional (null=True, blank=True in DB) */}
@@ -447,10 +505,7 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           placeholder="Enter First name"
                           value={formData.firstName}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              firstName: e.target.value,
-                            })
+                            handleRequiredFieldChange("firstName", e.target.value)
                           }
                         />
                         <input
@@ -471,13 +526,20 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           placeholder="Enter last name"
                           value={formData.lastName}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              lastName: e.target.value,
-                            })
+                            handleRequiredFieldChange("lastName", e.target.value)
                           }
                         />
                       </div>
+                      {displayRequiredFieldErrors.firstName && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.firstName}
+                        </div>
+                      )}
+                      {displayRequiredFieldErrors.lastName && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.lastName}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -492,13 +554,15 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           className="form-control detail"
                           value={formData.dob}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              dob: e.target.value,
-                            })
+                            handleRequiredFieldChange("dob", e.target.value)
                           }
                         />
                       </div>
+                      {displayRequiredFieldErrors.dob && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.dob}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -565,10 +629,7 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                             (option) => option.value === formData.bloodGroup
                           )}
                         onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            bloodGroup: selectedOption.value, // store ID (value)
-                          })
+                          handleRequiredFieldChange("bloodGroup", selectedOption?.value || "")
                         }
                       />
                     </div>
@@ -595,12 +656,14 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                             (option) => option.value === formData.nationality
                           )}
                         onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            nationality: selectedOption.value, // store ID
-                          })
+                          handleRequiredFieldChange("nationality", selectedOption?.value || "")
                         }
                       />
+                      {displayRequiredFieldErrors.nationality && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.nationality}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -623,12 +686,14 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           }))
                           .find((option) => option.value === formData.religion)}
                         onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            religion: selectedOption.value,
-                          })
+                          handleRequiredFieldChange("religion", selectedOption?.value || "")
                         }
                       />
+                      {displayRequiredFieldErrors.religion && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.religion}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -651,12 +716,14 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           }))
                           .find((option) => option.value === formData.gender)}
                         onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            gender: selectedOption.value,
-                          })
+                          handleRequiredFieldChange("gender", selectedOption?.value || "")
                         }
                       />
+                      {displayRequiredFieldErrors.gender && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.gender}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -681,12 +748,14 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                             (option) => option.value === formData.motherTongue
                           )}
                         onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            motherTongue: selectedOption.value,
-                          })
+                          handleRequiredFieldChange("motherTongue", selectedOption?.value || "")
                         }
                       />
+                      {displayRequiredFieldErrors.motherTongue && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.motherTongue}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -703,12 +772,14 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           (option) => option.value === formData.employeeType
                         )}
                         onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            employeeType: selectedOption.value, // store ID (value)
-                          })
+                          handleRequiredFieldChange("employeeType", selectedOption?.value || "")
                         }
                       />
+                      {displayRequiredFieldErrors.employeeType && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.employeeType}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -728,13 +799,15 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           label: formData.status || "ACTIVE",
                         }}
                         onChange={(selectedOption) =>
-                          setFormData({
-                            ...formData,
-                            status: selectedOption.value,
-                          })
+                          handleRequiredFieldChange("status", selectedOption?.value || "")
                         }
                         isDisabled={!formData.employeeId}
                       />
+                      {displayRequiredFieldErrors.status && (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.status}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -791,7 +864,7 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           maxLength={10}
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, "");
-                            setFormData({ ...formData, phoneNumber: val });
+                            handleRequiredFieldChange("phoneNumber", val);
                             if (val && val.length !== 10) {
                               setPhoneNumberError("Mobile number must be exactly 10 digits.");
                             } else {
@@ -800,7 +873,11 @@ const StaffInfo = ({ goToTab, setAddressDetails, setBasicInfoDataInParent, basic
                           }}
                         />
                       </div>
-                      {phoneNumberError && (
+                      {displayRequiredFieldErrors.phoneNumber ? (
+                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                          {displayRequiredFieldErrors.phoneNumber}
+                        </div>
+                      ) : phoneNumberError && (
                         <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
                           {phoneNumberError}
                         </div>

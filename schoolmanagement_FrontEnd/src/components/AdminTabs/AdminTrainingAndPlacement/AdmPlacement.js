@@ -40,6 +40,8 @@ const AdmAttendanceEntry = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   const { BatchList } = useFetchSessionList(orgId, branchId);
 
@@ -74,6 +76,8 @@ const AdmAttendanceEntry = () => {
     setSelectedDepartment(null);
     setSelectedAcademicYear(null);
     setSelectedSemester(null);
+    setErrors({});
+    setStatusMessage("");
 
     // Clear uncontrolled input refs if used elsewhere
     if (fromClassRef.current) fromClassRef.current.value = "";
@@ -171,10 +175,25 @@ const AdmAttendanceEntry = () => {
   };
 
   const handleSubmit = async () => {
-    if (!fromDate || !toDate) {
-      alert("Please select both From Date and To Date");
+    const newErrors = {};
+    if (!formData.organizationName?.trim()) newErrors.organizationName = "Organization/Company is required.";
+    if (!formData.trainingModule?.trim()) newErrors.trainingModule = "Training Module is required.";
+    if (!formData.duration) newErrors.duration = "Duration is required.";
+    if (!fromDate) newErrors.fromDate = "From Date is required.";
+    if (!toDate) newErrors.toDate = "To Date is required.";
+    if (!selectedBatch) newErrors.batch = "Session is required.";
+    if (!selectedCourse) newErrors.course = "Course is required.";
+    if (!selectedDepartment) newErrors.department = "Department is required.";
+    if (!selectedAcademicYear) newErrors.academicYear = "Academic Year is required.";
+    if (!formData.numParticipants) newErrors.numParticipants = "Number of Participants is required.";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
+    setErrors({});
+    setStatusMessage("");
 
     const userId = sessionStorage.getItem("userId") || "1";
 
@@ -234,9 +253,10 @@ const AdmAttendanceEntry = () => {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
       if (diffDays !== durationDays) {
-        alert(
-          `Date range mismatch! You selected a range of ${diffDays} days, but the Duration is set to ${durationDays} days. Please adjust the dates or the duration.`
-        );
+        setErrors((prev) => ({
+          ...prev,
+          duration: `Duration should match selected dates (${diffDays} days).`,
+        }));
         return; // Stop submission
       }
     }
@@ -275,7 +295,7 @@ const AdmAttendanceEntry = () => {
 
       if (response.ok) {
         const data = await response.json();
-        alert(
+        setStatusMessage(
           placementData?.id
             ? "Placement updated successfully!"
             : "Placement created successfully!"
@@ -288,12 +308,12 @@ const AdmAttendanceEntry = () => {
         );
       } else {
         const errorData = await response.json();
-        alert("Error saving placement. Please try again.");
+        setStatusMessage("Error: Error saving placement. Please try again.");
         console.error("Error saving placement:", errorData);
       }
     } catch (error) {
-      alert(
-        "Something went wrong. Please check your internet connection and try again."
+      setStatusMessage(
+        "Error: Something went wrong. Please check your internet connection and try again."
       );
       console.error("Error saving placement:", error);
     }
@@ -341,6 +361,13 @@ const AdmAttendanceEntry = () => {
                     Close
                   </button>
                 </div>
+                {statusMessage && (
+                  <div
+                    className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
+                  >
+                    {statusMessage}
+                  </div>
+                )}
               </div>
 
               {/* <div
@@ -488,8 +515,12 @@ const AdmAttendanceEntry = () => {
                           className="form-control detail"
                           name="organizationName"
                           value={formData.organizationName}
-                          onChange={handleChange}
+                          onChange={(e) => {
+                            handleChange(e);
+                            setErrors((prev) => ({ ...prev, organizationName: "" }));
+                          }}
                         />
+                        {errors.organizationName && <div className="text-danger small mt-1">{errors.organizationName}</div>}
                       </Col>
                     </Row>
 
@@ -506,8 +537,12 @@ const AdmAttendanceEntry = () => {
                           className="form-control detail"
                           name="trainingModule"
                           value={formData.trainingModule}
-                          onChange={handleChange}
+                          onChange={(e) => {
+                            handleChange(e);
+                            setErrors((prev) => ({ ...prev, trainingModule: "" }));
+                          }}
                         />
+                        {errors.trainingModule && <div className="text-danger small mt-1">{errors.trainingModule}</div>}
                       </Col>
                     </Row>
 
@@ -523,10 +558,14 @@ const AdmAttendanceEntry = () => {
                           name="duration"
                           className="form-control detail"
                           value={formData.duration}
-                          onChange={handleChange}
+                          onChange={(e) => {
+                            handleChange(e);
+                            setErrors((prev) => ({ ...prev, duration: "" }));
+                          }}
                           min="1"
                           placeholder="Enter days"
                         />
+                        {errors.duration && <div className="text-danger small mt-1">{errors.duration}</div>}
                       </Col>
                     </Row>
 
@@ -541,8 +580,12 @@ const AdmAttendanceEntry = () => {
                           type="date"
                           className="form-control detail"
                           value={fromDate || ""}
-                          onChange={(e) => setFromDate(e.target.value)}
+                          onChange={(e) => {
+                            setFromDate(e.target.value);
+                            setErrors((prev) => ({ ...prev, fromDate: "" }));
+                          }}
                         />
+                        {errors.fromDate && <div className="text-danger small mt-1">{errors.fromDate}</div>}
                       </Col>
                     </Row>
 
@@ -557,8 +600,12 @@ const AdmAttendanceEntry = () => {
                           type="date"
                           className="form-control detail"
                           value={toDate || ""}
-                          onChange={(e) => setToDate(e.target.value)}
+                          onChange={(e) => {
+                            setToDate(e.target.value);
+                            setErrors((prev) => ({ ...prev, toDate: "" }));
+                          }}
                         />
+                        {errors.toDate && <div className="text-danger small mt-1">{errors.toDate}</div>}
                       </Col>
                     </Row>
 
@@ -578,7 +625,10 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={selectedBatch}
-                          onChange={setSelectedBatch}
+                          onChange={(option) => {
+                            setSelectedBatch(option);
+                            setErrors((prev) => ({ ...prev, batch: "" }));
+                          }}
                           placeholder="Select Session"
                           styles={{
                             control: (provided) => ({
@@ -587,6 +637,7 @@ const AdmAttendanceEntry = () => {
                             }),
                           }}
                         />
+                        {errors.batch && <div className="text-danger small mt-1">{errors.batch}</div>}
                       </Col>
                     </Row>
 
@@ -607,7 +658,10 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={selectedCourse}
-                          onChange={setSelectedCourse}
+                          onChange={(option) => {
+                            setSelectedCourse(option);
+                            setErrors((prev) => ({ ...prev, course: "" }));
+                          }}
                           placeholder="Select Course"
                           isDisabled={!selectedBatch}
                           styles={{
@@ -617,6 +671,7 @@ const AdmAttendanceEntry = () => {
                             }),
                           }}
                         />
+                        {errors.course && <div className="text-danger small mt-1">{errors.course}</div>}
                       </Col>
                     </Row>
 
@@ -637,7 +692,10 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={selectedDepartment}
-                          onChange={setSelectedDepartment}
+                          onChange={(option) => {
+                            setSelectedDepartment(option);
+                            setErrors((prev) => ({ ...prev, department: "" }));
+                          }}
                           placeholder="Select Department"
                           isDisabled={!selectedCourse}
                           styles={{
@@ -647,6 +705,7 @@ const AdmAttendanceEntry = () => {
                             }),
                           }}
                         />
+                        {errors.department && <div className="text-danger small mt-1">{errors.department}</div>}
                       </Col>
                     </Row>
 
@@ -667,7 +726,10 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={selectedAcademicYear}
-                          onChange={setSelectedAcademicYear}
+                          onChange={(option) => {
+                            setSelectedAcademicYear(option);
+                            setErrors((prev) => ({ ...prev, academicYear: "" }));
+                          }}
                           placeholder="Select Academic Year"
                           isDisabled={!selectedDepartment}
                           styles={{
@@ -677,6 +739,7 @@ const AdmAttendanceEntry = () => {
                             }),
                           }}
                         />
+                        {errors.academicYear && <div className="text-danger small mt-1">{errors.academicYear}</div>}
                       </Col>
                     </Row>
 
@@ -721,8 +784,12 @@ const AdmAttendanceEntry = () => {
                           name="numParticipants"
                           className="form-control detail"
                           value={formData.numParticipants}
-                          onChange={handleChange}
+                          onChange={(e) => {
+                            handleChange(e);
+                            setErrors((prev) => ({ ...prev, numParticipants: "" }));
+                          }}
                         />
+                        {errors.numParticipants && <div className="text-danger small mt-1">{errors.numParticipants}</div>}
                       </Col>
                     </Row>
 
