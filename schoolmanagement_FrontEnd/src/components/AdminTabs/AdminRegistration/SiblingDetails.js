@@ -140,23 +140,7 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
 
   // Function to handle adding a new row
   const handleAddRow = () => {
-    // Validate required fields before adding a new row in sibling details
-    const incompleteSiblings = formData.sibilingsDetails.filter(
-      (detail) =>
-        !detail.admissionNo ||
-        !detail.studentName ||
-        !detail.class ||
-        !detail.section
-    );
-
-    if (incompleteSiblings.length > 0) {
-      alert(
-        "Please fill in all required fields (Admission No, Student Name, Class, Section) for sibling details before adding a new one."
-      );
-      return; // Prevent adding a new row
-    }
-
-    // If validation passes, add a new row
+    // Sibling details are optional, so rows can be added without field validation.
     setFormData((prevData) => ({
       ...prevData,
       sibilingsDetails: [

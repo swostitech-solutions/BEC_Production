@@ -601,32 +601,6 @@ export default function BasicTabs() {
       }
     }
 
-    const siblingRows = Array.isArray(formData.sibilingsDetails)
-      ? formData.sibilingsDetails
-      : [];
-    const siblingErrors = [];
-    siblingRows.forEach((row, index) => {
-      const rowError = {};
-      if (!row?.admissionNo || String(row.admissionNo).trim() === "") {
-        rowError.admissionNo = "This field is required";
-      }
-      if (!row?.studentName || String(row.studentName).trim() === "") {
-        rowError.studentName = "This field is required";
-      }
-      if (!row?.class || String(row.class).trim() === "") {
-        rowError.class = "This field is required";
-      }
-      if (!row?.section || String(row.section).trim() === "") {
-        rowError.section = "This field is required";
-      }
-      if (Object.keys(rowError).length > 0) {
-        siblingErrors[index] = rowError;
-      }
-    });
-    if (siblingErrors.length > 0) {
-      validationErrors.sibilingsDetails = siblingErrors;
-    }
-
     const emergencyRows = Array.isArray(formData.emegencyContact)
       ? formData.emegencyContact
       : [];

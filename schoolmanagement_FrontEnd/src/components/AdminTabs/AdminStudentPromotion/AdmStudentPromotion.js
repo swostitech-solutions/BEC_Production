@@ -234,6 +234,8 @@ const StudentPromotion = () => {
   const [errorStudents, setErrorStudents] = useState(null);
   const [studentLoading, setStudentLoading] = useState(false);
   const [studentError, setStudentError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [actionSuccess, setActionSuccess] = useState("");
 
   useEffect(() => {
     const handleSessionChange = () => {
@@ -393,6 +395,8 @@ const StudentPromotion = () => {
   const updateStudentStatus = async (status) => {
     const userId = sessionStorage.getItem("userId");
     const token = localStorage.getItem("accessToken");
+    setActionError("");
+    setActionSuccess("");
 
     // ✅ Validate all required fields
     if (
@@ -406,14 +410,14 @@ const StudentPromotion = () => {
       !toSemester ||
       !toSection
     ) {
-      alert("Please select all 'From' and 'To' fields before promotion.");
+      setActionError("Please select all 'From' and 'To' fields before promotion.");
       return;
     }
 
     // ✅ Collect selected promoted student IDs
     const studentIds = promotedStudents.map((s) => s.student_id);
     if (studentIds.length === 0) {
-      alert("No students selected for promotion.");
+      setActionError("No students selected for promotion.");
       return;
     }
 
@@ -464,15 +468,18 @@ const StudentPromotion = () => {
       console.log("📥 API Response:", result);
 
       if (response.ok && result.message) {
-        // ✅ Show the exact message from backend
-        alert(`✅ ${result.message}`);
+        setActionSuccess(result.message);
+        setActionError("");
         setPromotedStudents([]);
+        setSelectedStudents([]);
       } else {
-        alert(`⚠️ Error: ${result.message || "Promotion failed"}`);
+        setActionError(`Error: ${result.message || "Promotion failed"}`);
+        setActionSuccess("");
       }
     } catch (error) {
       console.error("❌ Error during promotion:", error);
-      alert("❌ Error updating student promotion status");
+      setActionError("Error updating student promotion status.");
+      setActionSuccess("");
     }
   };
 
@@ -500,6 +507,8 @@ const StudentPromotion = () => {
 
     // 🔹 Reset other form data if present
     setFormData({});
+    setActionError("");
+    setActionSuccess("");
 
     // 🔹 Optional: also clear localStorage/sessionStorage if you store selection
     localStorage.removeItem("selectedFromBatch");
@@ -1106,6 +1115,12 @@ const StudentPromotion = () => {
                     className="d-flex flex-column align-items-center"
                     style={{ minWidth: "140px", width: "100%" }}
                   >
+                    {actionError && (
+                      <div className="text-danger text-center mb-2">{actionError}</div>
+                    )}
+                    {actionSuccess && (
+                      <div className="text-success text-center mb-2">{actionSuccess}</div>
+                    )}
                     <Button
                       color="primary"
                       className="mb-2 w-100"

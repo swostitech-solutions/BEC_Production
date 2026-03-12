@@ -212,6 +212,9 @@ const AdmAttendanceEntry = () => {
     assignmentDetails: "",
   });
   const [isEditMode, setIsEditMode] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // change as needed
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -225,6 +228,51 @@ const AdmAttendanceEntry = () => {
   const handlePageChange = ({ selected }) => {
     setCurrentPage(selected + 1); // react-paginate uses 0-based indexing
   };
+
+  const requiredFieldLabels = {
+    assignmentDate: "Assignment Date is required",
+    batch: "Session is required",
+    course: "Course is required",
+    branch: "Department is required",
+    academic_year: "Academic Year is required",
+    semester: "Semester is required",
+    addmitted_section: "Section is required",
+    lectureId: "Period is required",
+    subjectId: "Subject is required",
+    professorId: "Lecture is required",
+    assignmentDetails: "Assignment Details is required",
+  };
+
+  const validateRequiredFields = () => {
+    const nextErrors = {};
+
+    Object.keys(requiredFieldLabels).forEach((fieldKey) => {
+      if (!String(formData[fieldKey] || "").trim()) {
+        nextErrors[fieldKey] = requiredFieldLabels[fieldKey];
+      }
+    });
+
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  useEffect(() => {
+    if (!Object.keys(fieldErrors).length) {
+      return;
+    }
+
+    setFieldErrors((prev) => {
+      const updated = { ...prev };
+
+      Object.keys(requiredFieldLabels).forEach((fieldKey) => {
+        if (String(formData[fieldKey] || "").trim()) {
+          delete updated[fieldKey];
+        }
+      });
+
+      return updated;
+    });
+  }, [formData]);
 
   const todayDate = new Date().toISOString().split("T")[0];
 
@@ -449,6 +497,9 @@ const AdmAttendanceEntry = () => {
 
     // ✅ Exit edit mode
     setIsEditMode(false);
+    setFormError("");
+    setFormSuccess("");
+    setFieldErrors({});
   };
 
   const [message, setMessage] = useState("");
@@ -804,11 +855,13 @@ const AdmAttendanceEntry = () => {
         // ✅ Scroll to form top
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        alert("Failed to fetch assignment details.");
+        setFormError("Failed to fetch assignment details.");
+        setFormSuccess("");
       }
     } catch (error) {
       console.error("Error fetching assignment details:", error);
-      alert("Something went wrong while loading assignment data.");
+      setFormError("Something went wrong while loading assignment data.");
+      setFormSuccess("");
     }
   };
 
@@ -827,20 +880,9 @@ const AdmAttendanceEntry = () => {
       assignmentDetails,
     } = formData;
 
-    if (
-      !batch ||
-      !course ||
-      !branch ||
-      !academic_year ||
-      !semester ||
-      !addmitted_section ||
-      !lectureId ||
-      !subjectId ||
-      !professorId ||
-      !assignmentDate ||
-      !assignmentDetails
-    ) {
-      alert("⚠️ Please fill all mandatory fields before saving.");
+    setFormError("");
+    setFormSuccess("");
+    if (!validateRequiredFields()) {
       return;
     }
 
@@ -889,26 +931,31 @@ const AdmAttendanceEntry = () => {
       console.log("Assignment Create Response:", result);
 
       if (response.ok && result.message === "Assignment Added sucessfully!!") {
-        alert("✅ Assignment Created Successfully!");
         fetchAssignments();
         handleClear();
+        setFormSuccess("Assignment created successfully.");
+        setFormError("");
       } else {
-        alert(
-          `❌ Failed to create assignment: ${result.message || "Unknown error"}`
+        setFormError(
+          `Failed to create assignment: ${result.message || "Unknown error"}`
         );
+        setFormSuccess("");
       }
     } catch (error) {
       console.error("Error while creating assignment:", error);
-      alert("❌ Something went wrong while creating assignment.");
+      setFormError("Something went wrong while creating assignment.");
+      setFormSuccess("");
     }
   };
 
   // ✅ Proper Update Function (PUT method, matches backend structure)
   const handleUpdateClick = async () => {
     const assignmentId = formData.assignmentId;
+    setFormError("");
+    setFormSuccess("");
 
     if (!assignmentId) {
-      alert("Assignment ID missing!");
+      setFormError("Assignment ID missing. Please select a record to edit.");
       return;
     }
 
@@ -932,20 +979,7 @@ const AdmAttendanceEntry = () => {
       assignmentDetails,
     } = formData;
 
-    if (
-      !batch ||
-      !course ||
-      !branch ||
-      !academic_year ||
-      !semester ||
-      !addmitted_section ||
-      !lectureId ||
-      !subjectId ||
-      !professorId ||
-      !assignmentDate ||
-      !assignmentDetails
-    ) {
-      alert("⚠️ Please fill all required fields before updating.");
+    if (!validateRequiredFields()) {
       return;
     }
 
@@ -996,16 +1030,19 @@ const AdmAttendanceEntry = () => {
       console.log("Assignment Update Response:", result);
 
       if (response.ok && result.message?.toLowerCase().includes("success")) {
-        alert("✅ Assignment Updated Successfully!");
         await fetchAssignments(); // refresh table
         handleClear(); // reset form
         setIsEditMode(false);
+        setFormSuccess("Assignment updated successfully.");
+        setFormError("");
       } else {
-        alert(`❌ Update failed: ${result.message || "Unknown error"}`);
+        setFormError(`Update failed: ${result.message || "Unknown error"}`);
+        setFormSuccess("");
       }
     } catch (error) {
       console.error("Error updating assignment:", error);
-      alert("❌ Failed to update assignment. Please try again.");
+      setFormError("Failed to update assignment. Please try again.");
+      setFormSuccess("");
     }
   };
 
@@ -1020,7 +1057,8 @@ const AdmAttendanceEntry = () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        alert("Unauthorized: Missing access token.");
+        setFormError("Unauthorized: Missing access token.");
+        setFormSuccess("");
         return;
       }
 
@@ -1039,23 +1077,23 @@ const AdmAttendanceEntry = () => {
       console.log("Delete Response:", result);
 
       if (result.message?.toLowerCase().includes("success")) {
-        alert("✅ Assignment deleted successfully.");
+        setFormSuccess("Assignment deleted successfully.");
+        setFormError("");
 
         // ✅ IMMEDIATELY remove from table
         setAssignments((prev) =>
           prev.filter((item) => item.id !== assignmentId)
         );
       } else {
-        alert(
-          `❌ Failed to delete assignment: ${result.message || "Unknown error."
-          }`
+        setFormError(
+          `Failed to delete assignment: ${result.message || "Unknown error."}`
         );
+        setFormSuccess("");
       }
     } catch (error) {
       console.error("Error deleting assignment:", error);
-      alert(
-        "An error occurred while deleting the assignment: " + error.message
-      );
+      setFormError("An error occurred while deleting the assignment: " + error.message);
+      setFormSuccess("");
     }
   };
 
@@ -1209,6 +1247,12 @@ const AdmAttendanceEntry = () => {
 
               <div className="row mt-3 mx-2">
                 <div className="col-12 custom-section-box">
+                  {formSuccess && (
+                    <div className="text-success mb-2">{formSuccess}</div>
+                  )}
+                  {formError && (
+                    <div className="text-danger mb-2">{formError}</div>
+                  )}
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                     <div className="row flex-grow-1 mt-3">
                       <div className="col-12 col-md-3 mb-3">
@@ -1224,6 +1268,11 @@ const AdmAttendanceEntry = () => {
                           value={formData.assignmentDate}
                           onChange={handleDateChange}
                         />
+                        {fieldErrors.assignmentDate && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.assignmentDate}
+                          </small>
+                        )}
                       </div>
 
                       {/* Batch / Session */}
@@ -1266,6 +1315,11 @@ const AdmAttendanceEntry = () => {
                                 : "Select Session"
                           }
                         />
+                        {fieldErrors.batch && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.batch}
+                          </small>
+                        )}
                       </div>
                       {/* Course */}
                       <div className="col-12 col-md-3 mb-1">
@@ -1317,6 +1371,11 @@ const AdmAttendanceEntry = () => {
                                 : "Select Course"
                           }
                         />
+                        {fieldErrors.course && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.course}
+                          </small>
+                        )}
                       </div>
 
                       {/* Department */}
@@ -1369,6 +1428,11 @@ const AdmAttendanceEntry = () => {
                                 : "Select Department"
                           }
                         />
+                        {fieldErrors.branch && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.branch}
+                          </small>
+                        )}
                       </div>
 
                       {/* Academic Year */}
@@ -1419,6 +1483,11 @@ const AdmAttendanceEntry = () => {
                                 : "Select Academic Year"
                           }
                         />
+                        {fieldErrors.academic_year && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.academic_year}
+                          </small>
+                        )}
                       </div>
 
                       {/* Semester */}
@@ -1472,6 +1541,11 @@ const AdmAttendanceEntry = () => {
                                 : "Select Semester"
                           }
                         />
+                        {fieldErrors.semester && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.semester}
+                          </small>
+                        )}
                       </div>
 
                       {/* Section */}
@@ -1519,6 +1593,11 @@ const AdmAttendanceEntry = () => {
                           }
                             isClearable={false}
                         />
+                        {fieldErrors.addmitted_section && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.addmitted_section}
+                          </small>
+                        )}
                       </div>
                       {/* Period Dropdown */}
                       <div className="col-12 col-md-3 mb-1">
@@ -1569,6 +1648,11 @@ const AdmAttendanceEntry = () => {
                                 : "Select Period"
                           }
                         />
+                        {fieldErrors.lectureId && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.lectureId}
+                          </small>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1623,6 +1707,11 @@ const AdmAttendanceEntry = () => {
                               : "Select Subject"
                         }
                       />
+                      {fieldErrors.subjectId && (
+                        <small className="text-danger d-block mt-1">
+                          {fieldErrors.subjectId}
+                        </small>
+                      )}
                     </div>
                     {/* Professor Dropdown */}
                     <div className="col-12 col-md-3 mb-1">
@@ -1667,6 +1756,11 @@ const AdmAttendanceEntry = () => {
                               : "Select Lecture"
                         }
                       />
+                      {fieldErrors.professorId && (
+                        <small className="text-danger d-block mt-1">
+                          {fieldErrors.professorId}
+                        </small>
+                      )}
                     </div>
                     <div className="col-12 col-md-3 mb-0">
                       <label htmlFor="upload" className="form-label">
@@ -1821,6 +1915,11 @@ const AdmAttendanceEntry = () => {
                             boxSizing: "border-box",
                           }}
                         ></textarea>
+                        {fieldErrors.assignmentDetails && (
+                          <small className="text-danger d-block mt-1">
+                            {fieldErrors.assignmentDetails}
+                          </small>
+                        )}
                         <div className="d-flex justify-content-middle mt-1">
                           <small className="text-muted">
                             Remaining characters:{" "}
