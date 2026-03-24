@@ -12200,8 +12200,28 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
 
                     instance.save()
 
-                    student_course_instance = StudentCourse.objects.get(student_id=student_id)
-
+                    try:
+                        student_course_instance = StudentCourse.objects.filter(student_id=student_id).order_by('-id').first()
+                        if not student_course_instance:
+                            raise StudentCourse.DoesNotExist
+                    except StudentCourse.DoesNotExist:
+                        # If StudentCourse doesn't exist, create it with default values
+                        student_course_instance = StudentCourse.objects.create(
+                            academic_year=instance.academic_year,
+                            student=instance,
+                            organization=instance.organization,
+                            branch=instance.branch,
+                            batch=instance.batch,
+                            course=instance.course,
+                            department=instance.department,
+                            semester=instance.semester,
+                            section=instance.section,
+                            fee_group=None,
+                            fee_applied_from=None,
+                            enrollment_no=None,
+                            house=instance.house,
+                            student_status='active'
+                        )
 
                     student_course_instance.batch = student_basic_detail.get('batch', student_course_instance.batch)
                     student_course_instance.course = student_basic_detail.get('course', student_course_instance.course)
