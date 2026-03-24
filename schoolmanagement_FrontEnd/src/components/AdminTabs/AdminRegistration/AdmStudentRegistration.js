@@ -972,8 +972,19 @@ export default function BasicTabs() {
       const fileType = sessionStorage.getItem("profile_pic_type");
 
       if (base64Data && fileName && fileType) {
-        const res = await fetch(base64Data);
-        const blob = await res.blob();
+        // Remove data URL prefix if present
+        const base64String = base64Data.includes(',')
+          ? base64Data.split(',')[1]
+          : base64Data;
+
+        // Convert base64 to Uint8Array
+        const binary = atob(base64String);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], { type: fileType });
         const file = new File([blob], fileName, { type: fileType });
         formPayload.append("profile_pic", file);
       }
@@ -1178,8 +1189,19 @@ export default function BasicTabs() {
       const fileType = sessionStorage.getItem("profile_pic_type");
 
       if (base64Data && fileName && fileType) {
-        const res = await fetch(base64Data);
-        const blob = await res.blob();
+        // Remove data URL prefix if present
+        const base64String = base64Data.includes(',')
+          ? base64Data.split(',')[1]
+          : base64Data;
+
+        // Convert base64 to Uint8Array
+        const binary = atob(base64String);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+
+        const blob = new Blob([bytes], { type: fileType });
         const file = new File([blob], fileName, { type: fileType });
         formPayload.append("profile_pic", file);
       }

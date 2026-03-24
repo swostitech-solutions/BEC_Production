@@ -14,7 +14,8 @@ import { useNavigate } from "react-router-dom";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import { ApiUrl } from "../../ApiUrl";
 import ForgotPasswordModal from "./ForgotPasswordModal";
-import WelcomePopup from "../../components/WelcomePopup/WelcomePopup";
+
+
 
 
 
@@ -29,8 +30,6 @@ const Login = ({ onLogin }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [welcomeData, setWelcomeData] = useState({});
 
 
   const [formData, setFormData] = useState({
@@ -349,22 +348,31 @@ const Login = ({ onLogin }) => {
       localStorage.setItem("organizationName", organization_name);
       localStorage.setItem("branchName", branch_name);
 
-      // Store display_name and role_name for welcome popup
+      // Store display_name and role_name
       if (display_name) sessionStorage.setItem("display_name", display_name);
       if (role_name) sessionStorage.setItem("role_name", role_name);
 
-      // --- Step 2: Show welcome popup, then navigate ---
-      setWelcomeData({
-        displayName: display_name || username || '',
-        roleName: role_name || '',
-        userRole: userRole,
-      });
-      setShowWelcome(true);
-
-      // Store navigation info for after popup dismissal
-      sessionStorage.setItem("_pendingUserRole", userRole);
-
+      // --- Step 2: Navigate based on role ---
       setIsLoggedIn(true);
+
+      switch (userRole) {
+        case "staff":
+          navigate("/staff/dashboard");
+          onLogin("staff");
+          break;
+        case "student":
+          navigate("/student/dashboards");
+          onLogin("student");
+          break;
+        case "principal":
+        case "admin":
+          navigate("/admin/dashboard");
+          onLogin("principal");
+          break;
+        default:
+          console.error("Unknown user role:", userRole);
+          break;
+      }
 
       // --- Step 3: Wait before token request ---
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -408,6 +416,7 @@ const Login = ({ onLogin }) => {
       handleLogin();
     }
   };
+
   return (
     <div
       style={{
@@ -422,6 +431,38 @@ const Login = ({ onLogin }) => {
         paddingBottom: "50px",
       }}
     >
+      {/* <div>
+        <h1>Welcome to BEC ERP Management System</h1>
+      </div> */}
+      <div
+        style={{
+          position: "absolute",
+          top: "30px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          alignItems: "center",
+          gap: "15px",
+          zIndex: 10,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "2.2rem",
+            fontWeight: "bold",
+            margin: 0,
+            fontFamily: "'Poppins', sans-serif",
+            letterSpacing: "1.5px",
+            color: "#000",
+            whiteSpace: "nowrap",
+            textTransform: "uppercase",
+          }}
+        >
+          Welcome to BEC ERP Management System
+        </h1>
+
+       
+      </div>
       <Container className="mt-5">
         <Row className="justify-content-center">
           <Col md={6}>
@@ -430,7 +471,7 @@ const Login = ({ onLogin }) => {
                 variant="top"
                 src="/img/logobec.png"
                 className="beautiful-face mx-auto d-block"
-                style={{ width: "300px", height: "100px", marginTop: "10px" }}
+                style={{ width: "150px", height: "100px", marginTop: "10px" }}
               />
               <Card.Body>
                 <Card.Title className="text-center fw-bold">Login</Card.Title>
@@ -485,7 +526,7 @@ const Login = ({ onLogin }) => {
                         const selected = instituteOptions.find(
                           (inst) =>
                             inst.label === input ||
-                            inst.value.toString() === input
+                            inst.value.toString() === input,
                         );
                         setFormData({
                           ...formData,
@@ -538,36 +579,6 @@ const Login = ({ onLogin }) => {
       <ForgotPasswordModal
         show={showForgotPassword}
         onHide={() => setShowForgotPassword(false)}
-      />
-
-      {/* 🎓 Welcome Popup */}
-      <WelcomePopup
-        show={showWelcome}
-        displayName={welcomeData.displayName}
-        roleName={welcomeData.roleName}
-        userRole={welcomeData.userRole}
-        onDismiss={() => {
-          setShowWelcome(false);
-          const pendingRole = sessionStorage.getItem("_pendingUserRole");
-          sessionStorage.removeItem("_pendingUserRole");
-          switch (pendingRole) {
-            case "staff":
-              navigate("/staff/dashboard");
-              onLogin("staff");
-              break;
-            case "student":
-              navigate("/student/dashboards");
-              onLogin("student");
-              break;
-            case "principal":
-            case "admin":
-              navigate("/admin/dashboard");
-              onLogin("principal");
-              break;
-            default:
-              break;
-          }
-        }}
       />
     </div>
   );

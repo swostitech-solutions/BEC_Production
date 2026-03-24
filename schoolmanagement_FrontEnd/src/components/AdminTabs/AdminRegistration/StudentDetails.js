@@ -530,10 +530,18 @@ const AdmAttendanceEntry = ({
       sessionStorage.setItem("CategoryLogic", "true");
     }
 
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    // Auto-set feeappfrom based on admission_type
+    let updatedFormData = { ...formData, [name]: value };
+    
+    if (name === "admission_type") {
+      if (value === "Regular") {
+        updatedFormData.feeappfrom = "1st Semester";
+      } else if (value === "Lateral") {
+        updatedFormData.feeappfrom = "3rd Semester";
+      }
+    }
+
+    setFormData(updatedFormData);
   };
 
   useEffect(() => {
@@ -553,6 +561,25 @@ const AdmAttendanceEntry = ({
       localStorage.removeItem("selectedCategoryId");
     }
   }, [formData.category]);
+
+  // Auto-set feeappfrom based on admission_type
+  useEffect(() => {
+    if (formData.admission_type) {
+      let feeApplicableValue = "";
+      if (formData.admission_type === "Regular") {
+        feeApplicableValue = "1st Semester";
+      } else if (formData.admission_type === "Lateral") {
+        feeApplicableValue = "3rd Semester";
+      }
+      
+      if (feeApplicableValue && formData.feeappfrom !== feeApplicableValue) {
+        setFormData((prev) => ({
+          ...prev,
+          feeappfrom: feeApplicableValue,
+        }));
+      }
+    }
+  }, [formData.admission_type, formData.feeappfrom]);
 
   useEffect(() => {
     const orgId = formData.organization;
@@ -1179,7 +1206,7 @@ const AdmAttendanceEntry = ({
                         placeholder="Select Admission Type"
                         options={[
                           { value: "Regular", label: "Regular" },
-                          { value: "Irregular", label: "Irregular" },
+                          { value: "Lateral", label: "Lateral" },
                         ]}
                         value={
                           formData.admission_type

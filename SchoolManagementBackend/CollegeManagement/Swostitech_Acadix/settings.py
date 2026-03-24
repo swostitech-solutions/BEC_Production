@@ -213,9 +213,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 #image store in media file
-# MEDIA_URL= '/media/'
-
-MEDIA_URL='/SWOSTITECH_CMS/'
+MEDIA_URL = '/media/'
 
 # Configure Media Root for Render Persistent Disk
 # If RENDER_MEDIA_ROOT is set (e.g., /var/data), use it. Otherwise default to local project folder.
@@ -223,7 +221,7 @@ RENDER_MEDIA_ROOT = os.getenv('RENDER_MEDIA_ROOT')
 if RENDER_MEDIA_ROOT:
     MEDIA_ROOT = Path(RENDER_MEDIA_ROOT)
 else:
-    MEDIA_ROOT = BASE_DIR / 'SWOSTITECH_CMS'
+    MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

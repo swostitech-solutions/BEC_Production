@@ -286,7 +286,7 @@ const DesignComponent = ({
                           },
                         })
                       }
-                      isDisabled={isDisabled}
+                      isDisabled={true}
                     />
                     {submitErrors.feeappfrom && (
                       <small style={{ color: "red" }}>

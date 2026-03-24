@@ -242,17 +242,29 @@ urlpatterns = [
     path('api/StudentAddress/DeleteStudentAddress/<int:pk>/', views.StudentAddressDestroyAPIView.as_view(),
          name='studentaddressdelete'),
 
-    path('api/StudentDetails/GetStudentDetails/<int:academic_id>/<int:student_id>',
-         views.StudentDetailsGetListAPIView.as_view(), name='studentdetailsGet'),
-    path('api/StudentDetails/GetStudentFullDetails/', views.StudentFullDetailsAPIView.as_view(),
-         name='student-full-details'),
-    path('api/StudentFeeDetail/GetStudentFeeDetail/<int:academic_id>/<int:student_id>',
-         views.StudentFeeDetailGetListAPIView.as_view(), name='studentfeedetailsGet'),
-    path('api/FeeElementType/GetAllFeeElements/<str:elementType>', views.FeeElementTypeListAPIView.as_view(),
-         name='fee_element_typelist'),
+  path(
+    'api/StudentDetails/GetStudentDetails/<int:academic_id>/<int:student_id>/',
+    views.StudentDetailsGetListAPIView.as_view(),
+    name='studentdetailsGet'
+),
+    path
+    ('api/StudentDetails/GetStudentFullDetails/', views.StudentFullDetailsAPIView.as_view(),
+         name='student-full-details'
+         ),
 
-    path('api/Filter/GetStudentBasedCourseSection/', views.GetStudentBasedOnCourseSection.as_view(),
-         name='students-by-course-section'),
+  path
+  ('api/StudentFeeDetail/GetStudentFeeDetail/<int:academic_id>/<int:student_id>/',
+         views.StudentFeeDetailGetListAPIView.as_view(), name='studentfeedetailsGet'
+         ),
+    path
+    ('api/FeeElementType/GetAllFeeElements/<str:elementType>', views.FeeElementTypeListAPIView.as_view(),
+         name='fee_element_typelist'
+         ),
+
+    path
+    ('api/Filter/GetStudentBasedCourseSection/', views.GetStudentBasedOnCourseSection.as_view(),
+         name='students-by-course-section'
+         ),
     # path('api/Filter/GetstudentBasedClassSection/<str:classlist>/<str:sectionlist>/',views.StudentGetBasedOnClassSection.as_view(), name='students-by-class-section'), #pass class id & section id in comaseparate value like /api/students/class/[1,2,3]/section/[a,b,c]/
 
     path('api/Filter/GetFeeDetailsBasedOnFeeStructureAcademicSession/<int:academic_id>/<int:fee_structure>',
@@ -290,7 +302,7 @@ urlpatterns = [
 
     path('api/LANGUAGE/GetAllLanguageList/', views.LanguageListAPIView.as_view(), name='findlanguagelist'),
 
-    path('api/MOTHERTONGUE/GetAllMotherTongueList/', views.MotherTongueListAPIView.as_view(), name='find mothertong uelist'),
+    path('api/MOTHERTONGUE/GetAllMotherTongueList/', views.MotherTongueListAPIView.as_view(), name='find_mothertongue_list'),
 
     path('api/BLOODGROUP/GetAllBloodGroupList/', views.BloodGroupListAPIView.as_view(), name='findbloodlist'),
 
