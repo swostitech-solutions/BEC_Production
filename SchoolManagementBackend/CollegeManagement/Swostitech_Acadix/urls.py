@@ -50,12 +50,9 @@ from django.conf.urls.static import static
 
 # Serve media files in development
 # Serve media files (Enabled for production to fix 404 on Render)
-from django.urls import re_path
-from django.views.static import serve
-
-# Serve media files manually to ensure they work in production (DEBUG=False)
-urlpatterns += [
-    re_path(r'^SWOSTITECH_CMS/(?P<path>.*)$', serve, {
-        'document_root': settings.MEDIA_ROOT,
-    }),
+if DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # In production, serve media files manually
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ]
