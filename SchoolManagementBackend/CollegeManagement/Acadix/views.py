@@ -11005,8 +11005,7 @@ class UtilityGroupMixin:
 
     def documentsDetailsProcess(self, request, documentsDetails, instance, document_files):
         try:
-            count = 0
-            for documents in documentsDetails:
+            for i, documents in enumerate(documentsDetails):
                 document_no = documents.get('document_no')
                 document_type = documents.get('document_type')
 
@@ -11014,40 +11013,39 @@ class UtilityGroupMixin:
                 if not document_no and not document_type:
                     continue
 
-                if count < len(document_files):
-                    document_pic = document_files[count]
-                else:
-                    document_pic = None
+                document_pic = document_files.get(i)
                 start_from = documents.get('start_from')
                 end_to = documents.get('end_to')
 
-                # Check if the combination of data exist or not
-                if StudentDocument.objects.filter(document_no=document_no, document_type=document_type,
-                                                  is_active=True).exists():
-                    raise ValueError(f"This Document data with document_no {document_no} has already been added.")
-
-                # Save the Emergency contact on db
-                StudentDocumentData = StudentDocument.objects.create(
-                    student=instance,
-                    document_no=document_no,
-                    document_type=document_type,
-                    document_pic=document_pic,
-                    document_url="",
-                    start_from=start_from,
-                    end_to=end_to,
-                    created_by=instance.created_by,
-                    updated_by=instance.created_by
-                )
-                # Only build the URL if a document file was actually uploaded
-                if document_pic:
-                    StudentDocumentData.document_url = request.build_absolute_uri(StudentDocumentData.document_pic.url)
-                    StudentDocumentData.save()
-                count = count + 1
-                # if document_files:
-                #     for document_file in document_files:
-                #         i=0
-                #         StudentDocumentData.document_pic[i].save(document_file.name, document_file)
-                #         StudentDocumentData.save()
+                if documents.get('id'):
+                    # Update existing
+                    doc_instance = StudentDocument.objects.get(id=documents['id'], student=instance)
+                    doc_instance.document_no = document_no or doc_instance.document_no
+                    doc_instance.document_type = document_type or doc_instance.document_type
+                    doc_instance.start_from = start_from or doc_instance.start_from
+                    doc_instance.end_to = end_to or doc_instance.end_to
+                    doc_instance.updated_by = instance.updated_by
+                    if document_pic:
+                        doc_instance.document_pic = document_pic
+                        doc_instance.document_url = request.build_absolute_uri(doc_instance.document_pic.url)
+                    doc_instance.save()
+                else:
+                    # Create new
+                    StudentDocumentData = StudentDocument.objects.create(
+                        student=instance,
+                        document_no=document_no,
+                        document_type=document_type,
+                        document_pic=document_pic,
+                        document_url="",
+                        start_from=start_from,
+                        end_to=end_to,
+                        created_by=instance.created_by,
+                        updated_by=instance.updated_by
+                    )
+                    # Only build the URL if a document file was actually uploaded
+                    if document_pic:
+                        StudentDocumentData.document_url = request.build_absolute_uri(StudentDocumentData.document_pic.url)
+                        StudentDocumentData.save()
                 #         i = i+1
                 #
                 # serializer = self.get_serializer(data=documentsDetails)
@@ -12085,10 +12083,15 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
                     #     if request.FILES.getlist('document_pic')[i]:
                     #         document_files.append(request.FILES.getlist('document_pic')[i])
 
-                    document_files = []
+                    document_files = {}
                     for item, item_obj in request.FILES.items():
-                        if item != 'profile_pic':
-                            document_files.append(item_obj)
+                        if item.startswith('document_pic[') and item.endswith(']'):
+                            index_str = item.split('[')[1].split(']')[0]
+                            try:
+                                index = int(index_str)
+                                document_files[index] = item_obj
+                            except ValueError:
+                                pass  # ignore invalid
 
 
                         # if 'document_file' in request.FILES:
@@ -12267,7 +12270,10 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
 
                 # documentsDetails process
                 if document_detail and len(document_detail):
-                    StudentDocument.objects.filter(student=instance.id, is_active=True).update(is_active=False)
+                    # Get existing ids
+                    existing_ids = [d.get('id') for d in document_detail if d.get('id')]
+                    # Deactivate documents not in the list
+                    StudentDocument.objects.filter(student=instance.id, is_active=True).exclude(id__in=existing_ids).update(is_active=False)
                     self.documentsDetailsProcess(request, document_detail, instance, document_files)
 
                 # previousEducationDetails process
