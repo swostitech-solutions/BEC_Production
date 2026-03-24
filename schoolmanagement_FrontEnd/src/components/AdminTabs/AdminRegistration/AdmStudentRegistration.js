@@ -1126,8 +1126,10 @@ export default function BasicTabs() {
       const document_detail = JSON.stringify(
         formData.documentsDetails?.length
           ? formData.documentsDetails.map((d) => ({
+            id: d.id || null,
             document_no: d.document_no || "",
             document_type: d.document_type || "",
+            document_url: d.document_url || "",
             start_from: d.start_from || null,
             end_to: d.end_to || null,
           }))
