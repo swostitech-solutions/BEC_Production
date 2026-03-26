@@ -594,7 +594,7 @@ class StudentRegistration(models.Model):
     email = models.EmailField(unique=False, null=True, blank=True)
     children_in_family = models.CharField(max_length=10, null=True)
     student_aadhaar_no = models.CharField(max_length=12, null=True)
-    user_name = models.CharField(max_length=30, null=True)
+    user_name = models.CharField(max_length=100, null=True)
     remarks = models.CharField(max_length=50, null=True)
     referred_by = models.CharField(max_length=200, null=True, blank=True)
     # fee_group = models.ForeignKey(FeeStructureMaster, on_delete=models.CASCADE)
@@ -1070,7 +1070,7 @@ class StudentCourse(models.Model):
 
 
 class UserLogin(AbstractBaseUser, PermissionsMixin):
-    user_name = models.CharField(max_length=255, unique=True, null=False, blank=False)
+    user_name = models.CharField(max_length=100, unique=True, null=False, blank=False)
     plain_password = models.CharField(max_length=255)  # Consider removing this for security
     role_name = models.CharField(max_length=255, null=True, blank=True)  # Role name for admin users
     user_type = models.ForeignKey('UserType', default=1, on_delete=models.CASCADE)
