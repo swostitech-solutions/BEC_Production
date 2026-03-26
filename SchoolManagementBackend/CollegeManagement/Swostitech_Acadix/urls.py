@@ -16,10 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.http import JsonResponse
+from rest_framework_simplejwt.views import TokenRefreshView
+from Acadix.views import NormalizedTokenObtainPairView
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
+def render_admin_health_check(request):
+    return JsonResponse({"status": "ok", "admin_url": "/backend-admin/"})
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('health/', health_check, name='health_check'),
+    path('admin/', render_admin_health_check, name='render_admin_health_check'),
+    path('backend-admin/', admin.site.urls),
     path('',include('Acadix.urls')),
     path('',include('Transport.urls')),
     path('',include('Library.urls')),
@@ -42,12 +52,20 @@ urlpatterns = [
     # path('',include('REPORT_CARD.urls')),
     path('',include('INVENTORY.urls')),
 
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # login
+    path('api/token/', NormalizedTokenObtainPairView.as_view(), name='token_obtain_pair'),  # login
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh')  # refresh
 ]
 from django.conf import settings
 from django.conf.urls.static import static
 
-# Serve media files in development only
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve media files in development
+# Serve media files (Enabled for production to fix 404 on Render)
+from django.urls import re_path
+from django.views.static import serve
+
+# Serve media files manually to ensure they work in production (DEBUG=False)
+urlpatterns += [
+    re_path(r'^SWOSTITECH_CMS/(?P<path>.*)$', serve, {
+        'document_root': settings.MEDIA_ROOT,
+    }),
+]

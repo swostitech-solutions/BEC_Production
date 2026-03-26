@@ -33,7 +33,7 @@ class GrievanceCreateSerializer(serializers.Serializer):
     grievance_severity_id = serializers.IntegerField(allow_null=False,required=True)
     details = serializers.CharField(allow_null=False,allow_blank=False,required=True)
     is_anonymous = serializers.BooleanField(required=True)
-    upload_file = serializers.FileField(allow_null=True,allow_empty_file=True)
+    upload_file = serializers.FileField(allow_null=True, allow_empty_file=True, required=False)
     created_by = serializers.IntegerField(allow_null=False,required=True)
 
 

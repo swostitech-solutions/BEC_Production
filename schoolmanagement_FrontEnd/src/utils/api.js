@@ -32,6 +32,11 @@ api.interceptors.response.use(
     // If token expired or invalid, logout and redirect to login
     if (error.response?.status === 401) {
       console.log("Token expired or invalid");
+      alert("Your session has expired. Please re-login.");
+      sessionStorage.clear();
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

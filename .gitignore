@@ -12,6 +12,8 @@ __pycache__/
 *.so
 .Python
 
+BEC_13FEB2026 (1)/BEC_13FEB2026.bak
+
 # Virtual Environment
 venv/
 env/

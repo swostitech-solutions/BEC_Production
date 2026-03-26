@@ -20,8 +20,7 @@ const AdmAttendanceEntry = () => {
   const [paymentOptions, setPaymentOptions] = useState([]);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [selectedIncome, setSelectedIncome] = useState(null);
+
 
   // Custom hooks for fetching data
   const { banks, loading: loadingBanks, error: errorBanks } = useBanks();
@@ -87,27 +86,69 @@ const AdmAttendanceEntry = () => {
     }
   };
 
-  const handleView = async (incomeId) => {
-    try {
-      const response = await api.get(`EXPENSE/INCOME/IncomeDetailsRetrieve/${incomeId}/`);
-      const result = response.data;
+const handleView = async (incomeId) => {
+  try {
+    const response = await api.get(
+      `EXPENSE/INCOME/IncomeDetailsRetrieve/${incomeId}/`,
+    );
 
-      if (result.message === "success") {
-        console.log("Fetched Income Details:", result.data); // Log API response
-        setSelectedIncome(result.data);
-        setShowReceiptModal(true);
-      } else {
-        console.error("Failed to fetch income details: " + result.message);
-      }
-    } catch (error) {
-      console.error("Error fetching income details:", error);
+    const result = response.data;
+
+    if (result.message === "success") {
+      const income = result.data;
+
+      // ✅ Generate PDF
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text("Income Receipt", 105, 20, null, null, "center");
+
+      doc.setFontSize(12);
+      doc.text(`Income No: ${income.income_no || ""}`, 15, 40);
+      doc.text(`Date: ${income.income_date || ""}`, 140, 40);
+      doc.text(
+        `Party Name: ${income.party_name || income.partyName || ""}`,
+        15,
+        50,
+      );
+
+      const tableColumn = ["Sr.No", "Category", "Remarks", "Amount"];
+      const tableRows = [];
+
+      const detailsData =
+        income.IncomeDetailsdata || income.incomeDetaildata || [];
+
+      detailsData.forEach((item, index) => {
+        tableRows.push([
+          index + 1,
+          item.income_category_name || "",
+          item.remarks || "",
+          Number(item.amount || 0).toFixed(2),
+        ]);
+      });
+
+      doc.autoTable({
+        head: [tableColumn],
+        body: tableRows,
+        startY: 60,
+        theme: "grid",
+      });
+
+      // ✅ Convert to blob
+      const pdfBlob = doc.output("blob");
+
+      // ✅ Create URL
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+
+      // ✅ OPEN IN NEW TAB
+      window.open(pdfUrl, "_blank");
     }
-  };
+  } catch (error) {
+    console.error("Error fetching income details:", error);
+  }
+};
 
-  const handleCloseReceiptModal = () => {
-    setShowReceiptModal(false);
-    setSelectedIncome(null);
-  };
+
 
   // Helper to safely get total amount
   const getSafeTotalAmount = (income) => {
@@ -122,93 +163,7 @@ const AdmAttendanceEntry = () => {
     return 0;
   };
 
-  const handleDownloadReceipt = () => {
-    if (!selectedIncome) return;
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text("Income Receipt", 105, 20, null, null, "center");
-
-    doc.setFontSize(14);
-    doc.text("Bhubaneswar Engineering College", 105, 30, null, null, "center");
-
-    doc.setFontSize(12);
-    doc.text(`Income No: ${selectedIncome.income_no || ""}`, 15, 45);
-    doc.text(`Date: ${selectedIncome.income_date || selectedIncome.date || ""}`, 140, 45);
-    doc.text(`Party Name: ${selectedIncome.party_name || selectedIncome.partyName || ""}`, 15, 55);
-    doc.text(`Reference: ${selectedIncome.party_reference || ""}`, 140, 55);
-
-    const tableColumn = ["Sr.No", "Category", "Remarks", "Amount"];
-    const tableRows = [];
-
-    const detailsData = selectedIncome.IncomeDetailsdata || selectedIncome.incomeDetaildata || [];
-
-    if (Array.isArray(detailsData)) {
-      detailsData.forEach((item, index) => {
-        const rowData = [
-          index + 1,
-          item.income_category_name || item.expense_category_name || "",
-          item.remarks || "",
-          Number(item.amount || 0).toFixed(2)
-        ];
-        tableRows.push(rowData);
-      });
-    }
-
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 65,
-      theme: 'grid',
-    });
-
-    let currentY = doc.lastAutoTable.finalY + 10;
-
-    // Payment Details Section
-    // Check if PaymentDetailsData exists, otherwise construct from root fields
-    let paymentDataArray = [];
-    if (selectedIncome.PaymentDetailsData && Array.isArray(selectedIncome.PaymentDetailsData) && selectedIncome.PaymentDetailsData.length > 0) {
-      paymentDataArray = selectedIncome.PaymentDetailsData;
-    } else if (selectedIncome.payment_method) {
-      // Construct single payment entry from root fields if available
-      paymentDataArray.push({
-        payment_method: selectedIncome.payment_method,
-        applied_amount: getSafeTotalAmount(selectedIncome), // Use safe total here too
-        bank_name: selectedIncome.bank_name || "",
-        bank_account: selectedIncome.bank_account || selectedIncome.account_name || ""
-      });
-    }
-
-    if (paymentDataArray.length > 0) {
-      doc.text("Payment Details", 15, currentY);
-      const payColumn = ["Method", "Amount", "Details"];
-      const payRows = paymentDataArray.map(p => {
-        let details = "-";
-        if (p.payment_method === 'Bank' || p.payment_method === 'BANK') {
-          const bankName = p.bank_name || p.bankName || "";
-          const acc = p.bank_account || p.bank_accountId || p.account_name || "";
-          details = `${bankName} ${acc ? `(${acc})` : ''}`;
-        }
-        return [p.payment_method, Number(p.applied_amount || 0).toFixed(2), details];
-      });
-
-      doc.autoTable({
-        head: [payColumn],
-        body: payRows,
-        startY: currentY + 5,
-        theme: 'grid'
-      });
-      currentY = doc.lastAutoTable.finalY + 10;
-    }
-
-    // Total
-    const totalAmount = getSafeTotalAmount(selectedIncome);
-    doc.text(`Total Amount: ${Number(totalAmount).toFixed(2)}`, 140, currentY);
-    // doc.text(`Paid Amount: ${Number(selectedIncome.paid_amount).toFixed(2)}`, 140, currentY + 10);
-    // doc.text(`Balance Amount: ${Number(selectedIncome.balance_amount).toFixed(2)}`, 140, currentY + 20);
-
-    doc.save(`Receipt_${selectedIncome.income_no || "Doc"}.pdf`);
-  };
+ 
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -680,7 +635,7 @@ const AdmAttendanceEntry = () => {
                         )}
                       </div>
 
-                      <div className="col-12 col-md-3 mb-1">
+                      {/* <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="party-reference" className="form-label">
                           Party Reference
                         </label>
@@ -694,7 +649,7 @@ const AdmAttendanceEntry = () => {
                             onChange={(e) => setPartyReference(e.target.value)}
                           />
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>
@@ -703,7 +658,7 @@ const AdmAttendanceEntry = () => {
               <div className="col-12">
                 {searchResults.length > 0 && (
                   <div className="table-responsive">
-                    <table className="table">
+                    <table className="table table-bordered ">
                       <thead className="thead-dark">
                         <tr>
                           <th>Income ID</th>
@@ -783,113 +738,7 @@ const AdmAttendanceEntry = () => {
           </div>
         </div>
       </div>
-      <Modal show={showReceiptModal} onHide={handleCloseReceiptModal} size="lg" centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Income Receipt</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedIncome && (
-            <div>
-              <div className="d-flex justify-content-between mb-3">
-                <div>
-                  <strong>Party Name:</strong> {selectedIncome.party_name || selectedIncome.partyName} <br />
-                  <strong>Reference:</strong> {selectedIncome.party_reference}
-                </div>
-                <div>
-                  <strong>Income No:</strong> {selectedIncome.income_no} <br />
-                  <strong>Date:</strong> {selectedIncome.income_date || selectedIncome.date}
-                </div>
-              </div>
-
-              <h6 className="mt-3">Income Details</h6>
-              <Table striped bordered hover size="sm">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Category</th>
-                    <th>Remarks</th>
-                    <th>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(selectedIncome.IncomeDetailsdata || selectedIncome.incomeDetaildata || []).map((item, index) => (
-                    <tr key={index}>
-                      <td>{index + 1}</td>
-                      <td>{item.income_category_name || item.expense_category_name}</td>
-                      <td>{item.remarks}</td>
-                      <td>{Number(item.amount || 0).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-
-              {/* Payment Details Section in Modal */}
-              {(() => {
-                let paymentDataArray = [];
-                if (selectedIncome.PaymentDetailsData && Array.isArray(selectedIncome.PaymentDetailsData) && selectedIncome.PaymentDetailsData.length > 0) {
-                  paymentDataArray = selectedIncome.PaymentDetailsData;
-                } else if (selectedIncome.payment_method) {
-                  paymentDataArray.push({
-                    payment_method: selectedIncome.payment_method,
-                    applied_amount: getSafeTotalAmount(selectedIncome),
-                    bank_name: selectedIncome.bank_name || "",
-                    bank_account: selectedIncome.bank_account || selectedIncome.account_name || ""
-                  });
-                }
-
-                if (paymentDataArray.length > 0) {
-                  return (
-                    <>
-                      <h6 className="mt-3">Payment Details</h6>
-                      <Table striped bordered hover size="sm">
-                        <thead>
-                          <tr>
-                            <th>Method</th>
-                            <th>Amount</th>
-                            <th>Details</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paymentDataArray.map((p, index) => {
-                            let details = "-";
-                            if (p.payment_method === 'Bank' || p.payment_method === 'BANK') {
-                              const bankName = p.bank_name || p.bankName || "";
-                              const acc = p.bank_account || p.bank_accountId || p.account_name || "";
-                              details = `${bankName} ${acc ? `(${acc})` : ''}`;
-                            }
-                            return (
-                              <tr key={index}>
-                                <td>{p.payment_method}</td>
-                                <td>{Number(p.applied_amount || 0).toFixed(2)}</td>
-                                <td>{details}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </Table>
-                    </>
-                  );
-                }
-                return null;
-              })()}
-
-              <div className="d-flex justify-content-end mt-3">
-                <div style={{ textAlign: 'right' }}>
-                  <p><strong>Total Amount:</strong> {Number(getSafeTotalAmount(selectedIncome)).toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseReceiptModal}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleDownloadReceipt}>
-            Download Receipt
-          </Button>
-        </Modal.Footer>
-      </Modal>
+    
     </div >
   );
 };

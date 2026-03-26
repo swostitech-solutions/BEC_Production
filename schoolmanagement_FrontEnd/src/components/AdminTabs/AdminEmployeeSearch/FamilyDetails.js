@@ -6,7 +6,7 @@
 //   return (
 //     <div className="container-fluid ">
 //       <div className="table-responsive">
-//         <table className="table">
+//         <table className="table table-bordered ">
 //           <thead>
 //             <tr>
 //               <th>Sr.No</th>
@@ -278,6 +278,24 @@ const App = ({ goToTab, relationDetails, setEducationDetailsInParent, setRelatio
   };
 
   const handleAdd = () => {
+    // Validate required fields before adding
+    if (!formData.name.first || !formData.name.first.trim()) {
+      alert("Please enter the family member's first name.");
+      return;
+    }
+    if (!formData.name.last || !formData.name.last.trim()) {
+      alert("Please enter the family member's last name.");
+      return;
+    }
+    if (!formData.relation || !formData.relation.trim()) {
+      alert("Please enter the relation.");
+      return;
+    }
+    if (!formData.dob || !formData.dob.trim()) {
+      alert("Please enter the date of birth.");
+      return;
+    }
+
     const newEntry = {
       ...formData,
       srNo: dataList.length + 1, // Assign next serial number

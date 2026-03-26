@@ -599,10 +599,22 @@ const StudentFee = () => {
 
         // Extract fee details from same response
         const feeData = studentData.feedetails || [];
-        setFeeStructure(feeData);
+
+        // Sort by semester number extracted from name (e.g. "1st Semester" → 1, "Default Semester 3" → 3)
+        const semesterOrder = (sem) => {
+          const match = (sem || "").match(/\d+/);
+          return match ? parseInt(match[0], 10) : 9999;
+        };
+        const sortedFeeData = [...feeData].sort((a, b) => {
+          const diff = semesterOrder(a.semester) - semesterOrder(b.semester);
+          if (diff !== 0) return diff;
+          return (a.element_name || "").localeCompare(b.element_name || "");
+        });
+
+        setFeeStructure(sortedFeeData);
 
         // Unique unpaid elements
-        const unpaid = feeData
+        const unpaid = sortedFeeData
           .filter((item) => parseFloat(item.paid_amount) === 0)
           .reduce((unique, item) => {
             const isDuplicate = unique.some(
@@ -880,16 +892,16 @@ const StudentFee = () => {
                         onSelectStudent={handleSelectStudent}
                       />
 
-                      {/* <div className="col-12 col-md-4 mb-1">
+                      <div className="col-12 col-md-4 mb-1">
                         <label htmlFor="student-barcode" className="form-label">
-                          Student BarCode
+                          Roll No
                         </label>
                         <div className="d-flex align-items-center">
                           <input
                             type="text"
                             id="student-barcode"
                             className="form-control detail"
-                            placeholder="Enter student barcode"
+                            placeholder="Enter Roll No"
                             ref={barcodeRef}
                             value={selectedStudent.barcode}
                             onChange={(e) =>
@@ -900,7 +912,7 @@ const StudentFee = () => {
                             }
                           />
                         </div>
-                      </div> */}
+                      </div>
 
                       <div className="col-12 col-md-4 mb-1">
                         <label

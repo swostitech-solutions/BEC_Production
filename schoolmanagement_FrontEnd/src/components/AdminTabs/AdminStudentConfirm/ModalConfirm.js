@@ -66,7 +66,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
   const [filters, setFilters] = useState({
     studentName: "",
     admissionNo: "",
-    // barcode: "",
+    barcode: "",
     classId: "",
     section: "",
     fatherName: "",
@@ -139,9 +139,9 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
       if (filters.barcode)
         url += `&barcode=${encodeURIComponent(filters.barcode)}`;
       if (filters.fatherName)
-        url += `&fatherName=${encodeURIComponent(filters.fatherName)}`;
+        url += `&father_name=${encodeURIComponent(filters.fatherName)}`;
       if (filters.motherName)
-        url += `&motherName=${encodeURIComponent(filters.motherName)}`;
+        url += `&mother_name=${encodeURIComponent(filters.motherName)}`;
       if (filters.schoolAdmissionNo)
         url += `&college_admission_no=${encodeURIComponent(
           filters.schoolAdmissionNo
@@ -186,7 +186,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
       studentname: student.student_name,
       admission_no: student.admission_no,
       college_admission_no: student.college_admission_no,
-      // barcode: student.barcode,
+      barcode: student.barcode,
 
       batch_id: student.batch_id,
       course_id: student.course_id,
@@ -213,7 +213,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
     setFilters({
       studentName: "",
       admissionNo: "",
-      // barcode: "",
+      barcode: "",
       classId: "",
       section: "",
       fatherName: "",
@@ -315,17 +315,17 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                         placeholder="Admission No"
                       />
                     </div>
-                    {/* <div className="col-12 col-md-3 mb-2">
-                      <label className="form-label">Student Barcode</label>
+                    <div className="col-12 col-md-3 mb-2">
+                      <label className="form-label">Roll No</label>
                       <input
                         type="text"
                         name="barcode"
                         value={filters.barcode}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Student Barcode"
+                        placeholder="Roll No"
                       />
-                    </div> */}
+                    </div>
                     {/* Batch */}
                     <div className="col-12 col-md-3 mb-2">
                       <label className="form-label">Session</label>
@@ -561,7 +561,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Roll No</th>
                           <th>Status</th>
                           <th>Actions</th>
                         </tr>
@@ -580,7 +580,7 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                             <td>{student.section_name}</td>
                             <td>{student.fatherName}</td>
                             <td>{student.motherName}</td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
                             <td>{student.student_status}</td>
                             <td>
                               <button

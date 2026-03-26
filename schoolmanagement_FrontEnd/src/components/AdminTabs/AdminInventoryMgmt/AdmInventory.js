@@ -16,6 +16,8 @@ const InventoryCategoryMaster = () => {
   const [inventoryCategories, setInventoryCategories] = useState([]);
   const [filteredSubCategories, setFilteredSubCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [categoryErrors, setCategoryErrors] = useState({});
+  const [subCategoryErrors, setSubCategoryErrors] = useState({});
 
   // Get org and branch from sessionStorage with fallback defaults
   const orgId = sessionStorage.getItem("organization_id") || "1";
@@ -142,11 +144,15 @@ const InventoryCategoryMaster = () => {
   };
 
   // Save Category
+  const validateCategoryFields = () => {
+    const newErrors = {};
+    if (!categoryName.trim()) newErrors.categoryName = "Category name is required";
+    setCategoryErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
-    if (!categoryName.trim()) {
-      toast.error("Please enter a category name");
-      return;
-    }
+    if (!validateCategoryFields()) return;
 
     // Validate required IDs
     if (!orgId || !branchId) {
@@ -192,6 +198,7 @@ const InventoryCategoryMaster = () => {
       if (response.data.status === "success") {
         toast.success(response.data.message || "Category created successfully");
         setCategoryName("");
+        setCategoryErrors({});
         fetchCategories();
       } else {
         toast.error(response.data.message || "Failed to create category");
@@ -225,16 +232,16 @@ const InventoryCategoryMaster = () => {
   };
 
   // Save or Update Sub-Category
-  const handleSaveSubCategory = async () => {
-    if (!selectedCategoryId) {
-      toast.error("Please select a category");
-      return;
-    }
+  const validateSubCategoryFields = () => {
+    const newErrors = {};
+    if (!selectedCategoryId) newErrors.selectedCategoryId = "Please select a category";
+    if (!subCategory.trim()) newErrors.subCategory = "Sub-category name is required";
+    setSubCategoryErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-    if (!subCategory.trim()) {
-      toast.error("Please enter a sub-category name");
-      return;
-    }
+  const handleSaveSubCategory = async () => {
+    if (!validateSubCategoryFields()) return;
 
     // Validate required IDs
     if (!orgId || !branchId) {
@@ -278,6 +285,7 @@ const InventoryCategoryMaster = () => {
           toast.success(
             response.data.message || "Sub-category updated successfully"
           );
+          setSubCategoryErrors({});
           resetSubCategoryForm();
           fetchSubCategories(); // Fetch all sub-categories instead of filtering
         }
@@ -302,6 +310,7 @@ const InventoryCategoryMaster = () => {
           toast.success(
             response.data.message || "Sub-category created successfully"
           );
+          setSubCategoryErrors({});
           resetSubCategoryForm();
           fetchSubCategories(); // Fetch all sub-categories instead of filtering
         }
@@ -352,13 +361,16 @@ const InventoryCategoryMaster = () => {
         </h2>
         <div className="row align-items-center">
           <div className="col-md-3 mb-0">
-            <label style={{ fontWeight: "bold" }}>Enter Category</label>
+            <label style={{ fontWeight: "bold" }}>Enter Category <span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
-              className="form-control detail"
+              className={`form-control detail${categoryErrors.categoryName ? " is-invalid" : ""}`}
               value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
+              onChange={(e) => { setCategoryName(e.target.value); if (categoryErrors.categoryName) setCategoryErrors({}); }}
             />
+            {categoryErrors.categoryName && (
+              <small className="text-danger">{categoryErrors.categoryName}</small>
+            )}
           </div>
           <div className="col-md-2 mb-0">
             <button
@@ -376,7 +388,7 @@ const InventoryCategoryMaster = () => {
             Add Inventory Sub-Category
           </h2>
           <div className="col-md-3 mb-0">
-            <label style={{ fontWeight: "bold" }}>Select Category</label>
+            <label style={{ fontWeight: "bold" }}>Select Category <span style={{ color: "red" }}>*</span></label>
             <Select
               className="detail"
               options={[
@@ -391,6 +403,7 @@ const InventoryCategoryMaster = () => {
                   target: { value: selectedOption?.value || "" },
                 };
                 handleCategoryChange(event);
+                if (subCategoryErrors.selectedCategoryId) setSubCategoryErrors((prev) => ({ ...prev, selectedCategoryId: "" }));
               }}
               value={
                 selectedCategoryId
@@ -405,18 +418,24 @@ const InventoryCategoryMaster = () => {
                   : { value: "", label: "Select Categories" }
               }
             />
+            {subCategoryErrors.selectedCategoryId && (
+              <small className="text-danger">{subCategoryErrors.selectedCategoryId}</small>
+            )}
           </div>
         </div>
 
         <div className="row mt-3">
           <div className="col-md-3 mb-0">
-            <label style={{ fontWeight: "bold" }}>Sub-Category</label>
+            <label style={{ fontWeight: "bold" }}>Sub-Category <span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
-              className="form-control detail"
+              className={`form-control detail${subCategoryErrors.subCategory ? " is-invalid" : ""}`}
               value={subCategory}
-              onChange={(e) => setSubCategory(e.target.value)}
+              onChange={(e) => { setSubCategory(e.target.value); if (subCategoryErrors.subCategory) setSubCategoryErrors((prev) => ({ ...prev, subCategory: "" })); }}
             />
+            {subCategoryErrors.subCategory && (
+              <small className="text-danger">{subCategoryErrors.subCategory}</small>
+            )}
           </div>
           <div className="col-md-2 mb-0">
             <button

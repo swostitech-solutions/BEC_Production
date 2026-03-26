@@ -1,4 +1,4 @@
-import React, { useRef, useState,useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import useFetchBookCategories from "../../hooks/useFetchBookCategories";
 import useFetchBookSubCategories from "../../hooks/useFetchBookSubCategories";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -13,18 +13,18 @@ import { useNavigate } from "react-router-dom";
 
 
 const AdmBookTitleReport = () => {
-   const navigate = useNavigate();
+  const navigate = useNavigate();
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
-   const { categories } = useFetchBookCategories();
-   const [selectedCategory, setSelectedCategory] = useState(null);
-   const { subCategories } = useFetchBookSubCategories(selectedCategory?.value);
-   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
-     const [tableData, setTableData] = useState([]);
-      const [bookTitle, setBookTitle] = useState("");
-      const [bookAuthor, setBookAuthor] = useState("");
-      const [currentPage, setCurrentPage] = useState(0);
-      const itemsPerPage = 10;
+  const { categories } = useFetchBookCategories();
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const { subCategories } = useFetchBookSubCategories(selectedCategory?.value);
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+  const [tableData, setTableData] = useState([]);
+  const [bookTitle, setBookTitle] = useState("");
+  const [bookAuthor, setBookAuthor] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
 
   const pageCount = Math.ceil(tableData.length / itemsPerPage);
 
@@ -34,51 +34,51 @@ const AdmBookTitleReport = () => {
 
   const offset = currentPage * itemsPerPage;
   const currentItems = tableData.slice(offset, offset + itemsPerPage);
-     useEffect(() => {
-       fetchBookTitleReport(); // Load table data when page opens
-     }, []);
+  useEffect(() => {
+    fetchBookTitleReport(); // Load table data when page opens
+  }, []);
 
-     const fetchBookTitleReport = async (search = false) => {
-       const academicYearId = localStorage.getItem("academicSessionId") || "";
-       const orgId = localStorage.getItem("branchId") || "";
-       const branchId = localStorage.getItem("orgId") || "";
+  const fetchBookTitleReport = async (search = false) => {
+    const academicYearId = localStorage.getItem("academicSessionId") || "";
+    const orgId = localStorage.getItem("branchId") || "";
+    const branchId = localStorage.getItem("orgId") || "";
 
-       let apiUrl =  `${ApiUrl.apiurl}LIBRARYBOOK/GetAllBookTitleReport?academic_year_id=${academicYearId}&org_id=${orgId}&branch_id=${branchId}`;
+    let apiUrl = `${ApiUrl.apiurl}LIBRARYBOOK/GetAllBookTitleReport?academic_year_id=${academicYearId}&org_id=${orgId}&branch_id=${branchId}`;
 
-       if (search) {
-         if (bookTitle) apiUrl += `&book_name=${bookTitle}`;
-         if (bookAuthor) apiUrl += `&book_author=${bookAuthor}`;
-         if (selectedBranch) apiUrl += `&library_branch_id=${selectedBranch.value}`;
-         if (selectedCategory)
-           apiUrl += `&categoryId=${selectedCategory.value}`;
-         if (selectedSubCategory)
-           apiUrl += `&subcategoryId=${selectedSubCategory.value}`;
-       }
+    if (search) {
+      if (bookTitle) apiUrl += `&book_name=${bookTitle}`;
+      if (bookAuthor) apiUrl += `&book_author=${bookAuthor}`;
+      if (selectedBranch) apiUrl += `&library_branch_id=${selectedBranch.value}`;
+      if (selectedCategory)
+        apiUrl += `&categoryId=${selectedCategory.value}`;
+      if (selectedSubCategory)
+        apiUrl += `&subcategoryId=${selectedSubCategory.value}`;
+    }
 
-       try {
-         const response = await fetch(apiUrl);
-         const result = await response.json();
+    try {
+      const response = await fetch(apiUrl);
+      const result = await response.json();
 
-         if (response.ok && result.message === "success") {
-           setTableData(result.data);
-           setCurrentPage(0);
-         } else {
-           setTableData([]);
-            setCurrentPage(0);
-         }
-       } catch (error) {
-         console.error("Error fetching book title report:", error);
-         setTableData([]);
-          setCurrentPage(0);
-       }
-     };
+      if (response.ok && result.message === "success") {
+        setTableData(result.data);
+        setCurrentPage(0);
+      } else {
+        setTableData([]);
+        setCurrentPage(0);
+      }
+    } catch (error) {
+      console.error("Error fetching book title report:", error);
+      setTableData([]);
+      setCurrentPage(0);
+    }
+  };
 
 
   const exportToExcel = () => {
-       if (!tableData || tableData.length === 0) {
-    alert("No data available to export!");
-    return;
-  }
+    if (!tableData || tableData.length === 0) {
+      alert("No data available to export!");
+      return;
+    }
     const ws = XLSX.utils.json_to_sheet(
       tableData.map((book, index) => ({
         "Sl.No": index + 1,
@@ -97,51 +97,51 @@ const AdmBookTitleReport = () => {
 
 
 
-    const exportToPDF = () => {
+  const exportToPDF = () => {
 
-           if (!tableData || tableData.length === 0) {
-             alert("No data available to export!");
-             return;
-           }
+    if (!tableData || tableData.length === 0) {
+      alert("No data available to export!");
+      return;
+    }
 
-      const doc = new jsPDF();
-      const columns = [
-        "Sl.No",
-        "Book Name",
-        "Author Name",
-        "Category",
-        "Sub Category",
-        "Accession No",
-        "No. of Copies",
-      ];
+    const doc = new jsPDF();
+    const columns = [
+      "Sl.No",
+      "Book Name",
+      "Author Name",
+      "Category",
+      "Sub Category",
+      "Accession No",
+      "No. of Copies",
+    ];
 
-      const rows = tableData.map((book, index) => [
-        index + 1, // Sl.No
-        book.book_name,
-        book.author_name,
-        book.categoryName,
-        book.subcategory_name,
-        book.barcodeList.join(", "),
-        book.no_of_book_copies,
-      ]);
+    const rows = tableData.map((book, index) => [
+      index + 1, // Sl.No
+      book.book_name,
+      book.author_name,
+      book.categoryName,
+      book.subcategory_name,
+      book.barcodeList.join(", "),
+      book.no_of_book_copies,
+    ]);
 
-      // Use autoTable to add table to PDF
-      doc.autoTable({
-        head: [columns], // Table header
-        body: rows, // Table data
-        startY: 20, // Start the table below the title
-        theme: "grid", // Grid style for borders
-        margin: { top: 10 }, // Adjust margins
-        styles: {
-          cellPadding: 2, // Cell padding
-          fontSize: 10, // Font size
-          overflow: "linebreak", // Handle overflow text
-        },
-      });
+    // Use autoTable to add table to PDF
+    doc.autoTable({
+      head: [columns], // Table header
+      body: rows, // Table data
+      startY: 20, // Start the table below the title
+      theme: "grid", // Grid style for borders
+      margin: { top: 10 }, // Adjust margins
+      styles: {
+        cellPadding: 2, // Cell padding
+        fontSize: 10, // Font size
+        overflow: "linebreak", // Handle overflow text
+      },
+    });
 
-      // Save the PDF
-      doc.save("books_data.pdf");
-    };
+    // Save the PDF
+    doc.save("books_data.pdf");
+  };
 
   useEffect(() => {
     const orgId = localStorage.getItem("branchId");
@@ -155,7 +155,7 @@ const AdmBookTitleReport = () => {
     const fetchBranches = async () => {
       try {
         const response = await fetch(
-           `${ApiUrl.apiurl}LIBRARYBRANCH/GetLibraryBranchList/${orgId}/${branchId}/`
+          `${ApiUrl.apiurl}LIBRARYBRANCH/GetLibraryBranchList/${orgId}/${branchId}/`
         );
         const data = await response.json();
 
@@ -283,7 +283,7 @@ const AdmBookTitleReport = () => {
                           onChange={(e) => setBookAuthor(e.target.value)}
                         />
                       </div>
-                      <div className="col-12 col-md-3 mb-2">
+                      {/* <div className="col-12 col-md-3 mb-2">
                         <label htmlFor="Branch" className="form-label">
                           {" "}
                           Branch{" "}
@@ -297,7 +297,7 @@ const AdmBookTitleReport = () => {
                           onChange={setSelectedBranch}
                           placeholder="Select Branch"
                         />
-                      </div>
+                      </div> */}
                       <div className="col-12 col-md-3 mb-3">
                         <label htmlFor="category" className="form-label">
                           Category

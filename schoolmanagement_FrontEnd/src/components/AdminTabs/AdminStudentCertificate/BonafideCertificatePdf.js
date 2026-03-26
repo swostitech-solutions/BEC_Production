@@ -160,7 +160,7 @@ const SchoolLeavingCertificate = () => {
     const imgX = 10;
     const imgY = 10;
     doc.addImage(
-      "/Assets/logobec.png",
+      "/Assets/sparsh.jpeg",
       "JPEG",
       imgX,
       imgY,
@@ -175,7 +175,7 @@ const SchoolLeavingCertificate = () => {
     doc.setTextColor(0, 0, 255); // Blue color
     doc.setFont("Helvetica", "bold");
     doc.text(
-      "Bhubaneswar Engineering College", //  Updated heading
+      "Sparsh College of Nursing and Allied Sciences", //  Updated heading
       headingX,
       headingY
     );
@@ -185,10 +185,10 @@ const SchoolLeavingCertificate = () => {
     doc.setTextColor(0, 0, 0); // Black color
     doc.setFont("Helvetica", "normal");
     doc.text("Affiliated to", headingX, headingY + 6);
-    doc.text(`Affiliation No.: School Code: BEC`, headingX, headingY + 12);
+    doc.text(`Affiliation No.: School Code: SPARSH`, headingX, headingY + 12);
     doc.text("Tel. No.:", headingX, headingY + 18);
     doc.text(
-      "",
+      "https://sparshhospitals.com/nursing-college-admission/",
       headingX,
       headingY + 24
     );

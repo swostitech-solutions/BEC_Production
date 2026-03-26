@@ -44,106 +44,9 @@ export default function BasicTabs() {
   const [languageData, setLanguageData] = useState(null);
   const [addressFormData, setAddressFormData] = useState(null);
   const [basicInfoData, setBasicInfoData] = useState(null);
-  const [basicInfoRequiredErrors, setBasicInfoRequiredErrors] = useState({});
-  const [addressRequiredErrors, setAddressRequiredErrors] = useState({});
+  const [basicInfoFieldErrors, setBasicInfoFieldErrors] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
-
-  const validateBasicInfoRequiredFields = (data) => {
-    const validationErrors = {};
-    const requiredFields = [
-      "employeeCode",
-      "firstName",
-      "lastName",
-      "dob",
-      "nationality",
-      "religion",
-      "gender",
-      "motherTongue",
-      "employeeType",
-      "status",
-      "phoneNumber",
-    ];
-
-    requiredFields.forEach((field) => {
-      const value = data?.[field];
-      const isEmpty =
-        value === null ||
-        value === undefined ||
-        (typeof value === "string" && value.trim() === "");
-
-      if (isEmpty) {
-        validationErrors[field] = "This field is required";
-      }
-    });
-
-    return validationErrors;
-  };
-
-  const clearBasicInfoFieldError = (field) => {
-    setBasicInfoRequiredErrors((prev) => {
-      if (!prev[field]) return prev;
-      const updated = { ...prev };
-      delete updated[field];
-      return updated;
-    });
-  };
-
-  const validateAddressRequiredFields = (data) => {
-    const validationErrors = {};
-    const formValues = data?.formValues || {};
-
-    const requiredFieldRules = [
-      { key: "residenceAddress", value: formValues.residenceAddress },
-      { key: "selectedCountry", value: data?.selectedCountry?.value },
-      { key: "selectedState", value: data?.selectedState?.value },
-      { key: "selectedResidenceDistrict", value: data?.selectedResidenceDistrict?.value },
-      { key: "residencePincode", value: formValues.residencePincode },
-      { key: "permanentAddress", value: formValues.permanentAddress },
-      { key: "selectedPermanentCountry", value: data?.selectedPermanentCountry?.value },
-      { key: "selectedPermanentState", value: data?.selectedPermanentState?.value },
-      { key: "selectedPermanentDistrict", value: data?.selectedPermanentDistrict?.value },
-      { key: "permanentPincode", value: formValues.permanentPincode },
-    ];
-
-    requiredFieldRules.forEach(({ key, value }) => {
-      const isEmpty =
-        value === null ||
-        value === undefined ||
-        (typeof value === "string" && value.trim() === "");
-
-      if (isEmpty) {
-        validationErrors[key] = "This field is required";
-      }
-    });
-
-    if (
-      formValues.residencePincode &&
-      String(formValues.residencePincode).trim() !== "" &&
-      String(formValues.residencePincode).length !== 6
-    ) {
-      validationErrors.residencePincode = "Pincode must be exactly 6 digits";
-    }
-
-    if (
-      formValues.permanentPincode &&
-      String(formValues.permanentPincode).trim() !== "" &&
-      String(formValues.permanentPincode).length !== 6
-    ) {
-      validationErrors.permanentPincode = "Pincode must be exactly 6 digits";
-    }
-
-    return validationErrors;
-  };
-
-  const clearAddressFieldError = (field) => {
-    setAddressRequiredErrors((prev) => {
-      if (!prev[field]) return prev;
-      const updated = { ...prev };
-      delete updated[field];
-      return updated;
-    });
-  };
 
   // Fetch metadata lists for mapping
   const { bloodGroups } = useFetchBloodGroups();
@@ -346,6 +249,106 @@ export default function BasicTabs() {
   }, []);
 
   // ============================================
+  // Shared validation for Basic Info required fields
+  // ============================================
+  const validateBasicInfo = () => {
+    const b = basicInfoData || {};
+    const a = addressFormData?.formValues || {};
+    const errors = {};
+
+    if (!b.employeeCode || !String(b.employeeCode).trim()) {
+      errors.employeeCode = "Employee Code is required.";
+    }
+    if (!b.firstName || !String(b.firstName).trim()) {
+      errors.firstName = "Employee First Name is required.";
+    }
+    if (!b.dob) {
+      errors.dob = "Date Of Join is required.";
+    }
+    if (!b.gender) {
+      errors.gender = "Gender is required.";
+    }
+    if (!b.nationality) {
+      errors.nationality = "Nationality is required.";
+    }
+    if (!b.religion) {
+      errors.religion = "Religion is required.";
+    }
+    if (!b.motherTongue) {
+      errors.motherTongue = "Mother Tongue is required.";
+    }
+    if (!b.employeeType) {
+      errors.employeeType = "Employee Type is required.";
+    }
+    if (!b.phoneNumber || !String(b.phoneNumber).trim()) {
+      errors.phoneNumber = "Mobile Number is required.";
+    } else if (!/^\d{10}$/.test(String(b.phoneNumber))) {
+      errors.phoneNumber = "Mobile Number must be exactly 10 digits.";
+    }
+
+    if (!b.email || !String(b.email).trim()) {
+      errors.email = "Email ID is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(b.email).trim())) {
+      errors.email = "Please enter a valid Email ID.";
+    }
+
+    if (!a.residenceAddress || !String(a.residenceAddress).trim()) {
+      errors.residenceAddress = "Address is required.";
+    }
+    if (!addressFormData?.selectedCountry?.value) {
+      errors.residenceCountry = "Country is required.";
+    }
+    if (!addressFormData?.selectedState?.value) {
+      errors.residenceState = "State is required.";
+    }
+    if (!addressFormData?.selectedResidenceDistrict?.value) {
+      errors.residenceCity = "City/District is required.";
+    }
+    if (!a.residencePincode || !String(a.residencePincode).trim()) {
+      errors.residencePincode = "Pincode is required.";
+    }
+    if (!a.permanentAddress || !String(a.permanentAddress).trim()) {
+      errors.permanentAddress = "Address is required.";
+    }
+    if (!addressFormData?.selectedPermanentCountry?.value) {
+      errors.permanentCountry = "Country is required.";
+    }
+    if (!addressFormData?.selectedPermanentState?.value) {
+      errors.permanentState = "State is required.";
+    }
+    if (!addressFormData?.selectedPermanentDistrict?.value) {
+      errors.permanentCity = "City/District is required.";
+    }
+    if (!a.permanentPincode || !String(a.permanentPincode).trim()) {
+      errors.permanentPincode = "Pincode is required.";
+    }
+
+    setBasicInfoFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      if (
+        errors.residenceAddress ||
+        errors.residenceCountry ||
+        errors.residenceState ||
+        errors.residenceCity ||
+        errors.residencePincode ||
+        errors.permanentAddress ||
+        errors.permanentCountry ||
+        errors.permanentState ||
+        errors.permanentCity ||
+        errors.permanentPincode
+      ) {
+        setValue(1);
+      } else {
+        setValue(0);
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+  // ============================================
   // PHASE 1: CREATION (POST) - For NEW Staff
   // ============================================
   const handleSave = async () => {
@@ -355,27 +358,12 @@ export default function BasicTabs() {
       return;
     }
 
+    // Validate required Basic Info fields
+    if (!validateBasicInfo()) return;
+
     const userId = sessionStorage.getItem("userId");
     const orgId = localStorage.getItem("orgId");
     const branchId = localStorage.getItem("branchId");
-
-    const basicInfoValidationErrors = validateBasicInfoRequiredFields(basicInfoData);
-    if (Object.keys(basicInfoValidationErrors).length > 0) {
-      setBasicInfoRequiredErrors(basicInfoValidationErrors);
-      setValue(0);
-      return;
-    }
-
-    setBasicInfoRequiredErrors({});
-
-    const addressValidationErrors = validateAddressRequiredFields(addressFormData);
-    if (Object.keys(addressValidationErrors).length > 0) {
-      setAddressRequiredErrors(addressValidationErrors);
-      setValue(1);
-      return;
-    }
-
-    setAddressRequiredErrors({});
 
     if (!userId) {
       alert("❌ User session expired. Please login again.");
@@ -537,7 +525,7 @@ export default function BasicTabs() {
             }
             // Map frontend camelCase to backend snake_case
             return {
-              document_details_id: d.id || d.document_details_id || 0,
+              document_details_id: d.id || d.document_id || d.document_details_id || 0,
               document_type_id: d.documentType || d.document_type_id || "",
               document_number: d.documentNumber || d.document_number || "",
               valid_from: d.validFrom || d.valid_from || null,
@@ -776,6 +764,9 @@ export default function BasicTabs() {
       return;
     }
 
+    // Validate required Basic Info fields
+    if (!validateBasicInfo()) return;
+
     const employeeId = localStorage.getItem("employeeId");
     const employeeTypeId = localStorage.getItem("employeeTypeId");
     const userId = sessionStorage.getItem("userId");
@@ -791,24 +782,6 @@ export default function BasicTabs() {
       alert("❌ User session expired. Please login again.");
       return;
     }
-
-    const basicInfoValidationErrors = validateBasicInfoRequiredFields(basicInfoData);
-    if (Object.keys(basicInfoValidationErrors).length > 0) {
-      setBasicInfoRequiredErrors(basicInfoValidationErrors);
-      setValue(0);
-      return;
-    }
-
-    setBasicInfoRequiredErrors({});
-
-    const addressValidationErrors = validateAddressRequiredFields(addressFormData);
-    if (Object.keys(addressValidationErrors).length > 0) {
-      setAddressRequiredErrors(addressValidationErrors);
-      setValue(1);
-      return;
-    }
-
-    setAddressRequiredErrors({});
 
     console.log("=== 💾 Starting UPDATE Existing Staff (PUT) - VERSION 3.0 FIXED ===");
     console.log("📊 Current State Data:", {
@@ -867,7 +840,7 @@ export default function BasicTabs() {
           basicPayload.append("last_name", basicInfoData.lastName || "");
           basicPayload.append("nuid", basicInfoData.nuid || "");
           if (basicInfoData.dob) basicPayload.append("date_of_birth", basicInfoData.dob);
-          basicPayload.append("place_of_birth", basicInfoData.placeOf_birth || "");
+          basicPayload.append("place_of_birth", basicInfoData.placeOfBirth || "");
           basicPayload.append("marital_status", basicInfoData.maritalStatus || "1");
           basicPayload.append("gender", basicInfoData.gender || "");
           // Map status to is_active (backend expects "True"/"False" string or boolean)
@@ -963,7 +936,7 @@ export default function BasicTabs() {
             }
             // Map frontend camelCase to backend snake_case
             return {
-              document_details_id: d.id || d.document_details_id || 0,
+              document_details_id: d.id || d.document_id || d.document_details_id || 0,
               document_type_id: d.documentType || d.document_type_id || "",
               document_number: d.documentNumber || d.document_number || "",
               valid_from: d.validFrom || d.valid_from || null,
@@ -1211,6 +1184,7 @@ export default function BasicTabs() {
     setEducationData([]);
     setCourseDetails([]);
     setLanguageData(null);
+    setBasicInfoFieldErrors({});
     localStorage.removeItem("employeeId");
     localStorage.removeItem("employeeTypeId");
     sessionStorage.removeItem("tempFormData");
@@ -1252,7 +1226,11 @@ export default function BasicTabs() {
         </div>
       </div>
 
-      <Tabs value={value} onChange={handleChange}>
+      <Tabs
+        value={value}
+        onChange={() => {}}
+        sx={{ '& .MuiTab-root': { pointerEvents: 'none', cursor: 'default' } }}
+      >
         <Tab label="Staff Basic Info" {...a11yProps(0)} />
         <Tab label="Address" {...a11yProps(1)} />
         <Tab label="Documents" {...a11yProps(2)} />
@@ -1269,8 +1247,8 @@ export default function BasicTabs() {
           setAddressDetails={setAddressDetails}
           setBasicInfoDataInParent={setBasicInfoData}
           basicInfoData={basicInfoData}
-          externalRequiredFieldErrors={basicInfoRequiredErrors}
-          onClearRequiredFieldError={clearBasicInfoFieldError}
+          requiredErrors={basicInfoFieldErrors}
+          setRequiredErrors={setBasicInfoFieldErrors}
         />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
@@ -1280,12 +1258,11 @@ export default function BasicTabs() {
           setDocumentDetailsInParent={setDocumentDetails}
           setAddressFormDataInParent={setAddressFormData}
           addressFormData={addressFormData}
-          externalAddressFieldErrors={addressRequiredErrors}
-          onClearAddressFieldError={clearAddressFieldError}
+          requiredErrors={basicInfoFieldErrors}
         />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={2}>
-        <DocumentDetails goToTab={goToTab} documentDetails={documentDetails} setRelationDetailsInParent={setRelationDetails} setDocumentDetails={setDocumentDetails} />
+        <DocumentDetails goToTab={goToTab} documentDetails={documentDetails} setDocumentDetails={setDocumentDetails} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={3}>
         <FamilyDetails goToTab={goToTab} relationDetails={relationDetails} setEducationDetailsInParent={setEducationData} setRelationDetails={setRelationDetails} />

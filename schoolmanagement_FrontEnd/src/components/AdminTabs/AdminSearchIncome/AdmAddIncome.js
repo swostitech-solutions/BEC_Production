@@ -583,7 +583,7 @@ const AdmAttendanceEntry = () => {
               <h3 style={{ color: "black" }}>Income Detail</h3>
               <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table">
+                  <table className="table table-bordered ">
                     <thead className="thead-dark">
                       <tr>
                         <th>Sr.No</th>

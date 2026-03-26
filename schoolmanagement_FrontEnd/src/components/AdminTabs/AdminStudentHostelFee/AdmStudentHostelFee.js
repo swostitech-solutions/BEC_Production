@@ -48,7 +48,6 @@ const AdmAttendanceEntry = () => {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [semesterList, setSemesterList] = useState([]);
-  const [pageMessage, setPageMessage] = useState("");
 
   const [selectedStudentAcademic, setSelectedStudentAcademic] = useState(null);
 
@@ -67,7 +66,6 @@ const AdmAttendanceEntry = () => {
     setFeePeriod("");
     setHostelData([]);
     setShowUnpaidFee(false);
-    setPageMessage("");
   };
 
   const handleClose = () => {
@@ -574,31 +572,6 @@ const AdmAttendanceEntry = () => {
     selectedSemester,
   ]);
 
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections]);
-
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -701,10 +674,9 @@ const AdmAttendanceEntry = () => {
       !selectedSemester?.value ||
       !selectedSection?.value
     ) {
-      setPageMessage("Error: Please select all required fields (*) before searching.");
+      alert("Please select all required fields (*) before searching.");
       return;
     }
-    setPageMessage("");
     setLoading(true);
 
     const organization_id = sessionStorage.getItem("organization_id");
@@ -769,7 +741,7 @@ const AdmAttendanceEntry = () => {
 
   const exportToExcel = () => {
     if (hostelData.length === 0) {
-      setPageMessage("Error: No data available to export.");
+      alert("No data available to export.");
       return;
     }
 
@@ -792,7 +764,6 @@ const AdmAttendanceEntry = () => {
 
     // Save the Excel file
     XLSX.writeFile(workbook, "HostelData.xlsx");
-    setPageMessage("Hostel data exported successfully.");
   };
 
   const fetchViewPDF = async (student_id, feePeriod) => {
@@ -829,11 +800,10 @@ const AdmAttendanceEntry = () => {
               }
         );
       } else {
-        setPageMessage("Error: No record found for PDF view.");
+        alert("No record found for PDF view");
       }
     } catch (error) {
       console.error("Fetch PDF Error:", error);
-      setPageMessage("Error: Failed to fetch PDF data.");
     }
   };
 
@@ -1011,13 +981,6 @@ const AdmAttendanceEntry = () => {
                     Close
                   </button>
                 </div>
-                {pageMessage && (
-                  <div
-                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
-                  >
-                    {pageMessage}
-                  </div>
-                )}
               </div>
 
               <div className="row mt-3 mx-2">
@@ -1142,16 +1105,8 @@ const AdmAttendanceEntry = () => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester?.value
-                              ? "Select Semester first"
-                              : sections?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
+                          onChange={setSelectedSection}
+                          placeholder="Select Section"
                         />
                       </div>
 
@@ -1259,14 +1214,17 @@ const AdmAttendanceEntry = () => {
 
                             {/* View Button */}
                             <td>
-                              <button
-                                className="btn btn-info btn-sm"
-                                onClick={() =>
-                                  fetchViewPDF(item.student_id, feePeriod)
-                                }
-                              >
-                                View
-                              </button>
+                              <td>
+                                <button
+                                  className="btn btn-info btn-sm"
+                                  onClick={() =>
+                                    fetchViewPDF(item.student_id, feePeriod)
+                                  }
+                                  disabled={Number(item.paid_fees) === 0} // ✅ disable when paid fees is 0
+                                >
+                                  View
+                                </button>
+                              </td>
                             </td>
                           </tr>
                         ))

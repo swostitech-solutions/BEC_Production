@@ -405,7 +405,7 @@ import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { ApiUrl } from "../../../ApiUrl";
 
-const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocumentDetails }) => {
+const App = ({ goToTab, documentDetails, setDocumentDetails }) => {
   const [documentTypes, setDocumentTypes] = useState([]);
 
   // Initialize tableData from parent if available (for when user navigates back)
@@ -438,7 +438,7 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
     documentFile: "",
     validFrom: "",
     validTo: "",
-    enabled: false,
+    enabled: true,  // default: enabled
   });
 
   // Key used to force-remount the file input (clears stale file name after Add)
@@ -449,17 +449,16 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
 
   // Update tableData when documentDetails changes from parent (for edit mode)
   useEffect(() => {
-    console.log("DocumentDetails received from parent:", documentDetails);
     if (documentDetails && documentDetails.length > 0) {
-      // Check if data is already in local format
+      // Data already in local format — just reflect it in tableData
       if (documentDetails[0].documentType !== undefined) {
-        console.log("Data already in local format, using directly");
         setTableData(documentDetails);
       } else {
-        // Map from API format
+        // Raw API format — map to local format and sync back to parent so
+        // AdmStaffDetails always holds local-format data for Save/Update
         const mappedData = documentDetails.map((doc, index) => ({
           srNo: index + 1,
-          id: doc.document_id,          // ✅ preserve DB primary key for deletion
+          id: doc.document_id,        // preserve DB primary key
           documentType: doc.document_type_id,
           documentNumber: doc.document_number,
           documentFile: doc.document_path,
@@ -467,13 +466,13 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
           validTo: doc.valid_to,
           enabled: doc.is_active,
         }));
-        console.log("Mapped document data:", mappedData);
         setTableData(mappedData);
+        // Sync local-format back to parent — prevents the raw-format / document_id
+        // mismatch that caused all docs to be deactivated on the next Update
+        if (setDocumentDetails) setDocumentDetails(mappedData);
       }
     }
-  }, [documentDetails]);
-
-  // Sync with Parent removed to prevent loop. Syncing handlers instead.
+  }, [documentDetails]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   useEffect(() => {
@@ -559,6 +558,18 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
   };
 
   const handleAddRow = () => {
+    // Required: document type must be selected
+    if (!formData.documentType) {
+      alert("Please select a Document Type.");
+      return;
+    }
+
+    // Required: a file must be chosen for new documents
+    if (!formData.documentFile) {
+      alert("Please choose a Document file to upload.");
+      return;
+    }
+
     // Aadhaar card 12-digit validation
     const selectedLabel =
       documentTypes.find(
@@ -586,7 +597,7 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
       documentFile: "",
       validFrom: "",
       validTo: "",
-      enabled: false,
+      enabled: true,  // reset to default enabled
     });
     // Force remount the file input so it shows empty (file inputs can't be reset via value prop)
     setFileInputKey((prev) => prev + 1);
@@ -603,9 +614,7 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
     }));
 
     setTableData(reNumberedData);
-    if (setDocumentDetails) setDocumentDetails(reNumberedData); // Sync to Parent
-
-    setTableData(reNumberedData);
+    if (setDocumentDetails) setDocumentDetails(reNumberedData); // Sync to parent
   };
 
   return (
@@ -621,7 +630,7 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
                 <th>Document</th>
                 <th>Valid From</th>
                 <th>Valid To</th>
-                <th>Enabled</th>
+                {/* <th>Enabled</th> */}
                 <th></th>
               </tr>
             </thead>
@@ -655,14 +664,14 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
 
                   <td>{row.validFrom}</td>
                   <td>{row.validTo}</td>
-                  <td>
+                  {/* <td>
                     <input
                       type="checkbox"
                       checked={row.enabled}
                       disabled
                       className="form-check-input"
                     />
-                  </td>
+                  </td> */}
                   <td>
                     <button
                       className="btn btn-danger btn-sm"
@@ -735,7 +744,7 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
                     onChange={handleInputChange}
                   />
                 </td>
-                <td>
+                {/* <td>
                   <input
                     type="checkbox"
                     className="form-check-input"
@@ -743,7 +752,7 @@ const App = ({ goToTab, documentDetails, setRelationDetailsInParent, setDocument
                     checked={formData.enabled}
                     onChange={handleInputChange}
                   />
-                </td>
+                </td> */}
                 <td>
                   <button className="btn btn-primary" onClick={handleAddRow}>
                     Add

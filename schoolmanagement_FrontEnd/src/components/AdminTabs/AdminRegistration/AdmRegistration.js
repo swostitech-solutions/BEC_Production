@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./AdmRegistration.css";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,8 @@ import Select from "react-select";
 import { Link } from "react-router-dom";
 import { ApiUrl } from "../../../ApiUrl";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import ReactPaginate from "react-paginate";
 
 const AdmAttendanceEntry = ({ formData, setFormData }) => {
@@ -78,30 +80,6 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
       selectedSemester              // semester_id
     );
 
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSectionFiltered(null);
-      setFilters((prev) => ({ ...prev, sectionId: "" }));
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (sec) => Number(sec.id) === Number(selectedSectionFiltered)
-    );
-    const nextSectionId = matchedSection ? matchedSection.id : SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setSelectedSectionFiltered(nextSectionId);
-    setFilters((prev) => ({ ...prev, sectionId: nextSectionId }));
-  }, [selectedSemester, SectionList]);
-
   const { genders, loading: genderLoading, error: genderError } = useFetchGenderList();
   const [selectedSectionFiltered, setSelectedSectionFiltered] = useState(null);
   const { categories, loading: loadingCategories, error: categoryError } = useFetchCategories();
@@ -119,34 +97,67 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const rowsPerPage = 10;
 
-  const filteredStudentData = useMemo(() => {
-    if (!searchQuery) return studentData;
-    const lowerQuery = searchQuery.toLowerCase();
-    return studentData.filter((student) => {
-      const basic = student?.studentBasicDetails;
-      if (!basic) return false;
+ const filteredStudentData = useMemo(() => {
+   if (!searchQuery?.trim()) return studentData;
 
-      const searchStr = `
-        ${basic.first_name || ""} 
-        ${basic.middle_name || ""} 
-        ${basic.last_name || ""}
-        ${basic.registration_no || ""}
-        ${basic.admission_no || ""}
-        ${basic.batch_description || ""}
-        ${basic.course_name || ""}
-        ${basic.department_description || ""}
-        ${basic.academic_year_description || ""}
-        ${basic.semester_description || ""}
-        ${basic.section_name || ""}
-        ${basic.father_name || ""}
-        ${basic.mother_name || ""}
-        ${basic.barcode || ""}
-        ${basic.category_name || ""}
-      `.toLowerCase();
+   const lowerQuery = searchQuery.trim().toLowerCase();
+   const queryWords = lowerQuery.split(/\s+/).filter(Boolean);
 
-      return searchStr.includes(lowerQuery);
-    });
-  }, [studentData, searchQuery]);
+   return studentData.filter((student) => {
+     const basic = student?.studentBasicDetails || {};
+     const address = student?.addressDetails?.[0] || {};
+     if (!Object.keys(basic).length && !Object.keys(address).length) return false;
+
+     const fullName = [basic.first_name, basic.middle_name, basic.last_name]
+       .filter(Boolean)
+       .join(" ")
+       .toLowerCase();
+
+     const searchableText = [
+       fullName,
+       basic.registration_no,
+       basic.admission_no,
+       basic.school_admission_no,
+       basic.barcode,
+       basic.rollno,
+       basic.roll_no,
+       basic.father_name,
+       basic.mother_name,
+       basic.gender_name,
+       basic.gender,
+       basic.religion_name,
+       basic.category_name,
+       basic.batch_description,
+       basic.course_name,
+       basic.department_description,
+       basic.academic_year_description,
+       basic.semester_description,
+       basic.section_name,
+       basic.organization_description,
+       basic.branch_name,
+       address.present_address,
+       address.present_city,
+       address.present_state,
+       address.present_country,
+       address.present_pincode,
+       address.permanent_address,
+       address.permanent_city,
+       address.permanent_state,
+       address.permanent_country,
+       address.permanent_pincode,
+     ]
+       .filter(Boolean)
+       .join(" ")
+       .toLowerCase();
+
+     const isNameMatch = queryWords.every((word) => fullName.includes(word));
+     const isSearchableFieldMatch = queryWords.every((word) =>
+       searchableText.includes(word)
+     );
+
+     return isNameMatch || isSearchableFieldMatch;
+   });
+ }, [studentData, searchQuery]);
 
   // Calculate total pages
   const totalPages = Math.ceil(filteredStudentData.length / rowsPerPage);
@@ -182,9 +193,12 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
     middle_name: "",
     last_name: "",
     gender: "",
+    status: "ACTIVE",
   });
   const [reportType, setReportType] = useState("");
   const [error, setError] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchAbortRef = useRef(null);
 
   // 03-12-2025
   useEffect(() => {
@@ -203,6 +217,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
 
   useEffect(() => {
     const fetchFullStudentData = async () => {
+      setIsSearching(true);
       try {
         const token = localStorage.getItem("accessToken");
         if (!token) {
@@ -225,7 +240,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
         }
 
         // const apiUrl = `${ApiUrl.apiurl}StudentRegistrationApi/GetAllSTUDENTList/?organization_id=${organizationId}&branch_id=${branchId}&academic_year_id=${academicYearId}`;
-        const apiUrl = `${ApiUrl.apiurl}StudentRegistrationApi/GetAllSTUDENTList/?organization_id=${organizationId}&branch_id=${branchId}`;
+        const apiUrl = `${ApiUrl.apiurl}StudentRegistrationApi/GetAllSTUDENTList/?organization_id=${organizationId}&branch_id=${branchId}&student_status=ACTIVE`;
 
         console.log("Fetch Full Student API URL:", apiUrl);
 
@@ -255,6 +270,8 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
         }
       } catch (error) {
         console.error("Fetch error:", error);
+      } finally {
+        setIsSearching(false);
       }
     };
 
@@ -280,6 +297,14 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
   };
 
   const handleSearch = async () => {
+    // Cancel any previous in-flight request
+    if (searchAbortRef.current) {
+      searchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+
+    setIsSearching(true);
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -310,13 +335,16 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
       appendIfValid("semester_id", selectedSemester);
       appendIfValid("section_id", selectedSectionFiltered);
 
-      // 🔍 Student Filters
       appendIfValid("student_name", filters.studentName);
       appendIfValid("admission_no", filters.admissionNo);
       appendIfValid("barcode", filters.barcode);
       appendIfValid("father_name", filters.fatherName);
       appendIfValid("mother_name", filters.motherName);
       appendIfValid("school_admission_no", filters.schoolAdmissionNo);
+      appendIfValid("student_status", filters.status);
+      appendIfValid("gender", filters.gender);
+      appendIfValid("from_date", fromDate);
+      appendIfValid("to_date", toDate);
 
       const apiUrl = `${ApiUrl.apiurl}StudentRegistrationApi/GetAllSTUDENTList/?${params.toString()}`;
       console.log("Search API URL:", apiUrl);
@@ -327,6 +355,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -344,15 +373,17 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
       }
 
     } catch (error) {
+      if (error.name === 'AbortError') {
+        // Previous request was cancelled — not an error
+        return;
+      }
       console.error("Search API Error:", error);
       setStudentData([]);
       setFullStudentData([]);
+    } finally {
+      setIsSearching(false);
     }
   };
-
-  useEffect(() => {
-    handleSearch();
-  }, []);
 
   const flattenStudentData = (data) => {
     return data.map((student, index) => {
@@ -408,7 +439,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
       fatherName: "",
       motherName: "",
       gender: "",
-      status: "",
+      status: "ACTIVE",
       courseId: "",
       branchId: "",
       academicYearId: "",
@@ -469,6 +500,350 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
     }
   };
 
+  // Export to PDF function
+  const exportToPDF = () => {
+    if (!fullStudentData || fullStudentData.length === 0) {
+      alert("No student data available to export!");
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const primaryRGB = [13, 110, 253];
+    const sectionBg = [33, 45, 62];
+    const labelBg = [232, 240, 255];
+    const borderRGB = [189, 208, 255];
+
+    const drawPageHeader = () => {
+      // Top bar
+      doc.setFillColor(...primaryRGB);
+      doc.rect(0, 0, pageWidth, 24, "F");
+      // Title
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("STUDENT REGISTRATION REPORT", pageWidth / 2, 11, { align: "center" });
+      // Subtitle line
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      const now = new Date();
+      const dateStr = now.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+      doc.text(
+        `Generated: ${dateStr}  |  Total Students: ${fullStudentData.length}`,
+        pageWidth / 2,
+        19,
+        { align: "center" }
+      );
+      // Bottom accent line
+      doc.setDrawColor(...borderRGB);
+      doc.setLineWidth(0.5);
+      doc.line(0, 24, pageWidth, 24);
+    };
+
+    drawPageHeader();
+    let yPos = 28;
+
+    const addSection = (doc, title, rows) => {
+      // Always show all fields; missing values display as —
+      const filtered = rows.map(([label, v]) => [label, (v !== undefined && v !== null && v !== "") ? v : "—"]);
+      if (filtered.length === 0) return;
+
+      // Check space for at least the header + 1 row
+      if (yPos > pageHeight - 22) {
+        doc.addPage();
+        yPos = 10;
+      }
+
+      // Section header bar
+      doc.setFillColor(...sectionBg);
+      doc.rect(10, yPos, pageWidth - 20, 6, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, 14, yPos + 4.2);
+      yPos += 6;
+
+      // Build 2-column label-value table rows
+      const pairedRows = [];
+      for (let i = 0; i < filtered.length; i += 2) {
+        pairedRows.push([
+          filtered[i][0],
+          String(filtered[i][1] ?? "—"),
+          filtered[i + 1] ? filtered[i + 1][0] : "",
+          filtered[i + 1] ? String(filtered[i + 1][1] ?? "—") : "",
+        ]);
+      }
+
+      autoTable(doc, {
+        startY: yPos,
+        margin: { left: 10, right: 10, top: 28 },
+        body: pairedRows,
+        theme: "grid",
+        styles: { fontSize: 7.5, cellPadding: 1.8, valign: "middle", textColor: [33, 37, 41] },
+        columnStyles: {
+          0: { fontStyle: "bold", fillColor: labelBg, cellWidth: 38, textColor: [13, 71, 161] },
+          1: { cellWidth: 52 },
+          2: { fontStyle: "bold", fillColor: labelBg, cellWidth: 38, textColor: [13, 71, 161] },
+          3: { cellWidth: 52 },
+        },
+        tableWidth: pageWidth - 20,
+        showHead: "never",
+        tableLineColor: borderRGB,
+        tableLineWidth: 0.2,
+      });
+
+      yPos = doc.lastAutoTable.finalY + 3;
+    };
+
+    // Helper: render a list section where each item is a numbered block of key-value rows
+    const addListSection = (doc, title, items, fieldExtractor) => {
+      if (!items || items.length === 0) {
+        // Still show the section title with "No records" note
+        if (yPos > pageHeight - 22) { doc.addPage(); yPos = 10; }
+        doc.setFillColor(...sectionBg);
+        doc.rect(10, yPos, pageWidth - 20, 6, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(7.5);
+        doc.setFont("helvetica", "bold");
+        doc.text(title, 14, yPos + 4.2);
+        yPos += 6;
+        doc.setFontSize(7.5);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont("helvetica", "italic");
+        doc.text("   No records found.", 14, yPos + 4);
+        yPos += 9;
+        return;
+      }
+      if (yPos > pageHeight - 22) { doc.addPage(); yPos = 10; }
+      doc.setFillColor(...sectionBg);
+      doc.rect(10, yPos, pageWidth - 20, 6, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, 14, yPos + 4.2);
+      yPos += 6;
+
+      items.forEach((item, i) => {
+        const rows = fieldExtractor(item, i);
+        const allRows = rows.map(([label, v]) => [label, (v !== undefined && v !== null && v !== "") ? String(v) : "—"]);
+        const pairedRows = [];
+        for (let r = 0; r < allRows.length; r += 2) {
+          pairedRows.push([
+            allRows[r][0], allRows[r][1],
+            allRows[r + 1] ? allRows[r + 1][0] : "",
+            allRows[r + 1] ? allRows[r + 1][1] : "",
+          ]);
+        }
+        // Sub-item label
+        if (yPos > pageHeight - 14) { doc.addPage(); yPos = 10; }
+        doc.setFillColor(210, 225, 255);
+        doc.rect(10, yPos, pageWidth - 20, 5, "F");
+        doc.setTextColor(13, 71, 161);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.text(`  Record ${i + 1}`, 14, yPos + 3.5);
+        yPos += 5;
+
+        autoTable(doc, {
+          startY: yPos,
+          margin: { left: 10, right: 10, top: 10 },
+          body: pairedRows,
+          theme: "grid",
+          styles: { fontSize: 7.5, cellPadding: 1.8, valign: "middle", textColor: [33, 37, 41] },
+          columnStyles: {
+            0: { fontStyle: "bold", fillColor: labelBg, cellWidth: 38, textColor: [13, 71, 161] },
+            1: { cellWidth: 52 },
+            2: { fontStyle: "bold", fillColor: labelBg, cellWidth: 38, textColor: [13, 71, 161] },
+            3: { cellWidth: 52 },
+          },
+          tableWidth: pageWidth - 20,
+          showHead: "never",
+          tableLineColor: borderRGB,
+          tableLineWidth: 0.2,
+        });
+        yPos = doc.lastAutoTable.finalY + 2;
+      });
+      yPos += 2;
+    };
+
+    fullStudentData.forEach((student, idx) => {
+      const basic = student.studentBasicDetails || {};
+      const address = (student.addressDetails && student.addressDetails[0]) || {};
+      const siblings = student.sibilingsDetails || [];
+      const emergencyContacts = student.emegencyContact || [];
+      const authorizedPickups = student.authorizedpickup || [];
+      const documents = student.documentsDetails || [];
+      const prevEducations = student.previousEducationDetails || [];
+      const feeList = student.feeDetails || [];
+
+      // Add spacing between records; let content flow naturally
+      if (idx > 0) {
+        yPos += 8;
+        if (yPos > pageHeight - 22) { doc.addPage(); yPos = 10; }
+      }
+
+      // Student title bar
+      doc.setFillColor(...primaryRGB);
+      doc.roundedRect(10, yPos, pageWidth - 20, 9, 1.5, 1.5, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      const sName = [basic.first_name, basic.middle_name, basic.last_name].filter(Boolean).join(" ");
+      const sInfo = `${idx + 1}. ${sName || "N/A"}   |   Adm No: ${basic.admission_no || "N/A"}   |   Reg No: ${basic.registration_no || "N/A"}`;
+      doc.text(sInfo, 14, yPos + 6);
+      yPos += 12;
+
+      // 1. BASIC INFORMATION
+      addSection(doc, "BASIC INFORMATION", [
+        ["First Name", basic.first_name],
+        ["Middle Name", basic.middle_name],
+        ["Last Name", basic.last_name],
+        ["Date of Birth", basic.date_of_birth],
+        ["Gender", basic.gender_name],
+        ["Blood Group", basic.blood_name],
+        ["Nationality", basic.nationality_name],
+        ["Religion", basic.religion_name],
+        ["Category", basic.category_name],
+        ["Mother Tongue", basic.mother_tongue_name],
+        ["House", basic.house_name],
+        ["Email", basic.email],
+        ["Aadhaar No", basic.student_aadhaar_no],
+        ["Roll No", basic.barcode],
+        ["Enrollment No", basic.enrollment_no],
+        ["Status", basic.status],
+        ["Children in Family", basic.children_in_family],
+        ["Primary Guardian", basic.primary_guardian],
+        ["Username", basic.user_name],
+        ["Referred By", basic.referred_by],
+        ["Remarks", basic.remarks],
+      ]);
+
+      // 2. ACADEMIC INFORMATION
+      addSection(doc, "ACADEMIC INFORMATION", [
+        ["Organization", basic.organization_description],
+        ["Branch", basic.branch_name],
+        ["Session / Batch", basic.batch_description],
+        ["Course", basic.course_name],
+        ["Department", basic.department_description],
+        ["Academic Year", basic.academic_year_description],
+        ["Semester", basic.semester_description],
+        ["Section", basic.section_name],
+        ["Admission No", basic.admission_no],
+        ["Registration No", basic.registration_no],
+        ["College Adm No", basic.college_admission_no],
+        ["Date of Admission", basic.date_of_admission],
+        ["Date of Join", basic.date_of_join],
+        ["Admission Type", basic.admission_type],
+      ]);
+
+      // 3. PARENT / GUARDIAN INFORMATION
+      addSection(doc, "PARENT / GUARDIAN INFORMATION", [
+        ["Father Name", basic.father_name],
+        ["Father Contact", basic.father_contact_number],
+        ["Father Email", basic.father_email],
+        ["Father Aadhaar", basic.father_aadhaar_no],
+        ["Father Profession", basic.father_profession],
+        ["Mother Name", basic.mother_name],
+        ["Mother Contact", basic.mother_contact_number],
+        ["Mother Email", basic.mother_email],
+        ["Mother Aadhaar", basic.mother_aadhaar_no],
+        ["Mother Profession", basic.mother_profession],
+      ]);
+
+      // 4. ADDRESS INFORMATION
+      addSection(doc, "ADDRESS INFORMATION", [
+        ["Present Address", address.present_address],
+        ["Present City", address.present_city],
+        ["Present State", address.present_state],
+        ["Present Country", address.present_country],
+        ["Present Pincode", address.present_pincode],
+        ["Present Phone", address.present_phone_number],
+        ["Permanent Address", address.permanent_address],
+        ["Permanent City", address.permanent_city],
+        ["Permanent State", address.permanent_state],
+        ["Permanent Country", address.permanent_country],
+        ["Permanent Pincode", address.permanent_pincode],
+        ["Permanent Phone", address.permanent_phone_number],
+      ]);
+
+      // 5. FEE DETAILS (list)
+      addListSection(doc, "FEE DETAILS", feeList, (item) => [
+        ["Fee Group", item.fee_group],
+        ["Applied From Semester", item.semester],
+      ]);
+
+      // 6. SIBLING DETAILS (list)
+      addListSection(doc, "SIBLING DETAILS", siblings, (item) => [
+        ["Sibling Name", `${item.sibling_firstname || ""} ${item.sibling_lastname || ""}`.trim()],
+        ["College Adm No", item.college_admission_no],
+        ["Course", item.course_name],
+        ["Section", item.section_name],
+      ]);
+
+      // 7. EMERGENCY CONTACTS (list)
+      addListSection(doc, "EMERGENCY CONTACTS", emergencyContacts, (item) => [
+        ["Name", item.name],
+        ["Relationship", item.relationship],
+        ["Mobile Number", item.mobile_number],
+        ["Remark", item.remark],
+      ]);
+
+      // 8. AUTHORISED PICKUP (list)
+      addListSection(doc, "AUTHORISED PICKUP", authorizedPickups, (item) => [
+        ["Name", item.name],
+        ["Relationship", item.relationship],
+        ["Mobile Number", item.mobile_number],
+        ["Email", item.email],
+        ["Address", item.address],
+        ["Remark", item.remark],
+      ]);
+
+      // 9. DOCUMENTS SUBMITTED (list)
+      addListSection(doc, "DOCUMENTS SUBMITTED", documents, (item) => [
+        ["Document Type", item.document_type],
+        ["Document No", item.document_no],
+        ["Valid From", item.start_from],
+        ["Valid To", item.end_to],
+        ["Document URL", item.document_url],
+      ]);
+
+      // 10. PREVIOUS EDUCATION DETAILS (list)
+      addListSection(doc, "PREVIOUS EDUCATION DETAILS", prevEducations, (item) => [
+        ["Institution Name", item.name_of_institution],
+        ["Location", item.location],
+        ["Course Completed", item.course_completed],
+        ["Year From", item.year_from],
+        ["Year To", item.year_to],
+        ["Language of Instruction", item.language_of_instruction],
+        ["Transfer Certificate", item.transfer_certificate],
+        ["Result", item.result],
+      ]);
+    });
+
+    // Page numbers
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.2);
+      doc.line(10, pageHeight - 8, pageWidth - 10, pageHeight - 8);
+      doc.setFontSize(7);
+      doc.setTextColor(128, 128, 128);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Page ${i} of ${totalPages}  •  Acadix School Management System`,
+        pageWidth / 2,
+        pageHeight - 3,
+        { align: "center" }
+      );
+    }
+
+    const fileName = `Student_Registration_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+  };
+
   // Export to Excel function
   const exportToExcel = () => {
     if (fullStudentData && fullStudentData.length > 0) {
@@ -516,8 +891,9 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                     type="button"
                     className="btn btn-primary me-2"
                     onClick={handleSearch}
+                    disabled={isSearching}
                   >
-                    Search
+                    {isSearching ? "Searching..." : "Search"}
                   </button>
                   <button
                     type="button"
@@ -539,6 +915,13 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                     onClick={exportToExcel}
                   >
                     Export To Excel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary me-2"
+                    onClick={exportToPDF}
+                  >
+                    Export To PDF
                   </button>
                   {/*  -- Temporarily Hidden for future use --
                   <button
@@ -583,20 +966,20 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           onChange={handleInputChange}
                         />
                       </div>
-                      {/* <div className="col-12 col-md-3 mb-2">
+                      <div className="col-12 col-md-3 mb-2">
                         <label htmlFor="barcode" className="form-label">
-                          Student Barcode
+                          Roll No
                         </label>
                         <input
                           type="text"
                           id="barcode"
                           name="barcode"
                           className="form-control detail"
-                          placeholder="Enter barcode"
+                          placeholder="Enter Roll No"
                           value={filters.barcode}
                           onChange={handleInputChange}
                         />
-                      </div> */}
+                      </div>
 
                       {/* 🔹 Session Dropdown */}
                       <div className="col-12 col-md-3 mb-2">
@@ -758,8 +1141,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           onChange={(selectedOption) => {
                             const value = selectedOption ? selectedOption.value : "";
                             setSelectedSemester(value);
-                            setSelectedSectionFiltered(null);
-                            setFilters((prev) => ({ ...prev, semesterId: value, sectionId: "" }));
+                            setFilters((prev) => ({ ...prev, semesterId: value }));
                           }}
                         />
                       </div>
@@ -772,14 +1154,15 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           id="section"
                           className="detail"
                           classNamePrefix="detail"
-                          placeholder={
-                            sectionFilterLoading
-                              ? "Loading Section..."
-                              : selectedSemester
-                                ? "Section auto selected"
-                                : "Select Semester first"
+                          placeholder={!selectedSemester ? "Select Semester first" : "Select Section"}
+                          isDisabled={
+                            !selectedOrganization ||
+                            !selectedSession ||
+                            !selectedCourse ||
+                            !selectedDepartment ||
+                            !selectedAcademicYear ||
+                            !selectedSemester
                           }
-                          isDisabled={true}
                           isLoading={sectionFilterLoading}
                           options={
                             SectionList.map((sec) => ({
@@ -793,8 +1176,11 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                               label: `${sec.section_name}`,
                             })).find((option) => option.value === selectedSectionFiltered) || null
                           }
-                          onChange={() => {}}
-                          isClearable={false}
+                          onChange={(selectedOption) => {
+                            const value = selectedOption ? selectedOption.value : "";
+                            setSelectedSectionFiltered(value);
+                            setFilters((prev) => ({ ...prev, sectionId: value }));
+                          }}
                         />
                       </div>
                       <div className="col-12 col-md-3 mb-1">
@@ -929,7 +1315,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           <input
                             type="text"
                             className="form-control detail"
-                            placeholder="Search: name, admission no, session, course, barcode, etc..."
+                            placeholder="Search: name, admission no, session, course, address, city, state ..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                           />
@@ -958,7 +1344,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                         <tr>
                           <th scope="col">Sl No.</th>
                           <th scope="col">Student Name</th>
-                          <th scope="col">BPUT Registration Number</th>
+                          <th scope="col">ONMRC Registration No</th>
                           <th scope="col">Admission No</th>
                           <th scope="col">Session</th>
                           <th scope="col">Course</th>
@@ -968,7 +1354,11 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           <th scope="col">Section</th>
                           <th scope="col">Father's Name</th>
                           <th scope="col">Mother's Name</th>
-                          {/* <th scope="col">Barcode</th> */}
+                          <th scope="col">Religion</th>
+                          <th scope="col">Address</th>
+                          <th scope="col">City</th>
+                          <th scope="col">State</th>
+                          <th scope="col">Roll No</th>
                           <th scope="col">Category</th>
                           <th scope="col">Action</th>
                         </tr>
@@ -997,7 +1387,11 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                                 <td>{studentBasicDetails?.section_name || "—"}</td>
                                 <td>{studentBasicDetails?.father_name || "—"}</td>
                                 <td>{studentBasicDetails?.mother_name || "—"}</td>
-                                {/* <td>{studentBasicDetails?.barcode || "—"}</td> */}
+                                <td>{studentBasicDetails?.religion_name || "—"}</td>
+                                <td>{student?.addressDetails?.[0]?.present_address || "—"}</td>
+                                <td>{student?.addressDetails?.[0]?.present_city || "—"}</td>
+                                <td>{student?.addressDetails?.[0]?.present_state || "—"}</td>
+                                <td>{studentBasicDetails?.barcode || "—"}</td>
                                 <td>{studentBasicDetails?.category_name || "—"}</td>
 
                                 <td>
@@ -1017,7 +1411,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           })
                         ) : (
                           <tr>
-                            <td colSpan="15" style={{ textAlign: "center" }}>
+                            <td colSpan="19" style={{ textAlign: "center" }}>
                               No Data Available
                             </td>
                           </tr>

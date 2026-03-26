@@ -166,16 +166,16 @@ const ResultPublishs = () => {
                           className="form-control detail"
                         />
                       </div>
-                      {/* <div className="col-12 col-md-4 mb-1">
+                      <div className="col-12 col-md-4 mb-1">
                         <label htmlFor="class" className="form-label">
-                          Student Barcode<span style={{ color: "red" }}>*</span>
+                          Roll No<span style={{ color: "red" }}>*</span>
                         </label>
                         <input
                           type="text"
                           id="student-barcode"
                           className="form-control detail"
                         />
-                      </div> */}
+                      </div>
                     </div>
                   </div>
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
@@ -299,7 +299,7 @@ const ResultPublishs = () => {
                         <th>Student Name</th>
                         <th>Admission No</th>
                         <th>Roll No</th>
-                        <th>Barcode</th>
+                        <th>Roll no</th>
                         <th>Father Name</th>
                         <th>Mother Name</th>
                         <th>Select Term</th>

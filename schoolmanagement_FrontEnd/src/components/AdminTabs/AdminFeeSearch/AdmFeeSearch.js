@@ -13,6 +13,7 @@ import Select from "react-select";
 import { ApiUrl } from "../../../ApiUrl";
 import ReactPaginate from "react-paginate";
 import fetchSessionList from "../../hooks/fetchSessionList"
+import { openFeeReceiptPdf } from "./feeReceiptPdf";
 
 const FeeSearchPage = () => {
   // Get today's date in YYYY-MM-DD format (local timezone)
@@ -65,8 +66,9 @@ const FeeSearchPage = () => {
 
   const [paymentMethodOptions, setPaymentMethodOptions] = useState([]);
   const [showCancelModal, setShowCancelModal] = useState(false);
-
   const [cancelRemark, setCancelRemark] = useState("");
+  const [cancelledByName, setCancelledByName] = useState("");
+  const [cancelledByRole, setCancelledByRole] = useState("");
   const [semesterOptions, setSemesterOptions] = useState([]);
 
   //  const [bankOptions, setBankOptions] = useState([]);
@@ -286,6 +288,8 @@ const FeeSearchPage = () => {
     setShowUpdateModal(false);
     setShowCancelModal(false);
     setCancelRemark("");
+    setCancelledByName("");
+    setCancelledByRole("");
 
     // Fetch today's data after clearing
     setTimeout(() => {
@@ -819,9 +823,46 @@ const FeeSearchPage = () => {
   };
 
   // Function to handle the Cancel link click
-  const handleCancelClick = (e, receipt) => {
+  const handleCancelClick = async (e, receipt) => {
     e.preventDefault();
     setSelectedReceipt(receipt);
+
+    // Fetch role_name and staff name directly from UserLogin table via the backend
+    const userLoginId = localStorage.getItem("user_login_id");
+    if (userLoginId) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const res = await fetch(
+          `${ApiUrl.apiurl}RegisterEmployee/GetUserStaffName/?user_login_id=${userLoginId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          // role_name comes from UserLogin.role_name field in DB
+          setCancelledByRole(data.role_name || "");
+          // staff_name resolved from UserLogin.reference_id → EmployeeMaster
+          setCancelledByName(data.staff_name || "");
+        } else {
+          // Fallback to sessionStorage if API fails
+          setCancelledByRole(sessionStorage.getItem("userRole") || "");
+          setCancelledByName(sessionStorage.getItem("username") || "");
+        }
+      } catch {
+        setCancelledByRole(sessionStorage.getItem("userRole") || "");
+        setCancelledByName(sessionStorage.getItem("username") || "");
+      }
+    } else {
+      // No user_login_id stored — fallback to sessionStorage
+      setCancelledByRole(sessionStorage.getItem("userRole") || "");
+      setCancelledByName(sessionStorage.getItem("username") || "");
+    }
+
     setShowCancelModal(true);
   };
 
@@ -914,8 +955,10 @@ const FeeSearchPage = () => {
     const data = {
       organization_id: sessionStorage.getItem("organization_id"),
       branch_id: sessionStorage.getItem("branch_id"),
-      receipt_id: selectedReceipt.receiptId, // API expects 'receipt_id'
-      cancel_remark: cancelRemark, // API expects 'cancel_remark'
+      receipt_id: selectedReceipt.receiptId,
+      cancel_remark: cancelRemark,
+      cancelled_by_name: cancelledByName,
+      cancelled_by_role: cancelledByRole,
     };
 
     try {
@@ -940,6 +983,8 @@ const FeeSearchPage = () => {
         setShowCancelModal(false);
         setSelectedReceipt(null);
         setCancelRemark("");
+        setCancelledByName("");
+        setCancelledByRole("");
       } else {
         alert(result.message || "Failed to cancel receipt.");
       }
@@ -950,7 +995,7 @@ const FeeSearchPage = () => {
   };
 
 
-  // Function to handle clearing fields (optional)
+  // Function to handle clearing fields — only clears the editable remark
   const handleCancelClear = () => {
     setCancelRemark("");
   };
@@ -960,6 +1005,8 @@ const FeeSearchPage = () => {
     setShowCancelModal(false);
     setSelectedReceipt(null);
     setCancelRemark("");
+    setCancelledByName("");
+    setCancelledByRole("");
   };
 
   const handleReceiptLinkClick = async (receiptNo) => {
@@ -978,139 +1025,181 @@ const FeeSearchPage = () => {
       const result = await response.json();
 
       if (response.ok && result.receipt_data) {
+        openFeeReceiptPdf(result.receipt_data);
+        return;
+
         const data = result.receipt_data;
         const doc = new jsPDF("portrait", "mm", "a4");
-
-        // LOGO LOAD
-        const toBase64 = (url) =>
-          new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.onload = () => {
-              const canvas = document.createElement("canvas");
-              canvas.width = img.width;
-              canvas.height = img.height;
-              canvas.getContext("2d").drawImage(img, 0, 0);
-              resolve(canvas.toDataURL("image/jpeg"));
-            };
-            img.onerror = reject;
-            img.src = url;
-          });
-
-        try {
-          const becLogo = await toBase64("/Assets/logobec.png");
-          doc.addImage(becLogo, "JPEG", 10, 10, 20, 20);
-        } catch { }
-
-        // HEADER
+        const safe = (v) => (v === null || v === undefined ? "" : v);
         const pageWidth = doc.internal.pageSize.getWidth();
+
+        doc.setLineWidth(0.5);
+        doc.rect(5, 5, 200, 287);
+
+        doc.setTextColor(0, 100, 80);
         doc.setFont("Helvetica", "bold");
         doc.setFontSize(16);
-        const headerText = "Bhubaneswar Engineering College";
-        const textWidth =
-          (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
-          doc.internal.scaleFactor;
-        doc.text(headerText, (pageWidth - textWidth) / 2, 22);
-        doc.setFontSize(12);
-        doc.text("Fee Receipt", pageWidth / 2, 30, { align: "center" });
-
-        // RECEIPT DETAILS
-        const receiptDetails = [
-          ["Receipt No", data.receipt_no, "Section", data.section_name],
-          [
-            "Receipt Date",
-            data.receipt_date?.split("T")[0],
-            "Father's Name",
-            data.father_name,
-          ],
-          [
-            "Student Name",
-            Array.isArray(data.student_name)
-              ? data.student_name.join(" ")
-              : typeof data.student_name === "object" &&
-                data.student_name !== null
-                ? Object.values(data.student_name).join(" ")
-                : data.student_name || "",
-            "Fee Period",
-            Array.isArray(data.fee_semesters)
-              ? data.fee_semesters.join(", ")
-              : typeof data.fee_semesters === "object" &&
-                data.fee_semesters !== null
-                ? Object.values(data.fee_semesters).join(", ")
-                : data.fee_semesters || "",
-          ],
-
-          ["Admission No", data.admission_no, "Amount", data.amount.toFixed(2)],
-          ["Class", `${data.course_name} - ${data.semester_name}`, "", ""],
-        ];
-
-        doc.autoTable({
-          startY: 35,
-          body: receiptDetails,
-          theme: "grid",
-          styles: { fontSize: 11, fontStyle: "bold" },
-          margin: { left: 15 },
-          tableWidth: 180,
+        doc.text("SPARSH COLLEGE OF NURSING & ALLIED SCIENCES", pageWidth / 2, 12, {
+          align: "center",
         });
 
-        // FEE ELEMENT TABLE
-        const feeElements = Object.values(data.payment_element_list).map(
-          (el, index) => [index + 1, el.element_name, el.amount.toFixed(2)]
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("Helvetica", "normal");
+        doc.text("(A unit of Nirmala Trust)", pageWidth / 2, 16, { align: "center" });
+        doc.text(
+          "Plot No: 154/1683/2194 & 177/2195, Kantabada, Bhubaneswar-752054",
+          pageWidth / 2,
+          20,
+          { align: "center" }
         );
-        feeElements.push(["", "Total", data.amount.toFixed(2)]);
+        doc.text(
+          "Ph.: +91 7735504783, Email: info@sparshnursing.edu.in",
+          pageWidth / 2,
+          24,
+          { align: "center" }
+        );
 
-        doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 8,
-          head: [["Sr. No.", "Element", "Amount"]],
-          body: feeElements,
-          theme: "grid",
-          styles: { fontSize: 11, fontStyle: "bold" },
-          columnStyles: { 2: { halign: "right" } },
-          margin: { left: 15 },
-          tableWidth: 180,
-        });
+        doc.setFillColor(0, 100, 80);
+        doc.rect(85, 27, 40, 7, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.text(" RECEIPT", 105, 32, { align: "center" });
 
-        // PAYMENT METHOD TABLE
-        const paymentData = [
-          [
-            data.payment_method,
-            data.payment_reference || "-",
-            data.remarks || "-",
-            data.amount.toFixed(2),
-          ],
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Receipt No. ${safe(data.receipt_no)}`, 140, 32);
+        doc.text(`Date: ${safe(data.receipt_date)}`, 140, 38);
+
+        doc.text(`Course: ......................... ${safe(data.course_name)}`, 10, 45);
+        doc.text(`Year: .............`, 80, 45);
+        doc.text(`Roll No.: ....................`, 130, 45);
+        doc.text(
+          `Received from Ms./ Mr. ............................................................................................................`,
+          10,
+          52
+        );
+        doc.setFont("Helvetica", "bold");
+        const studentName =
+          Array.isArray(data.student_name)
+            ? data.student_name.join(" ")
+            : typeof data.student_name === "object" && data.student_name !== null
+              ? Object.values(data.student_name).join(" ")
+              : safe(data.student_name);
+        doc.text(studentName, 45, 51.5);
+
+        const tableTop = 60;
+        const tableHeight = 175;
+
+        doc.setFont("Helvetica", "bold");
+        doc.line(10, tableTop, 200, tableTop);
+        doc.text("SL NO", 12, tableTop + 5);
+        doc.text("PARTICULAR", 70, tableTop + 5);
+        doc.text("AMOUNT", 175, tableTop + 3, { align: "center" });
+        doc.setFontSize(8);
+        doc.text("Rs.", 165, tableTop + 8);
+        doc.text("P.", 190, tableTop + 8);
+        doc.line(10, tableTop + 10, 200, tableTop + 10);
+
+        doc.line(10, tableTop, 10, tableTop + tableHeight);
+        doc.line(25, tableTop, 25, tableTop + tableHeight);
+        doc.line(155, tableTop, 155, tableTop + tableHeight);
+        doc.line(183, tableTop, 183, tableTop + tableHeight);
+        doc.line(200, tableTop, 200, tableTop + tableHeight);
+
+        const fullElementList = [
+          { sl: "", label: "College" },
+          { sl: "1", label: "Admission Fee" },
+          { sl: "2", label: "Tuition Fees" },
+          { sl: "3", label: "Late Payment Fee" },
+          { sl: "4", label: "Uniform Fee" },
+          { sl: "5", label: "Identity Card Fee" },
+          { sl: "6", label: "Library Fees" },
+          { sl: "7", label: "Library Caution Money" },
+          { sl: "8", label: "Library Card Fee" },
+          { sl: "9", label: "Clinical Training Fee" },
+          { sl: "10", label: "Transportation Fee" },
+          { sl: "", label: "Book Fee" },
+          { sl: "", label: "Council Registration Fee(ONMRC)" },
+          { sl: "", label: "University" },
+          { sl: "", label: "  (a) Enrollment Fee" },
+          { sl: "", label: "  (b) Examination Fee" },
+          { sl: "", label: "  (c) Fees for late Form Filling to Examination" },
+          { sl: "11", label: "Miscellaneous Fees" },
+          { sl: "12", label: "Hostel" },
+          { sl: "", label: "  Hostel Admission Fee" },
+          { sl: "", label: "  Hostel Caution Money" },
+          { sl: "", label: "  Hostel Fee" },
+          { sl: "", label: "  Accommodation Fee" },
+          { sl: "", label: "  Hostel Mess Fee" },
         ];
 
-        doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 8,
-          head: [["Payment Method", "Payment Reference", "Remark", "Amount"]],
-          body: paymentData,
-          theme: "grid",
-          styles: { fontSize: 11, fontStyle: "bold" },
-          columnStyles: { 3: { halign: "right" } },
-          margin: { left: 15 },
-          tableWidth: 180,
+        doc.setFont("Helvetica", "normal");
+        doc.setFontSize(9);
+        let yPos = tableTop + 15;
+
+        const currentPaymentItems = Array.isArray(data.payment_element_list)
+          ? data.payment_element_list
+          : Object.values(data.payment_element_list || {});
+
+        fullElementList.forEach((item) => {
+          const isHeader = ["College", "University", "Hostel"].includes(
+            item.label.trim()
+          );
+          doc.setFont("Helvetica", isHeader ? "bold" : "normal");
+
+          doc.text(item.sl, 15, yPos);
+          doc.text(item.label, 28, yPos);
+
+          const match = currentPaymentItems.find((el) => {
+            const dbName = String(el.element_name || "")
+              .toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9]/g, "");
+            const rowName = item.label
+              .toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9]/g, "");
+            return (
+              dbName === rowName ||
+              (dbName.includes("hostel") && rowName.includes("hostelfee"))
+            );
+          });
+
+          if (match && !isHeader) {
+            const currentTxAmt = Number(match.amount || match.paid_amount || 0);
+            if (currentTxAmt > 0 && currentTxAmt < 500000) {
+              doc.setFont("Helvetica", "bold");
+              doc.text(`${currentTxAmt.toFixed(0)}`, 180, yPos, { align: "right" });
+              doc.text("00", 192, yPos, { align: "center" });
+              doc.setFont("Helvetica", "normal");
+            }
+          }
+
+          yPos += 5.8;
         });
 
-        // SUMMARY TABLE
-        const summary = [
-          ["Total Session Fee", data.total_academic_year_fees.toFixed(2)],
-          ["Total Paid", data.total_paid.toFixed(2)],
-          ["Total Balance", data.remaining_amount.toFixed(2)],
-        ];
+        const footerTop = tableTop + tableHeight;
+        doc.line(10, footerTop, 200, footerTop);
 
-        doc.autoTable({
-          startY: doc.lastAutoTable.finalY + 8,
-          body: summary,
-          theme: "grid",
-          styles: { fontSize: 11, fontStyle: "bold" },
-          columnStyles: { 1: { halign: "right" } },
-          margin: { left: 15 },
-          tableWidth: 180,
+        doc.setFont("Helvetica", "italic");
+        doc.text(
+          "Rupees in words: ............................................................................................................",
+          10,
+          footerTop + 10
+        );
+
+        doc.setFont("Helvetica", "bold");
+        doc.text("TOTAL", 130, footerTop + 10);
+        doc.text(`${Number(data.amount || 0).toFixed(0)}`, 180, footerTop + 10, {
+          align: "right",
         });
+        doc.text("00", 192, footerTop + 10, { align: "center" });
 
-        // OPEN PDF
-        const pdfBlob = doc.output("blob");
-        window.open(URL.createObjectURL(pdfBlob), "_blank");
+        doc.text("Date: ....................", 10, footerTop + 20);
+        doc.text("Cashier Signature", 60, footerTop + 40, { align: "center" });
+        doc.text("Accountant Signature", 160, footerTop + 40, { align: "center" });
+
+        window.open(doc.output("bloburl"), "_blank");
       } else {
         alert(result.message || "Unable to load receipt.");
       }
@@ -1179,7 +1268,7 @@ const FeeSearchPage = () => {
                     }}
                     onClick={() => navigate("/admin/dashboard")}
 
-                  // onClick={handleCloseButton}
+                    // onClick={handleCloseButton}
                   >
                     Close
                   </button>
@@ -1200,7 +1289,7 @@ const FeeSearchPage = () => {
                 <div className="col-12 custom-section-box">
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                     <div className="row flex-grow-1">
-                      <div className="col-md-3 mb-3">
+                      {/* <div className="col-md-3 mb-3">
                         <label htmlFor="period" className="form-label">
                           Period
                         </label>
@@ -1212,15 +1301,15 @@ const FeeSearchPage = () => {
                           value={
                             period
                               ? semesterOptions.find(
-                                (option) => option.value === period
-                              )
+                                  (option) => option.value === period,
+                                )
                               : null
                           }
                           onChange={(selectedOption) =>
                             setPeriod(selectedOption?.value || null)
                           }
                         />
-                      </div>
+                      </div> */}
 
                       <div className="col-md-3 mb-3">
                         <label htmlFor="student-name" className="form-label">
@@ -1468,7 +1557,7 @@ const FeeSearchPage = () => {
                           <th>Father's Name</th>
                           <th>Course</th>
                           <th>Section</th>
-                          {/* <th>Bar Code No</th> */}
+                          <th>Bar Code No</th>
                           <th>College Admission No</th>
                           <th>Receipt Date</th>
                           <th>Receipt Amount</th>
@@ -1480,19 +1569,19 @@ const FeeSearchPage = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {receiptsData.map((receipt, index) => (
+                        {currentReceipts.map((receipt, index) => (
                           <tr key={receipt.receiptId}>
-                            <td>{index + 1}</td>
+                            <td>{offset + index + 1}</td>
                             <td>{receipt.semester_description}</td>
                             <td>{receipt.student_name}</td>
                             <td>{receipt.father_name}</td>
                             <td>{receipt.course_name}</td>
                             <td>{receipt.section_name}</td>
-                            {/* <td>{receipt.barcode}</td> */}
+                            <td>{receipt.barcode}</td>
                             <td>{receipt.college_admission_no}</td>
                             <td>
                               {new Date(
-                                receipt.receiptDate
+                                receipt.receiptDate,
                               ).toLocaleDateString()}
                             </td>
                             <td>{receipt.amount}</td>
@@ -1526,7 +1615,11 @@ const FeeSearchPage = () => {
                               </a>
                             </td>
 
-                            <td>{receipt.cancellation_remarks}</td>
+                            <td>
+                              {receipt.remarks ||
+                                receipt.cancellation_remarks ||
+                                "-"}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -1569,11 +1662,11 @@ const FeeSearchPage = () => {
                         <h5 className="modal-title">Cancel Receipt</h5>
                       </div>
                       <div className="modal-body">
-                        {/* Buttons at the top */}
-                        <div className="row mb-2">
+                        {/* Action Buttons — all 3 in a single row */}
+                        <div className="row mb-3">
                           <div
-                            className="col-12"
-                            style={{ border: "1px solid #ccc" }}
+                            className="col-12 d-flex align-items-center"
+                            style={{ border: "1px solid #ccc", padding: "8px" }}
                           >
                             <button
                               type="button"
@@ -1584,7 +1677,7 @@ const FeeSearchPage = () => {
                                 "--bs-btn-font-size": ".75rem",
                                 width: "150px",
                               }}
-                              onClick={handleCancelSave} // Updated function name
+                              onClick={handleCancelSave}
                             >
                               Save
                             </button>
@@ -1616,15 +1709,65 @@ const FeeSearchPage = () => {
                             </button>
                           </div>
                         </div>
-                        {/* Remark Field */}
-                        <div className="form-group mt-3">
-                          <label htmlFor="remark">Remark</label>
+
+                        {/* Role Name — auto-filled, read-only */}
+                        <div className="form-group mb-2">
+                          <label
+                            htmlFor="cancelRoleName"
+                            className="form-label fw-semibold"
+                          >
+                            Role Name
+                          </label>
+                          <input
+                            id="cancelRoleName"
+                            type="text"
+                            className="form-control"
+                            value={cancelledByRole}
+                            disabled
+                            style={{
+                              backgroundColor: "#f8f9fa",
+                              cursor: "not-allowed",
+                            }}
+                          />
+                        </div>
+
+                        {/* Cancelled By — non-teaching staff name, read-only */}
+                        <div className="form-group mb-2">
+                          <label
+                            htmlFor="cancelledByName"
+                            className="form-label fw-semibold"
+                          >
+                            Cancelled By
+                          </label>
+                          <input
+                            id="cancelledByName"
+                            type="text"
+                            className="form-control"
+                            value={cancelledByName}
+                            disabled
+                            style={{
+                              backgroundColor: "#f8f9fa",
+                              cursor: "not-allowed",
+                            }}
+                          />
+                        </div>
+
+                        {/* Cancellation Remark */}
+                        <div className="form-group mt-2">
+                          <label
+                            htmlFor="cancelRemark"
+                            className="form-label fw-semibold"
+                          >
+                            Cancellation Remark{" "}
+                            <span className="text-danger">*</span>
+                          </label>
                           <textarea
-                            id="remark"
+                            id="cancelRemark"
                             className="form-control detail"
                             rows="3"
-                            value={cancelRemark} // Bind remark value to state
-                            onChange={(e) => setCancelRemark(e.target.value)} // Update state on input change
+                            placeholder="Enter reason for cancellation..."
+                            value={cancelRemark}
+                            onChange={(e) => setCancelRemark(e.target.value)}
                           />
                         </div>
                       </div>
@@ -1697,7 +1840,7 @@ const FeeSearchPage = () => {
                                 paymentMethodOptions.find(
                                   (option) =>
                                     option.value ===
-                                    selectedReceipt.paymentMethodId
+                                    selectedReceipt.paymentMethodId,
                                 ) || null
                               }
                               onChange={(selectedOption) => {
@@ -1716,7 +1859,8 @@ const FeeSearchPage = () => {
                                   paymentMethodId: selectedValue,
                                   paymentMethodLabel: selectedLabel, // Store label for conditional rendering
                                   // Reset bank and account for ALL payment method changes
-                                  bankId: selectedLabel === "cash" ? null : null,
+                                  bankId:
+                                    selectedLabel === "cash" ? null : null,
                                   bankdetailsId: null,
                                   accountNumber: "",
                                 }));
@@ -1742,14 +1886,20 @@ const FeeSearchPage = () => {
                           {selectedReceipt.paymentMethodLabel === "cheque" && (
                             <>
                               <div className="form-group">
-                                <label className="form-label">Cheque Number</label>
+                                <label className="form-label">
+                                  Cheque Number
+                                </label>
                                 <input
                                   type="text"
                                   className="form-control detail"
                                   value={chequeNumber}
                                   onChange={(e) => {
-                                    const value = e.target.value.replace(/\D/g, '');
-                                    if (value.length <= 6) setChequeNumber(value);
+                                    const value = e.target.value.replace(
+                                      /\D/g,
+                                      "",
+                                    );
+                                    if (value.length <= 6)
+                                      setChequeNumber(value);
                                   }}
                                   maxLength="6"
                                   placeholder="Enter Cheque Number (6 digits)"
@@ -1757,23 +1907,31 @@ const FeeSearchPage = () => {
                               </div>
 
                               <div className="form-group">
-                                <label className="form-label">Cheque Bank Name</label>
+                                <label className="form-label">
+                                  Cheque Bank Name
+                                </label>
                                 <input
                                   type="text"
                                   className="form-control detail"
                                   value={chequeBankName}
-                                  onChange={(e) => setChequeBankName(e.target.value)}
+                                  onChange={(e) =>
+                                    setChequeBankName(e.target.value)
+                                  }
                                   placeholder="Cheque Bank Name"
                                 />
                               </div>
 
                               <div className="form-group">
-                                <label className="form-label">Cheque Branch Name</label>
+                                <label className="form-label">
+                                  Cheque Branch Name
+                                </label>
                                 <input
                                   type="text"
                                   className="form-control detail"
                                   value={chequeBranchName}
-                                  onChange={(e) => setChequeBranchName(e.target.value)}
+                                  onChange={(e) =>
+                                    setChequeBranchName(e.target.value)
+                                  }
                                   placeholder="Cheque Branch Name"
                                 />
                               </div>
@@ -1790,7 +1948,10 @@ const FeeSearchPage = () => {
                                   className="form-control detail"
                                   value={ddNumber}
                                   onChange={(e) => {
-                                    const value = e.target.value.replace(/\D/g, '');
+                                    const value = e.target.value.replace(
+                                      /\D/g,
+                                      "",
+                                    );
                                     if (value.length <= 6) setDdNumber(value);
                                   }}
                                   maxLength="6"
@@ -1799,12 +1960,16 @@ const FeeSearchPage = () => {
                               </div>
 
                               <div className="form-group">
-                                <label className="form-label">Issuing Bank</label>
+                                <label className="form-label">
+                                  Issuing Bank
+                                </label>
                                 <input
                                   type="text"
                                   className="form-control detail"
                                   value={ddIssuingBank}
-                                  onChange={(e) => setDdIssuingBank(e.target.value)}
+                                  onChange={(e) =>
+                                    setDdIssuingBank(e.target.value)
+                                  }
                                   placeholder="Issuing Bank"
                                 />
                               </div>
@@ -1812,7 +1977,9 @@ const FeeSearchPage = () => {
                           )}
 
                           {/* UPI Fields */}
-                          {selectedReceipt.paymentMethodLabel?.includes("upi") && (
+                          {selectedReceipt.paymentMethodLabel?.includes(
+                            "upi",
+                          ) && (
                             <div className="form-group">
                               <label className="form-label">UTR No</label>
                               <input
@@ -1820,7 +1987,10 @@ const FeeSearchPage = () => {
                                 className="form-control detail"
                                 value={upiUtrNo}
                                 onChange={(e) => {
-                                  const value = e.target.value.replace(/\D/g, '');
+                                  const value = e.target.value.replace(
+                                    /\D/g,
+                                    "",
+                                  );
                                   if (value.length <= 22) setUpiUtrNo(value);
                                 }}
                                 maxLength="22"
@@ -1830,47 +2000,60 @@ const FeeSearchPage = () => {
                           )}
 
                           {/* RTGS/NEFT Fields */}
-                          {(selectedReceipt.paymentMethodLabel?.includes("rtgs") ||
-                            selectedReceipt.paymentMethodLabel?.includes("neft")) && (
-                              <>
-                                <div className="form-group">
-                                  <label className="form-label">UTR No</label>
-                                  <input
-                                    type="text"
-                                    className="form-control detail"
-                                    value={rtgsUtrNo}
-                                    onChange={(e) => {
-                                      const value = e.target.value.replace(/\D/g, '');
-                                      if (value.length <= 22) setRtgsUtrNo(value);
-                                    }}
-                                    maxLength="22"
-                                    placeholder="Enter UTR No (22 digits)"
-                                  />
-                                </div>
+                          {(selectedReceipt.paymentMethodLabel?.includes(
+                            "rtgs",
+                          ) ||
+                            selectedReceipt.paymentMethodLabel?.includes(
+                              "neft",
+                            )) && (
+                            <>
+                              <div className="form-group">
+                                <label className="form-label">UTR No</label>
+                                <input
+                                  type="text"
+                                  className="form-control detail"
+                                  value={rtgsUtrNo}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(
+                                      /\D/g,
+                                      "",
+                                    );
+                                    if (value.length <= 22) setRtgsUtrNo(value);
+                                  }}
+                                  maxLength="22"
+                                  placeholder="Enter UTR No (22 digits)"
+                                />
+                              </div>
 
-                                <div className="form-group">
-                                  <label className="form-label">Sender Bank</label>
-                                  <input
-                                    type="text"
-                                    className="form-control detail"
-                                    value={rtgsSenderBank}
-                                    onChange={(e) => setRtgsSenderBank(e.target.value)}
-                                    placeholder="Sender Bank"
-                                  />
-                                </div>
+                              <div className="form-group">
+                                <label className="form-label">
+                                  Sender Bank
+                                </label>
+                                <input
+                                  type="text"
+                                  className="form-control detail"
+                                  value={rtgsSenderBank}
+                                  onChange={(e) =>
+                                    setRtgsSenderBank(e.target.value)
+                                  }
+                                  placeholder="Sender Bank"
+                                />
+                              </div>
 
-                                <div className="form-group">
-                                  <label className="form-label">Account No</label>
-                                  <input
-                                    type="text"
-                                    className="form-control detail"
-                                    value={rtgsAccountNo}
-                                    onChange={(e) => setRtgsAccountNo(e.target.value)}
-                                    placeholder="Account No"
-                                  />
-                                </div>
-                              </>
-                            )}
+                              <div className="form-group">
+                                <label className="form-label">Account No</label>
+                                <input
+                                  type="text"
+                                  className="form-control detail"
+                                  value={rtgsAccountNo}
+                                  onChange={(e) =>
+                                    setRtgsAccountNo(e.target.value)
+                                  }
+                                  placeholder="Account No"
+                                />
+                              </div>
+                            </>
+                          )}
 
                           {/* Bank Name Dropdown */}
                           <div className="form-group">
@@ -1882,7 +2065,7 @@ const FeeSearchPage = () => {
                               value={
                                 bankOptions.find(
                                   (bank) =>
-                                    bank.value === selectedReceipt.bankId
+                                    bank.value === selectedReceipt.bankId,
                                 ) || null
                               }
                               onChange={handleBankSelect}
@@ -1890,9 +2073,13 @@ const FeeSearchPage = () => {
                               placeholder="Select Bank"
                               isClearable
                               isDisabled={
-                                paymentMethodOptions.find(
-                                  (option) => option.value === selectedReceipt.paymentMethodId
-                                )?.label?.toLowerCase() === "cash"
+                                paymentMethodOptions
+                                  .find(
+                                    (option) =>
+                                      option.value ===
+                                      selectedReceipt.paymentMethodId,
+                                  )
+                                  ?.label?.toLowerCase() === "cash"
                               }
                             />
                           </div>
@@ -1906,7 +2093,9 @@ const FeeSearchPage = () => {
                               name="accountNumber"
                               value={
                                 accountDetails.find(
-                                  (account) => account.value === selectedReceipt.bankdetailsId
+                                  (account) =>
+                                    account.value ===
+                                    selectedReceipt.bankdetailsId,
                                 ) || null
                               }
                               onChange={handleAccountSelect}
@@ -1914,9 +2103,13 @@ const FeeSearchPage = () => {
                               placeholder="Select Account"
                               isClearable
                               isDisabled={
-                                paymentMethodOptions.find(
-                                  (option) => option.value === selectedReceipt.paymentMethodId
-                                )?.label?.toLowerCase() === "cash"
+                                paymentMethodOptions
+                                  .find(
+                                    (option) =>
+                                      option.value ===
+                                      selectedReceipt.paymentMethodId,
+                                  )
+                                  ?.label?.toLowerCase() === "cash"
                               }
                             />
                           </div>
@@ -1962,13 +2155,15 @@ const FeeSearchPage = () => {
                           <th>Discount Amount</th>
                           <th>Receipt No</th>
                           <th>Cancellation Remarks</th>
+                          <th>Cancelled By</th>
+                          <th>Role</th>
                           <th>Remarks</th>
                         </tr>
                       </thead>
                       <tbody>
                         {currentReceipts.map((receipt, index) => (
                           <tr key={receipt.receiptId}>
-                            <td>{index + 1}</td>
+                            <td>{offset + index + 1}</td>
                             <td>{receipt.semester_description}</td>
                             <td>{receipt.student_name}</td>
                             <td>{receipt.father_name}</td>
@@ -1978,14 +2173,16 @@ const FeeSearchPage = () => {
                             <td>{receipt.college_admission_no}</td>
                             <td>
                               {new Date(
-                                receipt.receiptDate
+                                receipt.receiptDate,
                               ).toLocaleDateString()}
                             </td>
                             <td>{receipt.amount}</td>
                             <td>{receipt.discount_amount}</td>
                             <td>RC{receipt.receipt_no}</td>
-                            <td>{receipt.cancellation_remarks}</td>
-                            <td>{receipt.payment_reference}</td>
+                            <td>{receipt.cancellation_remarks || "-"}</td>
+                            <td>{receipt.cancelled_by_name || "-"}</td>
+                            <td>{receipt.cancelled_by_role || "-"}</td>
+                            <td>{receipt.remarks || "-"}</td>
                           </tr>
                         ))}
                       </tbody>

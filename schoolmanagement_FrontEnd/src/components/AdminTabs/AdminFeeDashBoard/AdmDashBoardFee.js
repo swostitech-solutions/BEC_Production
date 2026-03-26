@@ -528,7 +528,7 @@
 
 //               <div className="col-12">
 //                 <div className="table-responsive">
-//                   <table className="table">
+//                   <table className="table table-bordered ">
 //                     <thead>
 //                       <tr>
 //                         {days.map((day) => (
@@ -919,7 +919,7 @@
 
 //               {/* <div className="col-12">
 //                 <div className="table-responsive">
-//                   <table className="table">
+//                   <table className="table table-bordered ">
 //                     <thead>
 //                       <tr>
 //                         {days.map((day) => (
@@ -956,7 +956,7 @@
 
 //               <div className="col-12">
 //                 <div className="table-responsive">
-//                   <table className="table">
+//                   <table className="table table-bordered ">
 //                     <thead>
 //                       <tr>
 //                         {days.map((day) => (
@@ -1514,7 +1514,7 @@ const FeeDashboard = () => {
 
               {/* <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table">
+                  <table className="table table-bordered ">
                     <thead>
                       <tr>
                         {days.map((day) => (

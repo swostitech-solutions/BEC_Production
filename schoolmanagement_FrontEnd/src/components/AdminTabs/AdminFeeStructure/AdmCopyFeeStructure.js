@@ -39,6 +39,13 @@ const [selectedCourses, setSelectedCourses] = useState([]);
 const [selectedAcademicYears, setSelectedAcademicYears] = useState([]);
 const [selectedSemesters, setSelectedSemesters] = useState([]);
 
+  // ===== NEW SEARCH STATE =====
+  const [selectedSessionForSearch, setSelectedSessionForSearch] = useState(null);
+  const [feeStructureSearchList, setFeeStructureSearchList] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchDone, setSearchDone] = useState(false);
+  const [deletingId, setDeletingId] = useState(null); // tracks which row is being soft-deleted
+
 
 
 const organizationId = sessionStorage.getItem("organization_id");
@@ -320,10 +327,186 @@ const handleBranchSelection = (id) => {
     setAlertMessage(""); // Clear alert message
     setShowAlert(false); // Hide alert
     setFeeDetails(null); // Clear fee details
+    // New search state clear
+    setSelectedSessionForSearch(null);
+    setFeeStructureSearchList([]);
+    setSearchDone(false);
+  };
+
+  // ===== NEW SEARCH HANDLER =====
+  const handleSearch = async () => {
+    if (!selectedSessionForSearch) {
+      alert("Please select a session first.");
+      return;
+    }
+    const organization_id = sessionStorage.getItem("organization_id");
+    const branch_id = sessionStorage.getItem("branch_id");
+    setSearchLoading(true);
+    setFeeStructureSearchList([]);
+    setSearchDone(false);
+    try {
+      const response = await fetch(
+        `${ApiUrl.apiurl}FeeStructure/GetFeeStructureBySession/?batch_id=${selectedSessionForSearch.value}&organization_id=${organization_id}&branch_id=${branch_id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      const result = await response.json();
+      if (response.ok && result.message === "success" && Array.isArray(result.data)) {
+        // Inject the selected session label so the Session column always displays correctly
+        const sessionLabel = selectedSessionForSearch.label;
+        const enrichedData = result.data.map((item) => ({
+          ...item,
+          batch_description: item.batch_description || sessionLabel,
+        }));
+        setFeeStructureSearchList(enrichedData);
+      } else {
+        setFeeStructureSearchList([]);
+      }
+    } catch (error) {
+      console.error("Error fetching fee structures:", error);
+      setFeeStructureSearchList([]);
+    } finally {
+      setSearchLoading(false);
+      setSearchDone(true);
+    }
+  };
+
+  // ===== SOFT DELETE HANDLER =====
+  const handleDeleteFeeStructure = async (id, code) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${code}"? This may cause data integrity issues for students linked to this fee structure.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(id);
+    try {
+      const response = await fetch(
+        `${ApiUrl.apiurl}FeeStructure/SoftDelete/${id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      const result = await response.json();
+      if (response.ok) {
+        alert(`Fee structure "${code}" has been deleted successfully.`);
+        // Remove from local list so UI updates instantly
+        setFeeStructureSearchList((prev) => prev.filter((item) => item.id !== id));
+      } else {
+        alert(result.error || "Failed to delete fee structure. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting fee structure:", error);
+      alert("An error occurred while deleting. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
     <div>
+
+      {/* ===== NEW COPY FEE STRUCTURE DESIGN ===== */}
+      <div className="row mb-3 mx-0">
+        <div className="col-12 mb-3 mt-3 d-flex flex-wrap gap-2">
+          {/* Save button commented out — replaced by Search */}
+          {/* <button type="button" className="btn btn-primary me-2" style={{ width: "150px" }} onClick={handleSave}>Save</button> */}
+          {/* <button type="button" className="btn btn-secondary me-2" style={{ width: "150px" }} onClick={handleClear}>Clear</button> */}
+          <button
+            type="button"
+            className="btn btn-primary me-2"
+            style={{ width: "150px" }}
+            onClick={handleSearch}
+            disabled={searchLoading}
+          >
+            {searchLoading ? "Searching..." : "Search"}
+          </button>
+          <button type="button" className="btn btn-danger me-2" style={{ width: "150px" }} onClick={() => navigate("/admin/dashboard")}>Close</button>
+        </div>
+      </div>
+
+      <div className="row mt-3 mx-2">
+        <div style={{ border: "1px solid #ccc", padding: "20px", borderRadius: "5px", backgroundColor: "#fff", boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)", marginBottom: "20px" }}>
+          <div className="row align-items-end g-3">
+            <div className="col-md-4">
+              <label className="form-label fw-bold">Session</label>
+              <Select
+                options={BatchList.map((s) => ({ value: s.id, label: s.batch_code || s.batch_description }))}
+                value={selectedSessionForSearch}
+                onChange={setSelectedSessionForSearch}
+                placeholder="Select Session"
+                classNamePrefix="session-select"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {feeStructureSearchList.length > 0 && (
+        <div className="row mt-3 mx-2">
+          <div className="col-12">
+            <div className="table-responsive">
+              <table className="table table-bordered table-hover">
+                <thead className="table-primary">
+                  <tr>
+                    <th>Sr. No.</th>
+                    <th>Session</th>
+                    <th>Fee Structure Code</th>
+                    <th>Fee Structure Description</th>
+                    <th>Course</th>
+                    <th>Department</th>
+                    <th>Academic Year</th>
+                    <th>Semester</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {feeStructureSearchList.map((item, index) => (
+                    <tr key={item.id}>
+                      <td>{index + 1}</td>
+                      <td>{item.batch_description || item.batch_name || item.session || "-"}</td>
+                      <td>{item.fee_structure_code}</td>
+                      <td>{item.fee_structure_description}</td>
+                      <td>{item.course_name}</td>
+                      <td>{item.department_description || "-"}</td>
+                      <td>{item.academic_year_code || item.academic_year_description}</td>
+                      <td>{item.semester_description}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleDeleteFeeStructure(item.id, item.fee_structure_code)}
+                          disabled={deletingId === item.id}
+                        >
+                          {deletingId === item.id ? "Deleting..." : "Delete"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {searchDone && feeStructureSearchList.length === 0 && (
+        <div className="row mt-3 mx-2">
+          <p className="text-muted text-center mt-2">No fee structures found for the selected session.</p>
+        </div>
+      )}
+
+      {/* ===== OLD COPY FEE STRUCTURE DESIGN — SET true TO RE-ENABLE ===== */}
+      {false && (
+      <div>
       <div className="row mb-3 mx-0">
         <div className="col-12 mb-3 mt-3 d-flex flex-wrap gap-2">
           <button
@@ -332,7 +515,7 @@ const handleBranchSelection = (id) => {
             style={{
               width: "150px",
             }}
-            onClick={handleSave} // Attach the save function
+            onClick={handleSave}
           >
             Save
           </button>
@@ -690,6 +873,9 @@ const handleBranchSelection = (id) => {
           </Table>
         </div>
       )}
+      </div>
+      )} {/* ===== END OLD DESIGN ===== */}
+
     </div>
   );
 };

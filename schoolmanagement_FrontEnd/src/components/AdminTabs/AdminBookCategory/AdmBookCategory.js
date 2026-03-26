@@ -14,7 +14,6 @@ const BookCategoryMaster = () => {
   const [subCategory, setSubCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [message, setMessage] = useState("");
-  const [errors, setErrors] = useState({});
   const [loadingSubCategories, setLoadingSubCategories] = useState(false);
   const [selectedCategoryName, setSelectedCategoryName] = useState("");
   const [editingSubCategoryId, setEditingSubCategoryId] = useState(null);
@@ -23,6 +22,8 @@ const BookCategoryMaster = () => {
   const [filteredSubCategories, setFilteredSubCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [categoryErrors, setCategoryErrors] = useState({});
+  const [subCategoryErrors, setSubCategoryErrors] = useState({});
   const itemsPerPage = 10;
 
   const offset = currentPage * itemsPerPage;
@@ -115,23 +116,21 @@ const BookCategoryMaster = () => {
   const handleCheckboxChange = (event) => {
     setIsEnabled(event.target.checked);
   };
+  const validateSubCategoryFields = () => {
+    const newErrors = {};
+    if (!selectedCategoryId) newErrors.selectedCategoryId = "Please select a category";
+    if (!subCategory.trim()) newErrors.subCategory = "Sub-category name is required";
+    setSubCategoryErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSaveSubCategory = async () => {
+    if (!validateSubCategoryFields()) return;
     const orgId = sessionStorage.getItem("organization_id");
     const branchId = sessionStorage.getItem("branch_id");
     const token = sessionStorage.getItem("accessToken");
     if (!token) {
       setMessage("Error: Unauthorized - Missing access token.");
-      return;
-    }
-    const subErrors = {};
-    if (!selectedCategoryId) {
-      subErrors.selectedCategory = "Please select a category.";
-    }
-    if (!subCategory || !subCategory.trim()) {
-      subErrors.subCategory = "Sub-category name is required.";
-    }
-    if (Object.keys(subErrors).length > 0) {
-      setErrors((prev) => ({ ...prev, ...subErrors }));
       return;
     }
     const data = {
@@ -158,6 +157,9 @@ const BookCategoryMaster = () => {
             body: JSON.stringify(data),
           }
         );
+        if (response.ok) {
+          alert("Sub-category updated successfully!");
+        }
       } else {
         // Create new sub-category
         response = await fetch(
@@ -171,12 +173,15 @@ const BookCategoryMaster = () => {
             body: JSON.stringify(data),
           }
         );
+        if (response.ok) {
+          alert("Sub-category created successfully!");
+        }
       }
       const result = await response.json();
       if (response.ok) {
-        setMessage(editingSubCategoryId ? "Sub-category updated successfully!" : "Sub-category created successfully!");
-        setErrors({});
+        setMessage(result.message);
         setSubCategory("");
+        setSubCategoryErrors({});
         setEditingSubCategoryId(null); // Clear edit mode after saving
         // Refresh all categories and subcategories to show complete list
         await fetchAllCategoriesWithSubCategories();
@@ -214,7 +219,16 @@ const BookCategoryMaster = () => {
   };
 
 
+  const validateCategoryFields = () => {
+    const newErrors = {};
+    if (!categoryName.trim()) newErrors.categoryName = "Category name is required";
+    setCategoryErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validateCategoryFields()) return;
+
     // Get and validate token first
     let token = sessionStorage.getItem("accessToken");
     if (!token) {
@@ -234,19 +248,13 @@ const BookCategoryMaster = () => {
       return;
     }
 
-    const catErrors = {};
-    if (!categoryName || categoryName.trim() === "") {
-      catErrors.categoryName = "Category name is required.";
-    } else if (
+    if (
       (categories || []).some(
         (category) =>
-          category.category_name?.toLowerCase() === categoryName.trim().toLowerCase()
+          category.category_name?.toLowerCase() === categoryName?.toLowerCase()
       )
     ) {
-      catErrors.categoryName = "Category already exists.";
-    }
-    if (Object.keys(catErrors).length > 0) {
-      setErrors((prev) => ({ ...prev, ...catErrors }));
+      alert("Category already exists.");
       return;
     }
 
@@ -280,12 +288,13 @@ const BookCategoryMaster = () => {
       const result = await response.json();
 
       if (response.ok) {
-        setMessage("Category created successfully!");
-        setErrors({});
+        alert("Category created successfully!");
         fetchCategories();
         // Refresh all categories and subcategories to show complete list in table
         await fetchAllCategoriesWithSubCategories();
         setCategoryName("");
+        setCategoryErrors({});
+        setMessage("");
       } else {
         setMessage("Error: " + (result.message || "Failed to create category"));
       }
@@ -327,29 +336,18 @@ const BookCategoryMaster = () => {
         </h2>
         <div className="row align-items-center">
           <div className="col-md-3 mb-0">
-            <label style={{ fontWeight: "bold" }}>Enter Category</label>
+            <label style={{ fontWeight: "bold" }}>Enter Category <span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
-              className={`form-control ${errors.categoryName ? "is-invalid" : ""}`}
+              className={`form-control ${categoryErrors.categoryName ? "is-invalid" : ""}`}
               value={categoryName}
-              onChange={(e) => {
-                setCategoryName(e.target.value);
-                setErrors((prev) => ({ ...prev, categoryName: "" }));
-                setMessage("");
-              }}
+              onChange={(e) => { setCategoryName(e.target.value); if (categoryErrors.categoryName) setCategoryErrors({}); }}
             />
-            {errors.categoryName && (
-              <div className="invalid-feedback">{errors.categoryName}</div>
+            {categoryErrors.categoryName && (
+              <small className="text-danger">{categoryErrors.categoryName}</small>
             )}
           </div>
           <div className="col-md-2 mb-0">
-            {message && (
-              <div
-                className={`mt-2 small ${message.startsWith("Error") ? "text-danger" : "text-success"}`}
-              >
-                {message}
-              </div>
-            )}
             <button className="btn btn-primary mt-3" onClick={handleSave}>
               Save
             </button>
@@ -360,9 +358,8 @@ const BookCategoryMaster = () => {
             Add BookSub-Category
           </h2>
           <div className="col-md-3 mb-0">
-            <label style={{ fontWeight: "bold" }}>Select Category</label>
+            <label style={{ fontWeight: "bold" }}>Select Category <span style={{ color: "red" }}>*</span></label>
             <Select
-
               options={[
                 { value: "", label: "Select Categories" },
                 ...(categories || []).map((cat) => ({
@@ -375,7 +372,7 @@ const BookCategoryMaster = () => {
                   target: { value: selectedOption?.value || "" },
                 };
                 handleCategoryChange(event);
-                setErrors((prev) => ({ ...prev, selectedCategory: "" }));
+                if (subCategoryErrors.selectedCategoryId) setSubCategoryErrors((prev) => ({ ...prev, selectedCategoryId: "" }));
               }}
               value={
                 selectedCategoryId
@@ -388,38 +385,26 @@ const BookCategoryMaster = () => {
                   }
                   : { value: "", label: "Select Categories" }
               }
-
             />
-            {errors.selectedCategory && (
-              <div className="text-danger small mt-1">{errors.selectedCategory}</div>
+            {subCategoryErrors.selectedCategoryId && (
+              <small className="text-danger">{subCategoryErrors.selectedCategoryId}</small>
             )}
           </div>
         </div>
         <div className="row mt-3">
           <div className="col-md-3 mb-0">
-            <label style={{ fontWeight: "bold" }}>Sub-Category</label>
+            <label style={{ fontWeight: "bold" }}>Sub-Category <span style={{ color: "red" }}>*</span></label>
             <input
               type="text"
-              className={`form-control ${errors.subCategory ? "is-invalid" : ""}`}
+              className={`form-control ${subCategoryErrors.subCategory ? "is-invalid" : ""}`}
               value={subCategory}
-              onChange={(e) => {
-                setSubCategory(e.target.value);
-                setErrors((prev) => ({ ...prev, subCategory: "" }));
-                setMessage("");
-              }}
+              onChange={(e) => { setSubCategory(e.target.value); if (subCategoryErrors.subCategory) setSubCategoryErrors((prev) => ({ ...prev, subCategory: "" })); }}
             />
-            {errors.subCategory && (
-              <div className="invalid-feedback">{errors.subCategory}</div>
+            {subCategoryErrors.subCategory && (
+              <small className="text-danger">{subCategoryErrors.subCategory}</small>
             )}
           </div>
           <div className="col-md-2 mb-0">
-            {message && (
-              <div
-                className={`mt-2 small ${message.startsWith("Error") ? "text-danger" : "text-success"}`}
-              >
-                {message}
-              </div>
-            )}
             <button
               className="btn btn-primary mt-3"
               onClick={handleSaveSubCategory}

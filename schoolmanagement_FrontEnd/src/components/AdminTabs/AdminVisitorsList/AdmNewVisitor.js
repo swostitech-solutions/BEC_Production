@@ -59,10 +59,13 @@ const AdmAttendanceEntry = () => {
   const validateFields = () => {
     const newErrors = {};
 
+    // required fields
+    if (!visitorName.trim()) newErrors.visitorName = "Name is required";
     if (!purposeOfVisit.trim())
       newErrors.purposeOfVisit = "Purpose is required";
     if (!whomToVisit.trim())
       newErrors.whomToVisit = "Whom to visit is required";
+    if (!address.trim()) newErrors.address = "Address is required";
 
     const phoneRegex = /^[0-9]{10}$/;
     if (!phone.trim()) {
@@ -75,8 +78,17 @@ const AdmAttendanceEntry = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleClear = () => {
+  // helper used to stop camera stream and cleanup state
+  const stopCamera = () => {
+    setIsCameraOn(false);
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = videoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  };
 
+  const handleClear = () => {
     setVisitorName("");
     setPurposeOfVisit("");
     setWhomToVisit("");
@@ -87,14 +99,7 @@ const AdmAttendanceEntry = () => {
     setAddress("");
     setErrors({});
     setImage(null);
-    setIsCameraOn(false);
-
-    // Stop camera if active
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
+    stopCamera();
 
     // Reset file input if required
     if (fileInputRef.current) {
@@ -155,6 +160,8 @@ const AdmAttendanceEntry = () => {
 
       if (result.message === "success") {
         alert("Visitor entry saved successfully!");
+        // stop camera now that data has been saved
+        stopCamera();
         navigate("/admin/visitors-list");
       } else {
         // Show specific error from backend if available
@@ -289,8 +296,7 @@ const AdmAttendanceEntry = () => {
                         ),
 
                         value: visitorName,
-                        onChange: setVisitorName,
-                      },
+                        onChange: setVisitorName,                        error: errors.visitorName,                      },
                       {
                         label: (
                           <>
@@ -400,13 +406,20 @@ const AdmAttendanceEntry = () => {
                         Address
                         <span style={{ color: "red" }}>*</span>
                       </label>
-                      <textarea
-                        className="form-control detail-textarea"
-                        rows="3"
-                        style={{ width: "60%" }}
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                      ></textarea>
+                      <div style={{ width: "60%" }}>
+                        <textarea
+                          className="form-control detail-textarea"
+                          rows="3"
+                          style={{ width: "100%" }}
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                        ></textarea>
+                        {errors.address && (
+                          <small className="text-danger">
+                            {errors.address}
+                          </small>
+                        )}
+                      </div>
                     </div>
                   </form>
 

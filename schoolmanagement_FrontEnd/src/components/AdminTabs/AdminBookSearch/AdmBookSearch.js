@@ -232,7 +232,7 @@
 //                         <tr>
 //                           <th>Sr.No</th>
 //                           <th>Book Name</th>
-//                           <th>Book Code</th>
+//
 //                           <th>Accession No</th>
 //                           <th>Category</th>
 //                           <th>Sub Category</th>
@@ -269,6 +269,8 @@ import Select from "react-select";
 import useFetchBookCategories from "../../hooks/useFetchBookCategories";
 import useFetchBookSubCategories from "../../hooks/useFetchBookSubCategories";
 import ReactPaginate from "react-paginate";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const AdmBookSearch = () => {
   const [showModal, setShowModal] = useState(false);
@@ -277,6 +279,7 @@ const AdmBookSearch = () => {
   const [tableData, setTableData] = useState([]);
   const [showTable, setShowTable] = useState(false);
   const [error, setError] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   // const { categories } = useFetchBookCategories();
   const [categoryId, setCategoryId] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -568,6 +571,8 @@ const AdmBookSearch = () => {
       return;
     }
 
+    setIsSearching(true);
+
     // Log all filter values
     console.log("=== SEARCH FILTERS ===");
     console.log("Branch:", branch, "Location:", location);
@@ -604,6 +609,11 @@ const AdmBookSearch = () => {
           );
         }
 
+        // Sort by accession no (bookBarcode) descending
+        filteredData = filteredData.sort((a, b) =>
+          String(b.bookBarcode || "").localeCompare(String(a.bookBarcode || ""), undefined, { numeric: true, sensitivity: "base" })
+        );
+
         setTableData(filteredData); // Set filtered data
         setShowTable(true); // Show table
         setError(""); // Clear any previous errors
@@ -617,6 +627,8 @@ const AdmBookSearch = () => {
       setError("Error fetching data: " + error.message);
       setTableData([]); // Clear table data on error
       setShowTable(false); // Hide table on error
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -633,13 +645,92 @@ const AdmBookSearch = () => {
   };
 
 
+  // Initial page load — fetch all books
+  useEffect(() => {
+    const loadInitialBooks = async () => {
+      const academicYearId = localStorage.getItem("academicSessionId");
+      if (!academicYearId) {
+        console.error("Academic Year ID is not available for initial load");
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const apiUrl = `${ApiUrl.apiurl}LIBRARYBOOK/GetBooksearchList/?academic_year_id=${academicYearId}`;
+        console.log("Initial Book Load API URL:", apiUrl);
+
+        const response = await fetch(apiUrl);
+        const result = await response.json();
+
+        if (response.ok && result.message === "success" && result.data.length > 0) {
+          // Sort by accession no (bookBarcode) descending
+          const sortedData = result.data.sort((a, b) =>
+            String(b.bookBarcode || "").localeCompare(String(a.bookBarcode || ""), undefined, { numeric: true, sensitivity: "base" })
+          );
+          setTableData(sortedData);
+          setShowTable(true);
+          console.log("Initial load successful, found", sortedData.length, "books");
+        } else {
+          setTableData([]);
+          setShowTable(true);
+        }
+      } catch (error) {
+        console.error("Error fetching initial book data:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    loadInitialBooks();
+  }, []);
+
   useEffect(() => {
     console.log("Author state:", author);
   }, [author]);
   const handleNew = () => {
     navigate("/admbookMaster");
   };
+const handleExportToExcel = () => {
+  if (!tableData || tableData.length === 0) {
+    alert("No data to export");
+    return;
+  }
 
+  // Format data for Excel
+  const formattedData = tableData.map((book, index) => ({
+    "Sr No": index + 1,
+    "Book Accession No": book.bookBarcode,
+    "Book Title": book.book_name,
+    Author: book.author,
+    Category: book.book_category,
+    "Sub Category": book.book_sub_category,
+    Branch: book.library_branch,
+    Location: book.locationName,
+    ISBN: book.ISBN,
+    "Type of Book": book.type,
+    Publisher: book.publisher,
+    "Publish Year": book.publish_year,
+  }));
+
+  // Create worksheet
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
+
+  // Create workbook
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Books");
+
+  // Generate Excel file
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array",
+  });
+
+  const data = new Blob([excelBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+  });
+
+  saveAs(data, "Book_List.xlsx");
+};
   return (
     <div className="container-fluid">
       <div className="row">
@@ -675,8 +766,9 @@ const AdmBookSearch = () => {
                       width: "150px",
                     }}
                     onClick={handleSearch}
+                    disabled={isSearching}
                   >
-                    Search
+                    {isSearching ? "Searching..." : "Search"}
                   </button>
                   <button
                     type="button"
@@ -698,29 +790,24 @@ const AdmBookSearch = () => {
                   >
                     Close
                   </button>
+                  <button
+                    type="button"
+                    className="btn btn-success me-2"
+                    style={{ width: "150px" }}
+                    onClick={handleExportToExcel}
+                  >
+                    Export Excel
+                  </button>
                 </div>
               </div>
 
               <div className="row mt-3 mx-2">
-                <div className="col-12 custom-section-box" style={{ backgroundColor: "white" }}>
+                <div
+                  className="col-12 custom-section-box"
+                  style={{ backgroundColor: "white" }}
+                >
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                     <div className="row flex-grow-1">
-                      <div className="col-12 col-md-3 mb-3">
-                        <label htmlFor="book-code" className="form-label">
-                          Book Code
-                        </label>
-                        <div className="d-flex align-items-center">
-                          <input
-                            type="text"
-                            id="book-code"
-                            className="form-control detail"
-                            placeholder="Enter book code"
-                            ref={studentNameRef}
-                            value={bookCode}
-                            onChange={(e) => setBookCode(e.target.value)}
-                          />
-                        </div>
-                      </div>
                       <div className="col-12 col-md-3 mb-0">
                         <label
                           htmlFor="book-accession-no"
@@ -787,8 +874,8 @@ const AdmBookSearch = () => {
                           value={
                             bookCategory
                               ? categoryOptions.find(
-                                (option) => option.value === bookCategory
-                              )
+                                  (option) => option.value === bookCategory,
+                                )
                               : null
                           }
                         />
@@ -811,8 +898,8 @@ const AdmBookSearch = () => {
                           value={
                             bookSubCategory
                               ? subCategoryOptions.find(
-                                (option) => option.value === bookSubCategory
-                              )
+                                  (option) => option.value === bookSubCategory,
+                                )
                               : null
                           }
                           isDisabled={!subCategoryOptions.length} // Disable if no sub-categories
@@ -834,8 +921,8 @@ const AdmBookSearch = () => {
                           value={
                             location
                               ? locations.find(
-                                (option) => option.value === location
-                              ) // Find the selected option by ID
+                                  (option) => option.value === location,
+                                ) // Find the selected option by ID
                               : null
                           }
                         />
@@ -852,8 +939,8 @@ const AdmBookSearch = () => {
                           value={
                             branch
                               ? branches.find(
-                                (option) => option.value === branch
-                              )
+                                  (option) => option.value === branch,
+                                )
                               : null
                           } // Match selected branch ID to options
                           onChange={handleBranchChange} // Handle branch selection
@@ -890,8 +977,8 @@ const AdmBookSearch = () => {
                           value={
                             typeofBooks
                               ? bookJournalOptions.find(
-                                (option) => option.value === typeofBooks
-                              )
+                                  (option) => option.value === typeofBooks,
+                                )
                               : null
                           }
                           onChange={handleOptionChange}
@@ -911,7 +998,6 @@ const AdmBookSearch = () => {
                       <table className="table table-bordered mt-3">
                         <thead>
                           <tr>
-                            <th>Book Code</th>
                             <th>Book Accession No</th>
                             <th>Book Name</th>
                             <th>Author</th>
@@ -929,7 +1015,6 @@ const AdmBookSearch = () => {
                         <tbody>
                           {tableData.map((book, index) => (
                             <tr key={index}>
-                              <td>{book.book_code}</td>
                               <td>{book.book_accession_no}</td>
                               <td>{book.book_name}</td>
                               <td>{book.author}</td>
@@ -954,8 +1039,7 @@ const AdmBookSearch = () => {
                       <table className="table table-bordered mt-3">
                         <thead>
                           <tr>
-                            <th>Sr No</th> 
-                            <th>Book Code</th>
+                            <th>Sr No</th>
                             <th>Book Accession No</th>
                             <th>Book Title</th>
                             <th>Author</th>
@@ -973,8 +1057,7 @@ const AdmBookSearch = () => {
                         <tbody>
                           {tableData.map((book, index) => (
                             <tr key={index}>
-                              <td>{index + 1}</td> 
-                              <td>{book.book_code}</td>
+                              <td>{index + 1}</td>
                               <td>{book.bookBarcode}</td>
                               <td>{book.book_name}</td>
                               <td>{book.author}</td>
@@ -1010,7 +1093,6 @@ const AdmBookSearch = () => {
                         <thead>
                           <tr>
                             <th>Sr No</th>
-                            <th>Book Code</th>
                             <th>Book Accession No</th>
                             <th>Book Title</th>
                             <th>Author</th>
@@ -1030,7 +1112,6 @@ const AdmBookSearch = () => {
                             currentData.map((book, index) => (
                               <tr key={index}>
                                 <td>{offset + index + 1}</td>
-                                <td>{book.book_code}</td>
                                 <td>{book.bookBarcode}</td>
                                 <td>{book.book_name}</td>
                                 <td>{book.author}</td>

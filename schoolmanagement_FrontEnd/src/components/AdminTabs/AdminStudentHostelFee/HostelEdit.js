@@ -142,17 +142,14 @@ const HostelEdit = ({
       return;
     }
 
-    // const selectedSemesterIds = monthStatus
-    //   .filter((month) => month.checked)
-    //   .map((month) => month.id);
     const selectedSemesterIds = monthStatus
-      .filter((month) => month.checked && !month.disabled) // 🚀 ONLY USER SELECTED
+      .filter((month) => month.checked)
       .map((month) => month.id);
 
-    // if (selectedSemesterIds.length === 0) {
-    //   alert("Please select at least one semester.");
-    //   return;
-    // }
+    if (hostelAvailed && selectedSemesterIds.length === 0) {
+      alert("Please select at least one semester.");
+      return;
+    }
 
     const payload = {
       organization_id: Number(organizationId),
@@ -290,8 +287,8 @@ const HostelEdit = ({
                   disabled
                 />
               </div>
-              {/* <div className="col-md-4">
-                <label className="form-label">Student Barcode</label>
+              <div className="col-md-4">
+                <label className="form-label">Roll No</label>
                 <input
                   type="text"
                   className="form-control detail"
@@ -299,7 +296,7 @@ const HostelEdit = ({
                   readOnly
                   disabled
                 />
-              </div> */}
+              </div>
             </div>
             <div className="row g-2 mt-2">
               <div className="col-md-4">

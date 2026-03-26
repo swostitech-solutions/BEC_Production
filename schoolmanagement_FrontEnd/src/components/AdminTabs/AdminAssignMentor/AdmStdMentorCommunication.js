@@ -18,7 +18,6 @@ const AdmAttendanceEntry = () => {
     useState(null);
   const [selectedCommunicatedVia, setSelectedCommunicatedVia] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [statusMessage, setStatusMessage] = useState("");
 
   const handleClear = () => {
     setSelectedDate("");
@@ -29,7 +28,22 @@ const AdmAttendanceEntry = () => {
     setCommunicationDetails("");
     setRemarks("");
     setFieldErrors({});
-    setStatusMessage("");
+  };
+
+  const validateRequiredFields = () => {
+    const errors = {};
+    if (!selectedDate) errors.selectedDate = "Date is required";
+    if (!selectedMentor) errors.selectedMentor = "Mentor is required";
+    if (!selectedStudent) errors.selectedStudent = "Student is required";
+    if (!selectedCommunicatedWith) {
+      errors.selectedCommunicatedWith = "Communicated with is required";
+    }
+    if (!selectedCommunicatedVia) {
+      errors.selectedCommunicatedVia = "Communicated via is required";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   useEffect(() => {
@@ -102,7 +116,7 @@ const AdmAttendanceEntry = () => {
         }
       } catch (error) {
         console.error("Error fetching students:", error);
-        setStatusMessage("Error: Failed to fetch students. Please try again.");
+        alert("Failed to fetch students. Please try again.");
         setStudents([]);
       }
     };
@@ -131,24 +145,9 @@ const AdmAttendanceEntry = () => {
   ];
 
   const handleSave = async () => {
-    // Validation
-    const newFieldErrors = {};
-    if (!selectedDate) newFieldErrors.selectedDate = "Date is required.";
-    if (!selectedMentor) newFieldErrors.selectedMentor = "Mentor is required.";
-    if (!selectedStudent) newFieldErrors.selectedStudent = "Student is required.";
-    if (!selectedCommunicatedWith) {
-      newFieldErrors.selectedCommunicatedWith = "Communicated With is required.";
-    }
-    if (!selectedCommunicatedVia) {
-      newFieldErrors.selectedCommunicatedVia = "Communicated Via is required.";
-    }
-    if (Object.keys(newFieldErrors).length > 0) {
-      setFieldErrors(newFieldErrors);
+    if (!validateRequiredFields()) {
       return;
     }
-
-    setFieldErrors({});
-    setStatusMessage("");
 
     // Get required IDs - check localStorage first (as user mentioned org and batch are stored there)
     const orgId = parseInt(
@@ -190,7 +189,7 @@ const AdmAttendanceEntry = () => {
 
     // Validate required fields
     if (!orgId || orgId === 0) {
-      setStatusMessage("Error: Missing organization information. Please ensure you are properly logged in.");
+      alert("Missing organization information. Please ensure you are properly logged in.");
       console.error("Organization ID not found. Available keys:", {
         sessionStorage: sessionStorage.getItem("organization_id"),
         localStorage: localStorage.getItem("organization_id") || localStorage.getItem("orgId")
@@ -199,7 +198,7 @@ const AdmAttendanceEntry = () => {
     }
 
     if (!branchId || branchId === 0) {
-      setStatusMessage("Error: Missing branch/batch information. Please ensure you are properly logged in.");
+      alert("Missing branch/batch information. Please ensure you are properly logged in.");
       console.error("Branch ID not found. Available keys:", {
         sessionStorage: sessionStorage.getItem("branch_id"),
         localStorage: localStorage.getItem("branch_id") || localStorage.getItem("branchId") || localStorage.getItem("batch_id")
@@ -208,7 +207,7 @@ const AdmAttendanceEntry = () => {
     }
 
     if (!academicYearId || academicYearId === 0) {
-      setStatusMessage("Error: Missing academic year information. Please select a student first.");
+      alert("Missing academic year information. Please select a student first.");
       console.error("Academic Year ID not found. Student data:", selectedStudent);
       return;
     }
@@ -250,15 +249,15 @@ const AdmAttendanceEntry = () => {
       const data = await response.json();
 
       if (response.ok && data.message?.toLowerCase().includes("success")) {
+        alert("Communication record saved successfully!");
         // Clear the form
         handleClear();
-        setStatusMessage("Communication record saved successfully!");
       } else {
-        setStatusMessage(`Error: ${data.message || data.error || "Something went wrong!"}`);
+        alert(`Error: ${data.message || data.error || "Something went wrong!"}`);
       }
     } catch (error) {
       console.error("Error saving data:", error);
-      setStatusMessage("Error: Failed to save data: " + error.message);
+      alert("Failed to save data: " + error.message);
     }
   };
 
@@ -334,7 +333,7 @@ const AdmAttendanceEntry = () => {
                           placeholder="Select date"
                         />
                         {fieldErrors.selectedDate && (
-                          <div className="text-danger small mt-1">{fieldErrors.selectedDate}</div>
+                          <small className="text-danger">{fieldErrors.selectedDate}</small>
                         )}
                       </div>
 
@@ -355,7 +354,7 @@ const AdmAttendanceEntry = () => {
                           classNamePrefix="mentor-dropdown"
                         />
                         {fieldErrors.selectedMentor && (
-                          <div className="text-danger small mt-1">{fieldErrors.selectedMentor}</div>
+                          <small className="text-danger">{fieldErrors.selectedMentor}</small>
                         )}
                       </div>
                       {/* Student Dropdown (Appears only if mentor is selected) */}
@@ -377,7 +376,7 @@ const AdmAttendanceEntry = () => {
                           }}
                         />
                         {fieldErrors.selectedStudent && (
-                          <div className="text-danger small mt-1">{fieldErrors.selectedStudent}</div>
+                          <small className="text-danger">{fieldErrors.selectedStudent}</small>
                         )}
                       </div>
                       {/* Communicated With Dropdown */}
@@ -401,7 +400,7 @@ const AdmAttendanceEntry = () => {
                           placeholder="Select "
                         />
                         {fieldErrors.selectedCommunicatedWith && (
-                          <div className="text-danger small mt-1">{fieldErrors.selectedCommunicatedWith}</div>
+                          <small className="text-danger">{fieldErrors.selectedCommunicatedWith}</small>
                         )}
                       </div>
 
@@ -426,7 +425,7 @@ const AdmAttendanceEntry = () => {
                           }}
                         />
                         {fieldErrors.selectedCommunicatedVia && (
-                          <div className="text-danger small mt-1">{fieldErrors.selectedCommunicatedVia}</div>
+                          <small className="text-danger">{fieldErrors.selectedCommunicatedVia}</small>
                         )}
                       </div>
                       {/* Communication Details Input Field */}
@@ -471,13 +470,6 @@ const AdmAttendanceEntry = () => {
                           placeholder="Enter any additional remarks..."
                         />
                       </div>
-                      {statusMessage && (
-                        <div
-                          className={`col-12 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
-                        >
-                          {statusMessage}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

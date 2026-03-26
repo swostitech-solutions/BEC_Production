@@ -11,19 +11,11 @@ const ParentDetailsForm = ({
   setDocumentDetailsInParent,
   setAddressFormDataInParent,
   addressFormData, // Data from parent to restore on tab return
-  externalAddressFieldErrors = {},
-  onClearAddressFieldError,
+  requiredErrors = {},
 }) => {
   // State to store form values - initialize from parent data if available
   // Validation errors for phone fields
   const [phoneErrors, setPhoneErrors] = useState({ residencePhone: "", permanentPhone: "" });
-  const displayAddressFieldErrors = externalAddressFieldErrors || {};
-
-  const clearAddressFieldError = (field) => {
-    if (onClearAddressFieldError) {
-      onClearAddressFieldError(field);
-    }
-  };
 
   const [formValues, setFormValues] = useState(() => {
     if (addressFormData && addressFormData.formValues) {
@@ -357,88 +349,102 @@ const ParentDetailsForm = ({
 
   // Fetch states when a country is selected
   useEffect(() => {
-    if (selectedCountry) {
-      const fetchStates = async () => {
-        try {
-          const apiURL = `${ApiUrl.apiurl}State/GetStateListBasedOnCountryId/${selectedCountry.value}`;
-          const response = await fetch(apiURL);
-          const result = await response.json();
-
-          if (result.message === "success") {
-            setStates(result.data); // Set states data
-          }
-        } catch (err) {
-          // You said no error handling required
-        }
-      };
-
-      fetchStates();
+    if (!selectedCountry) {
+      setStates([]);
+      setCities([]);
+      return;
     }
+
+    const fetchStates = async () => {
+      try {
+        const apiURL = `${ApiUrl.apiurl}State/GetStateListBasedOnCountryId/${selectedCountry.value}`;
+        const response = await fetch(apiURL);
+        const result = await response.json();
+
+        if (result.message === "success") {
+          setStates(result.data); // Set states data
+        }
+      } catch (err) {
+        // You said no error handling required
+      }
+    };
+
+    fetchStates();
   }, [selectedCountry]);
 
 
   // Fetch cities when a state is selected
   useEffect(() => {
-    if (selectedState) {
-      const fetchCities = async () => {
-        try {
-          const apiURL = `${ApiUrl.apiurl}City/GetCityListBasedOnStateId/${selectedState.value}`;
-          const response = await fetch(apiURL);
-          const result = await response.json();
-
-          if (result.message === "success") {
-            setCities(result.data); // Set the cities data
-          }
-        } catch (err) {
-          // No error handling required as per your request
-        }
-      };
-
-      fetchCities();
+    if (!selectedState) {
+      setCities([]);
+      return;
     }
+
+    const fetchCities = async () => {
+      try {
+        const apiURL = `${ApiUrl.apiurl}City/GetCityListBasedOnStateId/${selectedState.value}`;
+        const response = await fetch(apiURL);
+        const result = await response.json();
+
+        if (result.message === "success") {
+          setCities(result.data); // Set the cities data
+        }
+      } catch (err) {
+        // No error handling required as per your request
+      }
+    };
+
+    fetchCities();
   }, [selectedState]);
 
 
   // Fetch permanent states when permanent country is selected
   useEffect(() => {
-    if (selectedPermanentCountry) {
-      const fetchPermanentStates = async () => {
-        try {
-          const apiURL = `${ApiUrl.apiurl}State/GetStateListBasedOnCountryId/${selectedPermanentCountry.value}`;
-          const response = await fetch(apiURL);
-          const result = await response.json();
-
-          if (result.message === "success") {
-            setPermanentStates(result.data);
-          }
-        } catch (err) {
-          // No error handling required
-        }
-      };
-
-      fetchPermanentStates();
+    if (!selectedPermanentCountry) {
+      setPermanentStates([]);
+      setPermanentCities([]);
+      return;
     }
+
+    const fetchPermanentStates = async () => {
+      try {
+        const apiURL = `${ApiUrl.apiurl}State/GetStateListBasedOnCountryId/${selectedPermanentCountry.value}`;
+        const response = await fetch(apiURL);
+        const result = await response.json();
+
+        if (result.message === "success") {
+          setPermanentStates(result.data);
+        }
+      } catch (err) {
+        // No error handling required
+      }
+    };
+
+    fetchPermanentStates();
   }, [selectedPermanentCountry]);
 
   // Fetch permanent cities when permanent state is selected
   useEffect(() => {
-    if (selectedPermanentState) {
-      const fetchPermanentCities = async () => {
-        try {
-          const apiURL = `${ApiUrl.apiurl}City/GetCityListBasedOnStateId/${selectedPermanentState.value}`;
-          const response = await fetch(apiURL);
-          const result = await response.json();
-
-          if (result.message === "success") {
-            setPermanentCities(result.data);
-          }
-        } catch (err) {
-          // No error handling required
-        }
-      };
-
-      fetchPermanentCities();
+    if (!selectedPermanentState) {
+      setPermanentCities([]);
+      return;
     }
+
+    const fetchPermanentCities = async () => {
+      try {
+        const apiURL = `${ApiUrl.apiurl}City/GetCityListBasedOnStateId/${selectedPermanentState.value}`;
+        const response = await fetch(apiURL);
+        const result = await response.json();
+
+        if (result.message === "success") {
+          setPermanentCities(result.data);
+        }
+      } catch (err) {
+        // No error handling required
+      }
+    };
+
+    fetchPermanentCities();
   }, [selectedPermanentState]);
 
   // Sync address form data to parent on every change
@@ -461,8 +467,6 @@ const ParentDetailsForm = ({
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-
-    clearAddressFieldError(id);
 
     // Validation for Pincode
     if (id === "residencePincode" || id === "permanentPincode") {
@@ -502,12 +506,6 @@ const ParentDetailsForm = ({
 
   // Handle checkbox change
   const handleCheckboxChange = () => {
-    clearAddressFieldError("permanentAddress");
-    clearAddressFieldError("selectedPermanentCountry");
-    clearAddressFieldError("selectedPermanentState");
-    clearAddressFieldError("selectedPermanentDistrict");
-    clearAddressFieldError("permanentPincode");
-
     setFormValues((prevValues) => {
       const isChecked = !prevValues.sameAsResidence;
 
@@ -539,6 +537,34 @@ const ParentDetailsForm = ({
     }
   };
 
+  const handleResidenceCountryChange = (selectedOption) => {
+    setSelectedCountry(selectedOption);
+    setSelectedState(null);
+    setSelectedResidenceDistrict(null);
+    setStates([]);
+    setCities([]);
+  };
+
+  const handleResidenceStateChange = (selectedOption) => {
+    setSelectedState(selectedOption);
+    setSelectedResidenceDistrict(null);
+    setCities([]);
+  };
+
+  const handlePermanentCountryChange = (selectedOption) => {
+    setSelectedPermanentCountry(selectedOption);
+    setSelectedPermanentState(null);
+    setSelectedPermanentDistrict(null);
+    setPermanentStates([]);
+    setPermanentCities([]);
+  };
+
+  const handlePermanentStateChange = (selectedOption) => {
+    setSelectedPermanentState(selectedOption);
+    setSelectedPermanentDistrict(null);
+    setPermanentCities([]);
+  };
+
 
   const handleAddressSubmit = async () => {
     try {
@@ -551,12 +577,6 @@ const ParentDetailsForm = ({
 
       if (!tempFormData || !orgId || !branchId) {
         alert("Missing required details from Tab 1 or user session.");
-        return;
-      }
-
-      // Validate required fields
-      if (!tempFormData.phoneNumber || tempFormData.phoneNumber.trim() === "") {
-        alert("Phone number is required! Please go back to Basic Info and fill it.");
         return;
       }
 
@@ -817,15 +837,13 @@ const ParentDetailsForm = ({
                   <input
                     type="text"
                     id="residenceAddress"
-                    className="form-control detail"
+                    className={`form-control detail${requiredErrors.residenceAddress ? " is-invalid" : ""}`}
                     placeholder="Enter address"
                     value={formValues.residenceAddress}
                     onChange={handleInputChange}
                   />
-                  {displayAddressFieldErrors.residenceAddress && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.residenceAddress}
-                    </div>
+                  {requiredErrors.residenceAddress && (
+                    <small className="text-danger">{requiredErrors.residenceAddress}</small>
                   )}
                 </div>
 
@@ -842,15 +860,10 @@ const ParentDetailsForm = ({
                       label: country.country_name,
                     }))}
                     value={selectedCountry}
-                    onChange={(selectedOption) => {
-                      setSelectedCountry(selectedOption);
-                      clearAddressFieldError("selectedCountry");
-                    }}
+                    onChange={handleResidenceCountryChange}
                   />
-                  {displayAddressFieldErrors.selectedCountry && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.selectedCountry}
-                    </div>
+                  {requiredErrors.residenceCountry && (
+                    <small className="text-danger">{requiredErrors.residenceCountry}</small>
                   )}
                 </div>
 
@@ -866,17 +879,12 @@ const ParentDetailsForm = ({
                       value: state.id,
                       label: state.state_name,
                     }))}
-                    onChange={(selectedOption) => {
-                      setSelectedState(selectedOption);
-                      clearAddressFieldError("selectedState");
-                    }}
+                    onChange={handleResidenceStateChange}
                     value={selectedState}
                     isDisabled={!selectedCountry} // Disable if no country is selected
                   />
-                  {displayAddressFieldErrors.selectedState && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.selectedState}
-                    </div>
+                  {requiredErrors.residenceState && (
+                    <small className="text-danger">{requiredErrors.residenceState}</small>
                   )}
                 </div>
 
@@ -892,36 +900,31 @@ const ParentDetailsForm = ({
                       value: city.id,
                       label: city.city_name,
                     }))}
-                    onChange={(selectedOption) => {
-                      setSelectedResidenceDistrict(selectedOption);
-                      clearAddressFieldError("selectedResidenceDistrict");
-                    }}
+                    onChange={(selectedOption) =>
+                      setSelectedResidenceDistrict(selectedOption)
+                    }
                     value={selectedResidenceDistrict}
                     isDisabled={!selectedState}
                   />
-                  {displayAddressFieldErrors.selectedResidenceDistrict && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.selectedResidenceDistrict}
-                    </div>
+                  {requiredErrors.residenceCity && (
+                    <small className="text-danger">{requiredErrors.residenceCity}</small>
                   )}
                 </div>
 
                 <div className="col-6 mb-2">
                   <label htmlFor="residencePincode" className="form-label">
-                    Pincode<span style={{ color: "red" }}>*</span>
+                    Pincode
                   </label>
                   <input
                     type="text"
                     id="residencePincode"
-                    className="form-control detail"
+                    className={`form-control detail${requiredErrors.residencePincode ? " is-invalid" : ""}`}
                     placeholder="Enter pincode"
                     value={formValues.residencePincode}
                     onChange={handleInputChange}
                   />
-                  {displayAddressFieldErrors.residencePincode && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.residencePincode}
-                    </div>
+                  {requiredErrors.residencePincode && (
+                    <small className="text-danger">{requiredErrors.residencePincode}</small>
                   )}
                 </div>
 
@@ -979,21 +982,19 @@ const ParentDetailsForm = ({
                   <input
                     type="text"
                     id="permanentAddress"
-                    className="form-control detail"
+                    className={`form-control detail${requiredErrors.permanentAddress ? " is-invalid" : ""}`}
                     placeholder="Enter address"
                     value={formValues.permanentAddress}
                     onChange={handleInputChange}
                     disabled={formValues.sameAsResidence}
                   />
-                  {displayAddressFieldErrors.permanentAddress && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.permanentAddress}
-                    </div>
+                  {requiredErrors.permanentAddress && (
+                    <small className="text-danger">{requiredErrors.permanentAddress}</small>
                   )}
                 </div>
                 <div className="col-6 mb-2">
                   <label htmlFor="country" className="form-label">
-                    Country
+                    Country <span style={{ color: "red" }}>*</span>
                   </label>
                   <Select
                     inputId="country"
@@ -1004,22 +1005,17 @@ const ParentDetailsForm = ({
                       label: country.country_name,
                     }))}
                     value={selectedPermanentCountry}
-                    onChange={(selectedOption) => {
-                      setSelectedPermanentCountry(selectedOption);
-                      clearAddressFieldError("selectedPermanentCountry");
-                    }}
+                    onChange={handlePermanentCountryChange}
                     isDisabled={formValues.sameAsResidence}
                   />
-                  {displayAddressFieldErrors.selectedPermanentCountry && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.selectedPermanentCountry}
-                    </div>
+                  {requiredErrors.permanentCountry && (
+                    <small className="text-danger">{requiredErrors.permanentCountry}</small>
                   )}
                 </div>
 
                 <div className="col-6 mb-2">
                   <label htmlFor="state" className="form-label">
-                    State
+                    State <span style={{ color: "red" }}>*</span>
                   </label>
                   <Select
                     inputId="permanentState"
@@ -1029,23 +1025,18 @@ const ParentDetailsForm = ({
                       value: state.id,
                       label: state.state_name,
                     }))}
-                    onChange={(selectedOption) => {
-                      setSelectedPermanentState(selectedOption);
-                      clearAddressFieldError("selectedPermanentState");
-                    }}
+                    onChange={handlePermanentStateChange}
                     value={selectedPermanentState}
                     isDisabled={!selectedPermanentCountry || formValues.sameAsResidence}
                   />
-                  {displayAddressFieldErrors.selectedPermanentState && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.selectedPermanentState}
-                    </div>
+                  {requiredErrors.permanentState && (
+                    <small className="text-danger">{requiredErrors.permanentState}</small>
                   )}
                 </div>
 
                 <div className="col-6 mb-2">
                   <label htmlFor="residenceCity" className="form-label">
-                    City/District
+                    City/District <span style={{ color: "red" }}>*</span>
                   </label>
                   <Select
                     inputId="permanentCity"
@@ -1055,17 +1046,14 @@ const ParentDetailsForm = ({
                       value: city.id,
                       label: city.city_name,
                     }))}
-                    onChange={(selectedOption) => {
-                      setSelectedPermanentDistrict(selectedOption);
-                      clearAddressFieldError("selectedPermanentDistrict");
-                    }}
+                    onChange={(selectedOption) =>
+                      setSelectedPermanentDistrict(selectedOption)
+                    }
                     value={selectedPermanentDistrict}
                     isDisabled={!selectedPermanentState || formValues.sameAsResidence}
                   />
-                  {displayAddressFieldErrors.selectedPermanentDistrict && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.selectedPermanentDistrict}
-                    </div>
+                  {requiredErrors.permanentCity && (
+                    <small className="text-danger">{requiredErrors.permanentCity}</small>
                   )}
                 </div>
 
@@ -1076,16 +1064,14 @@ const ParentDetailsForm = ({
                   <input
                     type="text"
                     id="permanentPincode"
-                    className="form-control detail"
+                    className={`form-control detail${requiredErrors.permanentPincode ? " is-invalid" : ""}`}
                     placeholder="Enter pincode"
                     value={formValues.permanentPincode}
                     onChange={handleInputChange}
                     disabled={formValues.sameAsResidence}
                   />
-                  {displayAddressFieldErrors.permanentPincode && (
-                    <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                      {displayAddressFieldErrors.permanentPincode}
-                    </div>
+                  {requiredErrors.permanentPincode && (
+                    <small className="text-danger">{requiredErrors.permanentPincode}</small>
                   )}
                 </div>
                 <div className="col-6 mb-2">

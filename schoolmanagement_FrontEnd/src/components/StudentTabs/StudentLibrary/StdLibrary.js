@@ -242,7 +242,7 @@ const StdLibrary = () => {
                       <tr>
                         <th style={{ width: "50px" }}>#</th>
                         <th>Book Name</th>
-                        <th>Barcode</th>
+                        <th>Roll no</th>
                         <th>Issue Date</th>
                         <th>Due Date</th>
                         <th>Return Date</th>

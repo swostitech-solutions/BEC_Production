@@ -33,8 +33,6 @@ const AdmAttendanceEntry = () => {
   const [classOptions, setClassOptions] = useState([]);
   const [sectionOptions, setSectionOptions] = useState([]);
   const [showTable, setShowTable] = useState(false);
-  const [showBalanceFees, setShowBalanceFees] = useState(true);
-
   const [viewOption, setViewOption] = useState("viewReceipts");
   const [periodOptions, setPeriodOptions] = useState([]);
 
@@ -117,10 +115,9 @@ const AdmAttendanceEntry = () => {
     setToPeriod(null);
     setReport(null);
 
-    // RESET RADIO / CHECKBOX
+    // RESET RADIO
     setShowFees("F");
     setIsChecked(true);
-    setShowBalanceFees(true);
     setFeeAppFrom(null);
 
     // TABLE
@@ -144,13 +141,13 @@ const AdmAttendanceEntry = () => {
   ];
 
   const reportOptions = [
-    { value: "A", label: "Fee Due Receipt" },
-    { value: "B", label: "Month wise Fee" },
+    // { value: "A", label: "Fee Due Receipt" },
+    // { value: "B", label: "Month wise Fee" },
     { value: "C", label: "Fee Balance" },
-    { value: "D", label: "Fee Collection(Student Wise)" },
-    { value: "E", label: "Fee Collection (Payment Type Wise)" },
-    { value: "F", label: "Export To Excel" },
-    { value: "G", label: "Fee Receipt Details" },
+    // { value: "D", label: "Fee Collection(Student Wise)" },
+    // { value: "E", label: "Fee Collection (Payment Type Wise)" },
+    // { value: "F", label: "Export To Excel" },
+    // { value: "G", label: "Fee Receipt Details" },
     // { value: "H", label: "Fee Details" },
   ];
 
@@ -701,7 +698,6 @@ const AdmAttendanceEntry = () => {
         !selectedSemester?.value
       ) {
         setSections([]); // clear section list when dependencies are missing
-        setSelectedSection(null);
         return;
       }
 
@@ -787,32 +783,6 @@ const AdmAttendanceEntry = () => {
     selectedAcademicYear,
     selectedSemester,
   ]);
-
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections, selectedSection]);
-
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -874,6 +844,30 @@ const AdmAttendanceEntry = () => {
     fetchPeriods();
   }, [selectedSession, selectedCourse, selectedDepartment]);
 
+  // Export to Excel function
+  const exportToExcel = () => {
+    if (tableData && tableData.length > 0) {
+      // Create a clean version of the data for export
+      const exportData = tableData.map((item) => ({
+        "Student Name": item.student_name || "",
+        "Course": item.course_name || "",
+        "Section": item.section_name || "",
+        "Father Name": item.fatherName || "",
+        "Mother Name": item.motherName || "",
+        "Total Fees": item.total_fees || 0,
+        "Fees Paid": item.total_paid || 0,
+        "Discount": item.discount_fees || 0,
+        "Balance": item.remaining_fees || 0,
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "FeeLedger");
+      XLSX.writeFile(workbook, "Fee_Ledger_Data.xlsx");
+    } else {
+      alert("No data available to export!");
+    }
+  };
+
   const handleSearch = async () => {
     const token = localStorage.getItem("accessToken");
     const organization_id = sessionStorage.getItem("organization_id");
@@ -907,7 +901,6 @@ const AdmAttendanceEntry = () => {
     if (report?.value) params.append("report", report.value);
 
     params.append("show_fees", showFees || "");
-    if (showBalanceFees) params.append("show_balance_fees", true);
 
     const apiUrl = `${ApiUrl.apiurl
       }FeeLedger/GetFeeLedgerBasedOnCondition/?${params.toString()}`;
@@ -977,15 +970,7 @@ const AdmAttendanceEntry = () => {
     const fee_due_from = fromPeriod || "";
     const fee_due_to = toPeriod || "";
 
-    // Validation: Ensure valid periods are selected for reports that require them
-    if (["A", "B", "C", "G"].includes(report.value)) {
-      if (!fee_due_from || !fee_due_to) {
-        alert(
-          "Please select both 'Fee Due Period From' and 'Fee Due Period To' to generate this report."
-        );
-        return;
-      }
-    }
+
 
     try {
       let url = "";
@@ -1068,6 +1053,31 @@ const AdmAttendanceEntry = () => {
     }
   };
 
+  const handleExportToExcel = () => {
+    if (!showTable || !Array.isArray(tableData) || tableData.length === 0) {
+      alert("No table data available to export!");
+      return;
+    }
+
+    const exportRows = tableData.map((item, index) => ({
+      "Sl No": index + 1,
+      "Student Name": item.student_name || "",
+      Course: item.course_name || "",
+      Section: item.section_name || "",
+      "Father Name": item.fatherName || "",
+      "Mother Name": item.motherName || "",
+      "Total Fees": item.total_fees || 0,
+      "Fees Paid": item.total_paid || 0,
+      Discount: item.discount_fees || 0,
+      Balance: item.remaining_fees || 0,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "FeeLedger");
+    XLSX.writeFile(workbook, "Fee_Ledger_Data.xlsx");
+  };
+
   const handleViewClick = async (academicYearId, studentId) => {
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
@@ -1133,8 +1143,8 @@ const AdmAttendanceEntry = () => {
   const generatePDF = async (data) => {
     const doc = new jsPDF("portrait", "mm", "a4");
 
-    // Load BEC logo
-    const becLogo = await toBase64("/Assets/logobec.png");
+    // Load Sparsh logo
+    const sparshLogo = await toBase64("/Assets/sparsh.jpeg");
 
     // Image positioning
     const imgX = 10;
@@ -1144,14 +1154,14 @@ const AdmAttendanceEntry = () => {
 
     // Add the logo
     try {
-      doc.addImage(becLogo, "JPEG", imgX, imgY, imgWidth, imgHeight);
+      doc.addImage(sparshLogo, "JPEG", imgX, imgY, imgWidth, imgHeight);
     } catch (error) {
       console.error("Error adding image:", error);
     }
 
     // ====== INSTITUTION HEADER (CENTERED) ======
     const pageWidth = doc.internal.pageSize.getWidth();
-    const headerText = "Bhubaneswar Engineering College";
+    const headerText = "Sparsh College of Nursing and Allied Sciences";
 
     doc.setFontSize(14);
     doc.setFont("Helvetica", "bold");
@@ -1278,6 +1288,16 @@ const AdmAttendanceEntry = () => {
                   </button>
                   <button
                     type="button"
+                    className="btn btn-primary me-2"
+                    style={{
+                      width: "150px",
+                    }}
+                    onClick={handleExportToExcel}
+                  >
+                    Export To Excel
+                  </button>
+                  <button
+                    type="button"
                     className="btn btn-danger me-2"
                     style={{
                       width: "150px",
@@ -1286,6 +1306,16 @@ const AdmAttendanceEntry = () => {
                   >
                     Close
                   </button>
+                  {/* <button
+                    type="button"
+                    className="btn btn-primary me-2"
+                    style={{
+                      width: "150px",
+                    }}
+                    onClick={exportToExcel}
+                  >
+                    Export To Excel
+                  </button> */}
                 </div>
               </div>
 
@@ -1394,11 +1424,8 @@ const AdmAttendanceEntry = () => {
                         options={semesters}
                         value={selectedSemester}
                         // onChange={(option) => setSelectedSemester(option)}
-                        onChange={(option) => {
-                          setSelectedSemester(option);
-                          setSelectedSection(null);
-                          setSections([]);
-                        }}
+
+                        onChange={setSelectedSemester}
                       />
                     </div>
 
@@ -1411,16 +1438,8 @@ const AdmAttendanceEntry = () => {
                         className="detail"
                         options={sections}
                         value={selectedSection || null}
-                        isDisabled={true}
-                        isClearable={false}
-                        onChange={() => {}}
-                        placeholder={
-                          !selectedSemester?.value
-                            ? "Select Semester first"
-                            : sections?.length > 0
-                            ? "Section auto selected"
-                            : "Loading Section..."
-                        }
+                        onChange={setSelectedSection}
+                        placeholder="Select Section"
                       />
                     </div>
                     <div className="col-12 col-md-3 mb-2">
@@ -1444,51 +1463,7 @@ const AdmAttendanceEntry = () => {
                         }}
                       />
                     </div>
-                    <div className="col-12 col-md-3 mb-3">
-                      <label
-                        htmlFor="fee-due-period-from"
-                        className="form-label"
-                      >
-                        Fee Due Period From
-                      </label>
-                      <Select
-                        classNamePrefix="react-select"
-                        className="detail"
-                        options={periodOptions}
-                        placeholder="Select Period"
-                        value={
-                          periodOptions.find(
-                            (opt) => opt.value === fromPeriod
-                          ) || null
-                        }
-                        onChange={(selectedOption) =>
-                          setFromPeriod(
-                            selectedOption ? selectedOption.value : null
-                          )
-                        }
-                      />
-                    </div>
-
-                    <div className="col-12 col-md-3 mb-2">
-                      <label htmlFor="fee-due-period-to" className="form-label">
-                        Fee Due Period To
-                      </label>
-                      <Select
-                        classNamePrefix="react-select"
-                        className="detail"
-                        options={periodOptions}
-                        placeholder="Select Period"
-                        value={
-                          periodOptions.find((opt) => opt.value === toPeriod) ||
-                          null
-                        }
-                        onChange={(selectedOption) =>
-                          setToPeriod(
-                            selectedOption ? selectedOption.value : null
-                          )
-                        }
-                      />
-                    </div>
+                   
 
                     <div className="col-12 col-md-3 mb-2">
                       <label htmlFor="report" className="form-label">
@@ -1507,8 +1482,8 @@ const AdmAttendanceEntry = () => {
                       />
                     </div>
 
-                    {/* Radio Buttons Section */}
-                    <div className="col-12 col-md-8 mb-3 mt-3">
+                    {/* Fee Filter Section */}
+                    <div className="col-12 mb-3 mt-3">
                       <div
                         className="d-flex flex-wrap gap-3 justify-content-start align-items-start p-3"
                         style={{
@@ -1569,21 +1544,16 @@ const AdmAttendanceEntry = () => {
                             Show Students with Zero Fees Only
                           </label>
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="col-12 col-md-4 mb-1">
-                      <div className="d-flex flex-row p-3">
-                        <div className="form-check">
+                        <div className="form-check me-3">
                           <input
                             className="form-check-input"
-                            type="checkbox"
+                            type="radio"
                             name="flexRadioDefault"
                             id="flexRadioDefault4"
-                            checked={showBalanceFees} // Bind state to checkbox
-                            onChange={(e) =>
-                              setShowBalanceFees(e.target.checked)
-                            } // Update state on toggle
+                            value="B"
+                            checked={showFees === "B"}
+                            onChange={(e) => setShowFees(e.target.value)}
                           />
                           <label
                             className="form-check-label"
@@ -1607,8 +1577,8 @@ const AdmAttendanceEntry = () => {
                       <thead>
                         <tr>
                           <th>Student Name</th>
-                          <th>Admission No</th>
-                          {/* <th>BarCode</th> */}
+                          {/* <th>Admission No</th>
+                          <th>Roll no</th> */}
                           <th>Course</th>
                           <th>Section</th>
                           <th>Father Name</th>
@@ -1635,8 +1605,8 @@ const AdmAttendanceEntry = () => {
                           currentItems.map((item, index) => (
                             <tr key={offset + index}>
                               <td>{item.student_name}</td>
-                              <td>{item.college_admission_no}</td>
-                              {/* <td>{item.barcode}</td> */}
+                              {/* <td>{item.college_admission_no}</td>
+                              <td>{item.barcode}</td> */}
                               <td>{item.course_name}</td>
                               <td>{item.section_name}</td>
                               <td>{item.fatherName}</td>

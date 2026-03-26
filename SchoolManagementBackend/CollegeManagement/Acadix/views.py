@@ -21,6 +21,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from HOSTEL.models import StudentHostelDetail
+from NON_TEACHING_STAFF.models import NonTeachingStaffMaster
 from Swostitech_Acadix import settings
 from _decimal import InvalidOperation
 from django.contrib.auth import authenticate
@@ -39,6 +40,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from django.contrib.auth.models import update_last_login
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from Swostitech_Acadix import settings
 from Transport.models import RouteDetail, RouteMaster, PickupPoint
@@ -61,19 +66,6 @@ from .utils import send_otp_email, generate_otp
 
 # from .serializers_new import UserTypeSerializer, EmployeeSerializer, LoginSerializer, LoginModelSerializer, \
 #     ChangePasswordSerializer, DetailsSerializer, AcademicYearSerializer, CourseSerializer, SectionSerializer, \
-#     CourseSemesterSectionBindSerializer, StudentSiblingDetailSerializer, \
-#     StudentEmergencyContactSerializer, AuthorisedPickupSerializer, StudentDocumentSerializer, \
-#     StudentPreviousEducationSerializer, OrganizationSerializer, BranchesSerializer, StudentRegistrationSerializer, \
-#     StudentCourseSerializer, FeeStructureMasterSerializer, FeeStructureDetailSerializer, \
-#     FeeStructureDetailUpdateSerializer, AcademicSessionUpdateYear, PeriodSerializer, PeriodUpdateSerializer, \
-#     UserTypeUpdateSerializer, OrganizationUpdateSerializer, BranchesUpdateSerializer, CourseUpdateSerializer, \
-#     SectionUpdateSerializer, CourseSemesterSectionBindUpdateSerializer, SiblingDetailUpdateSerializer, \
-#     StudentEmergencyUpdateContactSerializer, AuthorisedPickupUpdateSerializer, StudentDocumentUpdateSerializer, \
-#     StudentPreviousEducationUpdateSerializer, AddressSerializer, AddressUpdatedSerializer, \
-#     StudentDetailsGetSerializer, StudentFeeDetailSerializer, FeeElementTypeSerializer, InsertFeesForSelectedStudent, \
-#     HouseSerializer, ReligionSerializer, CategorySerializer, NationalitySerializer, \
-#     CountrySerializer, StateSerializer, CitySerializer, ProfessionSerializer, \
-#     DocumentSerializer, BloodSerializer, LanguageSerializer, StudentPromotionSerializer, \
 #     StudentRegistrationSerializer, FeeStructureMasterRequestSerializer, StudentBasicDetailSerializer, \
 #     StudentSibilingDetailSerializer, StudentEmergencyContactDetailsSerializer, AuthorisedPickupDetailsSerializer, \
 #     StudentDocumentDetailsSerializer, StudentPreviousEducationDetailsSerializer, AddressDetailsSerializer, \
@@ -98,6 +90,35 @@ from .utils import send_otp_email, generate_otp
 
 
 # Create your views here.
+
+
+class NormalizedTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        try:
+            return super().validate(attrs)
+        except Exception:
+            username = attrs.get(self.username_field)
+            user = UserLogin.objects.filter(user_name=username).first()
+
+            if not user:
+                raise
+
+            provided_password = attrs.get("password") or ""
+            if user.plain_password != provided_password or not user.is_active:
+                raise
+
+            refresh = self.get_token(user)
+            data = {"refresh": str(refresh), "access": str(refresh.access_token)}
+
+            if api_settings.UPDATE_LAST_LOGIN:
+                update_last_login(None, user)
+
+            return data
+
+
+class NormalizedTokenObtainPairView(TokenObtainPairView):
+    serializer_class = NormalizedTokenObtainPairSerializer
+
 
 class UserTypeCreateView(CreateAPIView):
     queryset = UserType.objects.all()
@@ -787,6 +808,16 @@ class RegisterUserLoginAPIView(CreateAPIView):
 
             user = authenticate(username=username, password=password)
 
+            if user is None:
+                user = UserLogin.objects.filter(user_name=username).select_related(
+                    'organization', 'branch', 'user_type'
+                ).first()
+                if user:
+                    if user.plain_password == password and user.is_active:
+                        pass
+                    else:
+                        user = None
+
             # print('Auth')
             if user is not None and user.is_active:
                 if user.organization.id == organization_id and user.branch.id == branch_id:
@@ -798,6 +829,12 @@ class RegisterUserLoginAPIView(CreateAPIView):
                     if user_type == 'PARENT':
                         # Registration Instance
                         Registrationinstance = StudentRegistration.objects.get(id=user.reference_id)
+                        student_status = (Registrationinstance.status or 'ACTIVE').upper()
+                        if not Registrationinstance.is_active or student_status != 'ACTIVE':
+                            return Response(
+                                {'message': 'Your login is inactive. Please contact the administrator.'},
+                                status=status.HTTP_403_FORBIDDEN
+                            )
                         # print(Registrationinstance,type(Registrationinstance))
 
                         # UserType Instance
@@ -865,24 +902,6 @@ class RegisterUserLoginAPIView(CreateAPIView):
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
                     elif user_type == 'ADMIN':
                         AdminInstance = user.user_type
-
-                        # Build display_name for admin
-                        admin_display_name = ''
-                        admin_role_name = user.role_name if user.role_name else ''
-
-                        # If reference_id exists and > 0, try to get EmployeeMaster name
-                        if user.reference_id and user.reference_id > 0:
-                            try:
-                                emp = EmployeeMaster.objects.get(id=user.reference_id)
-                                emp_name_parts = [emp.title or '', emp.first_name or '', emp.middle_name or '', emp.last_name or '']
-                                admin_display_name = ' '.join(part for part in emp_name_parts if part).strip()
-                            except EmployeeMaster.DoesNotExist:
-                                admin_display_name = ''
-
-                        # Fallback: role_name -> username
-                        if not admin_display_name:
-                            admin_display_name = admin_role_name if admin_role_name else user.user_name
-
                         data = {
                             "organization_id": user.organization.id,
                             "organization_name": user.organization.organization_code,
@@ -893,9 +912,7 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             'userRole': AdminInstance.user_type,
                             'userTypeId': AdminInstance.id,
                             'user_login_id': user.id,
-                            'accessible_modules': user.accessible_modules if user.accessible_modules else [],
-                            'display_name': admin_display_name,
-                            'role_name': admin_role_name,
+                            'accessible_modules': user.accessible_modules if user.accessible_modules else []
                         }
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
                     elif user_type == 'STAFF':
@@ -916,12 +933,6 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             )
                         # --- End Validation ---
 
-                        # Build display_name for staff from EmployeeMaster
-                        staff_name_parts = [employee_master.title or '', employee_master.first_name or '', employee_master.middle_name or '', employee_master.last_name or '']
-                        staff_display_name = ' '.join(part for part in staff_name_parts if part).strip()
-                        if not staff_display_name:
-                            staff_display_name = user.user_name
-
                         StaffInstance = user.user_type
                         data = {
                             "organization_id": user.organization.id,
@@ -931,25 +942,26 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             'userId': user.reference_id,
                             'username': user.user_name,
                             'userRole': StaffInstance.user_type,
-                            'userTypeId': StaffInstance.id,
-                            'display_name': staff_display_name,
+                            'userTypeId': StaffInstance.id
                         }
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
                     elif user_type == 'STUDENT':
+                        try:
+                            student_registration = StudentRegistration.objects.get(id=user.reference_id)
+                        except StudentRegistration.DoesNotExist:
+                            return Response(
+                                {'message': 'Student record not found. Please contact the administrator.'},
+                                status=status.HTTP_404_NOT_FOUND
+                            )
+
+                        student_status = (student_registration.status or 'ACTIVE').upper()
+                        if not student_registration.is_active or student_status != 'ACTIVE':
+                            return Response(
+                                {'message': 'Your login is inactive. Please contact the administrator.'},
+                                status=status.HTTP_403_FORBIDDEN
+                            )
+
                         student = user.user_type
-
-                        # Build display_name for student from StudentRegistration
-                        student_display_name = ''
-                        if user.reference_id and user.reference_id > 0:
-                            try:
-                                student_reg = StudentRegistration.objects.get(id=user.reference_id)
-                                student_name_parts = [student_reg.first_name or '', student_reg.middle_name or '', student_reg.last_name or '']
-                                student_display_name = ' '.join(part for part in student_name_parts if part).strip()
-                            except StudentRegistration.DoesNotExist:
-                                student_display_name = ''
-                        if not student_display_name:
-                            student_display_name = user.user_name
-
                         data = {
                             "organization_id": user.organization.id,
                             "organization_name": user.organization.organization_code,
@@ -958,8 +970,7 @@ class RegisterUserLoginAPIView(CreateAPIView):
                             'userId': user.reference_id,
                             'username': user.user_name,
                             'userRole': student.user_type,
-                            'userTypeId': student.id,
-                            'display_name': student_display_name,
+                            'userTypeId': student.id
                         }
                         return Response({'message': 'Logged in  Successfully', 'data': data}, status=status.HTTP_200_OK)
 
@@ -1069,6 +1080,57 @@ class RegisterUserChangePasswordAPIView(CreateAPIView):
             message=error_message,
 
         )
+
+
+class GetUserStaffNameAPIView(APIView):
+    """
+    Returns the staff name linked to a given user_login_id.
+    Checks NonTeachingStaffMaster first (via reference_id), then EmployeeMaster.
+    Used to populate the 'Cancelled By' field in the fee receipt cancel modal.
+    """
+
+    def get(self, request, *args, **kwargs):
+        try:
+            user_login_id = request.query_params.get('user_login_id')
+            if not user_login_id:
+                return Response({'error': 'user_login_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            user = UserLogin.objects.get(id=user_login_id)
+            reference_id = user.reference_id
+            staff_name = ''
+            role_name = user.role_name or (user.user_type.user_type if user.user_type else '')
+
+            if reference_id:
+                # Try Non-Teaching Staff first
+                try:
+                    nts = NonTeachingStaffMaster.objects.get(nts_id=reference_id, is_active=True)
+                    staff_name = nts.full_name
+                except NonTeachingStaffMaster.DoesNotExist:
+                    pass
+
+                # Fallback to Teaching Staff (EmployeeMaster)
+                if not staff_name:
+                    try:
+                        emp = EmployeeMaster.objects.get(id=reference_id, is_active=True)
+                        name_parts = filter(None, [emp.first_name, emp.middle_name, emp.last_name])
+                        staff_name = ' '.join(name_parts)
+                    except EmployeeMaster.DoesNotExist:
+                        pass
+
+            # Final fallback: use username
+            if not staff_name:
+                staff_name = user.user_name
+
+            return Response({
+                'staff_name': staff_name,
+                'role_name': role_name,
+                'username': user.user_name,
+            }, status=status.HTTP_200_OK)
+
+        except UserLogin.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CreateAdminUserAPIView(CreateAPIView):
@@ -6688,7 +6750,7 @@ class ProcessFeeGroupMixin:
                                 element_amount=element['amount'],
                                 total_element_period_amount=element['amount'],
                                 paid_amount=0,
-                                remarks=element['remarks'],
+                                remarks=element.get('remarks', ''),
                                 created_by=created_by,
                                 updated_by=created_by
                             )
@@ -7293,18 +7355,25 @@ class StudentCourseListAPIView(ListAPIView):
             # Step 1: Retrieve all students
             # studentList = StudentRegistration.objects.filter(academic_year=academicyearId)
             if course_id and section_id is not None:
-                # student_list = StudentCourse.objects.filter(
-                student_list = StudentRegistration.objects.filter(
-                    academic_year_id=academicyearId,
+                student_list = StudentCourse.objects.filter(
+                    academic_year=academicyearId,
                     is_active=True,
                     course=course_instance,
                     section=section_instance).order_by('-updated_at')
+                if not student_list.exists():
+                    student_list = StudentCourse.objects.filter(
+                        is_active=True,
+                        course=course_instance,
+                        section=section_instance).order_by('-updated_at')
             elif course_id is not None:
-                # student_list = StudentCourse.objects.filter(
-                student_list = StudentRegistration.objects.filter(
-                    academic_year_id=academicyearId,
+                student_list = StudentCourse.objects.filter(
+                    academic_year=academicyearId,
                     is_active=True,
                     course=course_instance).order_by('-updated_at')
+                if not student_list.exists():
+                    student_list = StudentCourse.objects.filter(
+                        is_active=True,
+                        course=course_instance).order_by('-updated_at')
             elif query_params.get('studentName'):
                 studentName = query_params.get('studentName')
                 name_parts = studentName.strip().split()
@@ -7749,7 +7818,7 @@ class FeeStructureMasterCreateAPIView(CreateAPIView):
                     'course_id': FeeStructureMaster_instance.course.id,
                     'enabled': FeeStructureMaster_instance.enabled,
                     'version_no': FeeStructureMaster_instance.version_no,
-                    'category_code': FeeStructureMaster_instance.category.category_code,
+                    'category_code': FeeStructureMaster_instance.category.category_code if FeeStructureMaster_instance.category else None,
                     'new_existing': FeeStructureMaster_instance.new_existing,
                 }
             }
@@ -10466,7 +10535,7 @@ class StudentPromotionCreateAPI(CreateAPIView):
                         return Response({
                                             "message": f"Student - {RegisterstudentInstance.first_name + RegisterstudentInstance.middle_name + RegisterstudentInstance.last_name} with student_id - {stu} is failed in current semester. !!!  "})
 
-                    # Check if a similar record already exists
+                    # Check if a similar record already exists (active OR already pending promotion)
                     existing_record = StudentCourse.objects.filter(
                         organization=organizationInstance,
                         student=RegisterstudentInstance,
@@ -10476,24 +10545,22 @@ class StudentPromotionCreateAPI(CreateAPIView):
                         department=departmentInstance,
                         semester=nextSemesterInstance,
                         section=nextSectionInstance,
-                        is_active=True
-                    ).exists()
+                    ).filter(Q(is_active=True) | Q(student_status__iexact='PROMOTED')).exists()
 
                     if existing_record:
                         return Response(
                             {'message': f'this student already promoted!!.'},
                             status=status.HTTP_400_BAD_REQUEST
                         )
-                    # Get all active student course instances for the student
-                    try:
-                        student_instances = StudentCourse.objects.get(student=RegisterstudentInstance, is_active=True)
-                        if not student_instances:
-                            return Response({
-                                                "message": f"student course record not found with student_id - {RegisterstudentInstance.id}  !!!"},
-                                            status=status.HTTP_400_BAD_REQUEST)
-                    except StudentCourse.DoesNotExist:
-                        return Response({"message": "student course record not found !!!"},
-                                        status=status.HTTP_204_NO_CONTENT)
+                    # Get the current active student course instance for this student
+                    student_instances = StudentCourse.objects.filter(
+                        student=RegisterstudentInstance, is_active=True
+                    ).order_by('-id').first()
+                    if not student_instances:
+                        return Response(
+                            {"message": f"student course record not found with student_id - {RegisterstudentInstance.id}  !!!"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                     enrollment_no = student_instances.enrollment_no
                     house_instance = student_instances.house
 
@@ -10515,10 +10582,10 @@ class StudentPromotionCreateAPI(CreateAPIView):
                         hostel_availed = False
                         hostel_choice_semester = ""
 
-                    # Deactivate all active student class records
-                    student_instances.is_active = False
-                    student_instances.student_status = "Inactive"
-                    student_instances.save()
+                    # Deactivate only the specific active StudentCourse record we read data from
+                    StudentCourse.objects.filter(
+                        pk=student_instances.pk
+                    ).update(is_active=False, student_status='Inactive')
                     # last_student = StudentRegistration.objects.filter(organization=organizationInstance.id,batch=batchInstance.id).last()
                     # enrollment_no = int(last_student.enrollment_no) + 1 if last_student else 1001
                     StudentCourse.objects.create(
@@ -11005,7 +11072,7 @@ class UtilityGroupMixin:
 
     def documentsDetailsProcess(self, request, documentsDetails, instance, document_files):
         try:
-            for i, documents in enumerate(documentsDetails):
+            for idx, documents in enumerate(documentsDetails):
                 document_no = documents.get('document_no')
                 document_type = documents.get('document_type')
 
@@ -11013,39 +11080,39 @@ class UtilityGroupMixin:
                 if not document_no and not document_type:
                     continue
 
-                document_pic = document_files.get(i)
+                # Look up file by its exact position index (matches frontend's document_pic[${idx}])
+                # This correctly handles gaps where some rows have no file
+                document_pic = request.FILES.get(f'document_pic[{idx}]')
+
                 start_from = documents.get('start_from')
                 end_to = documents.get('end_to')
 
-                if documents.get('id'):
-                    # Update existing
-                    doc_instance = StudentDocument.objects.get(id=documents['id'], student=instance)
-                    doc_instance.document_no = document_no or doc_instance.document_no
-                    doc_instance.document_type = document_type or doc_instance.document_type
-                    doc_instance.start_from = start_from or doc_instance.start_from
-                    doc_instance.end_to = end_to or doc_instance.end_to
-                    doc_instance.updated_by = instance.updated_by
-                    if document_pic:
-                        doc_instance.document_pic = document_pic
-                        doc_instance.document_url = request.build_absolute_uri(doc_instance.document_pic.url)
-                    doc_instance.save()
-                else:
-                    # Create new
-                    StudentDocumentData = StudentDocument.objects.create(
-                        student=instance,
-                        document_no=document_no,
-                        document_type=document_type,
-                        document_pic=document_pic,
-                        document_url="",
-                        start_from=start_from,
-                        end_to=end_to,
-                        created_by=instance.created_by,
-                        updated_by=instance.updated_by
-                    )
-                    # Only build the URL if a document file was actually uploaded
-                    if document_pic:
-                        StudentDocumentData.document_url = request.build_absolute_uri(StudentDocumentData.document_pic.url)
-                        StudentDocumentData.save()
+                # Check if the combination of data exist or not
+                if StudentDocument.objects.filter(document_no=document_no, document_type=document_type,
+                                                  is_active=True).exists():
+                    raise ValueError(f"This Document data with document_no {document_no} has already been added.")
+
+                # Save the Emergency contact on db
+                StudentDocumentData = StudentDocument.objects.create(
+                    student=instance,
+                    document_no=document_no,
+                    document_type=document_type,
+                    document_pic=document_pic,
+                    document_url="",
+                    start_from=start_from,
+                    end_to=end_to,
+                    created_by=instance.created_by,
+                    updated_by=instance.created_by
+                )
+                # Only build the URL if a document file was actually uploaded
+                if document_pic:
+                    StudentDocumentData.document_url = request.build_absolute_uri(StudentDocumentData.document_pic.url)
+                    StudentDocumentData.save()
+                # if document_files:
+                #     for document_file in document_files:
+                #         i=0
+                #         StudentDocumentData.document_pic[i].save(document_file.name, document_file)
+                #         StudentDocumentData.save()
                 #         i = i+1
                 #
                 # serializer = self.get_serializer(data=documentsDetails)
@@ -11471,7 +11538,7 @@ class StudentRegistrationCreate(CreateAPIView, UtilityGroupMixin):
                 else:
                     authorizedpickup = []
                 # check if DocumentDetails
-                if document_detail and len(document_detail) > 0 and len(document_files) > 0:
+                if document_detail and len(document_detail) > 0:
                     self.documentsDetailsProcess(request, document_detail, student_instance, document_files)
                 else:
                     documentsDetails = []
@@ -11661,7 +11728,7 @@ class FeeStructureDetailCreateAPI(CreateAPIView, FeeStructureMixin):
                     semester=fee_master_structure_detail['semester'],
                     enabled=fee_master_structure_detail['enabled'],
                     version_no=int(fee_master_structure_detail['version_no']),
-                    category=fee_master_structure_detail['category'],
+                    category=fee_master_structure_detail.get('category'),
                     new_existing=fee_master_structure_detail['new_existing'],
                     created_by=fee_master_structure_detail['created_by'],
                     updated_by=fee_master_structure_detail['created_by']
@@ -11750,36 +11817,39 @@ class StudentRegistrationListAPIView(ListAPIView):
             # admission_no,from_date,to_date,student_status,barcode,college_admission_no,father_name,mother_name
 
             if organization_id and branch_id:
-                try:
-                    studentRegistrationList = StudentRegistration.objects.filter(organization=organization_id,
-                                                                                 branch=branch_id,
-                                                                                 is_active=True).order_by('-updated_at')
-                except StudentRegistration.DoesNotExist:
-                    return Response({"message": "student registration record not found !!!"},
-                                    status=status.HTTP_404_NOT_FOUND)
+                # Initial filter should only include basic org/branch. 
+                # We will handle is_active/status filtering later.
+                studentRegistrationList = StudentRegistration.objects.filter(
+                    organization=organization_id,
+                    branch=branch_id
+                ).select_related(
+                    'organization', 'branch', 'batch', 'batch__branch',
+                    'course', 'department', 'academic_year', 'semester', 'section',
+                    'gender', 'house', 'religion', 'category', 'mother_tongue', 'blood', 'nationality'
+                ).order_by('-created_at')
             else:
                 return Response({"message": "organization_id and branch_id is required !!!"},
                                 status=status.HTTP_404_NOT_FOUND)
 
             if batch_id:
-                studentRegistrationList = studentRegistrationList.filter(batch=batch_id).order_by('-updated_at')
+                studentRegistrationList = studentRegistrationList.filter(batch=batch_id).order_by('-created_at')
 
             if course_id:
-                studentRegistrationList = studentRegistrationList.filter(course=course_id).order_by('-updated_at')
+                studentRegistrationList = studentRegistrationList.filter(course=course_id).order_by('-created_at')
 
             if department_id:
                 studentRegistrationList = studentRegistrationList.filter(department=department_id).order_by(
-                    '-updated_at')
+                    '-created_at')
 
             if academic_year_id:
                 studentRegistrationList = studentRegistrationList.filter(academic_year=academic_year_id).order_by(
-                    '-updated_at')
+                    '-created_at')
 
             if semester_id:
-                studentRegistrationList = studentRegistrationList.filter(semester=semester_id).order_by('-updated_at')
+                studentRegistrationList = studentRegistrationList.filter(semester=semester_id).order_by('-created_at')
 
             if section_id:
-                studentRegistrationList = studentRegistrationList.filter(section=section_id).order_by('-updated_at')
+                studentRegistrationList = studentRegistrationList.filter(section=section_id).order_by('-created_at')
 
             # try:
             #     academic_year_id = request.query_params.get('academic_year_id')
@@ -11826,25 +11896,22 @@ class StudentRegistrationListAPIView(ListAPIView):
                     first = name_parts[0].strip()
                     studentRegistrationList = studentRegistrationList.filter(
                         Q(first_name__icontains=first) | Q(middle_name__icontains=first) | Q(last_name__icontains=first)
-                        , is_active=True
-                        ).order_by('-updated_at')
+                        ).order_by('-created_at')
 
                 elif len(name_parts) == 2:  # First + Last
                     first, last = name_parts
                     studentRegistrationList = studentRegistrationList.filter(
-                        Q(first_name__iexact=first, last_name__iexact=last) |
-                        Q(first_name__iexact=first, middle_name__isnull=False, last_name__iexact=last)
-                        , is_active=True
-                    ).order_by('-updated_at')
+                        Q(first_name__icontains=first, last_name__icontains=last) |
+                        Q(first_name__icontains=first, middle_name__icontains=last) # Allow searching first and last
+                    ).order_by('-created_at')
 
                 elif len(name_parts) == 3:  # First + Middle + Last
                     first, middle, last = name_parts
                     studentRegistrationList = studentRegistrationList.filter(
-                        first_name__iexact=first,
-                        middle_name__iexact=middle,
-                        last_name__iexact=last,
-                        is_active=True
-                    ).order_by('-updated_at')
+                        first_name__icontains=first,
+                        middle_name__icontains=middle,
+                        last_name__icontains=last
+                    ).order_by('-created_at')
                 # studentNameSplit = studentName.split()
                 # student_list = StudentRegistration.objects.filter(first_name__istartswith=studentName,
                 #                                                     academic_year_id=academicyearId).order_by('-updated_at')
@@ -11855,25 +11922,30 @@ class StudentRegistrationListAPIView(ListAPIView):
                 #     student_list = StudentRegistration.objects.filter(first_name__istartswith = studentName[0],middle_name__istartswith=studentName[1] if len(studentNameSplit) > 1 else '',last_name__istartswith=studentName[2] if len(studentNameSplit) > 2 else '',academic_year_id=academicyearId).order_by('-updated_at')
             if gender:
                 # gender = request.query_params.get('gender')
-                studentRegistrationList = studentRegistrationList.filter(gender=gender).order_by('-updated_at')
+                studentRegistrationList = studentRegistrationList.filter(gender=gender).order_by('-created_at')
 
             if admission_no:
-                # admission_no = request.query_params.get('admission_no')
-                studentRegistrationList = studentRegistrationList.filter(admission_no=admission_no).order_by(
-                    '-updated_at')
+                studentRegistrationList = studentRegistrationList.filter(admission_no__icontains=admission_no).order_by(
+                    '-created_at')
             if from_date and to_date:
-                # from_date = request.query_params.get('from_date')
-                # to_date = request.query_params.get('to_date')
                 studentRegistrationList = studentRegistrationList.filter(
-                    created_at__range=(from_date, to_date)).order_by('-updated_at')
+                    created_at__date__range=(from_date, to_date)).order_by('-created_at')
+            elif from_date:
+                studentRegistrationList = studentRegistrationList.filter(
+                    created_at__date__gte=from_date).order_by('-created_at')
+            elif to_date:
+                studentRegistrationList = studentRegistrationList.filter(
+                    created_at__date__lte=to_date).order_by('-created_at')
             if student_status:
-                # student_status = request.query_params.get('student_status')
-                studentRegistrationList = studentRegistrationList.filter(status=student_status).order_by('-updated_at')
+                studentRegistrationList = studentRegistrationList.filter(status=student_status).order_by('-created_at')
+            else:
+                # Default behavior: if no status is explicitly requested, show only ACTIVE students
+                studentRegistrationList = studentRegistrationList.filter(is_active=True).order_by('-created_at')
             if barcode:
                 # barcode = request.query_params.get('barcode')
                 studentRegistrationList = studentRegistrationList.filter(barcode=barcode,
                                                                          ).order_by(
-                    '-updated_at')
+                    '-created_at')
             # if admission_no:
             #     # admissionNo = request.query_params.get('admissionNo')
             #     studentRegistrationList = studentRegistrationList.filter(admission_no=admission_no,
@@ -11883,16 +11955,12 @@ class StudentRegistrationListAPIView(ListAPIView):
                 # schoolAdmissionNo = request.query_params.get('college_admission_no')
                 studentRegistrationList = studentRegistrationList.filter(
                     college_admission_no=college_admission_no, ).order_by(
-                    '-updated_at')
+                    '-created_at')
             if father_name:
-                # fatherName = request.query_params.get('fatherName')
-                studentRegistrationList = studentRegistrationList.filter(father_name__icontains=father_name,
-                                                                         is_active=True)
+                studentRegistrationList = studentRegistrationList.filter(father_name__icontains=father_name).order_by('-created_at')
 
             if mother_name:
-                # motherName = request.query_params.get('motherName')
-                studentRegistrationList = studentRegistrationList.filter(mother_name__icontains=mother_name,
-                                                                         is_active=True)
+                studentRegistrationList = studentRegistrationList.filter(mother_name__icontains=mother_name).order_by('-created_at')
                 # name_parts = fatherName.strip().split()
                 # if len(name_parts) == 1:
                 #     first = name_parts[0].strip()
@@ -11934,8 +12002,7 @@ class StudentRegistrationListAPIView(ListAPIView):
                 #     RegistrationInstance = None
                 if student is not None:
                     # Step 2: Retrieve related data
-                    feeDetails = StudentCourse.objects.filter(student=student, is_active=True)
-                    transportDetails = StudentCourse.objects.filter(student=student, is_active=True)
+                    feeDetails = StudentCourse.objects.filter(student=student, is_active=True).select_related('fee_group', 'fee_applied_from')
                     addressDetails = Address.objects.filter(reference_id=student.id)
                     sibilingsDetails = SiblingDetail.objects.filter(student=student)
                     studentEmergencyContacts = StudentEmergencyContact.objects.filter(student=student)
@@ -11948,42 +12015,32 @@ class StudentRegistrationListAPIView(ListAPIView):
                     if feeDetails.exists():
 
                         for item in feeDetails:
-                            if item.fee_group.id == None or item.fee_applied_from.id == None:
+                            if not item.fee_group or not item.fee_applied_from:
                                 continue
-                            else:
-                                feemasterInstance = FeeStructureMaster.objects.get(id=item.fee_group.id)
-                                semesterInstance = Semester.objects.get(id=item.fee_applied_from.id)
 
-                                feedata = {
-                                    'fee_group_id': item.fee_group.id,
-                                    'fee_group': feemasterInstance.fee_structure_code,
-                                    'fee_applied_from_id': item.fee_applied_from.id,
-                                    'semester': semesterInstance.semester_description
-                                }
+                            feedata = {
+                                'fee_group_id': item.fee_group.id,
+                                'fee_group': item.fee_group.fee_structure_code,
+                                'fee_applied_from_id': item.fee_applied_from.id,
+                                'semester': item.fee_applied_from.semester_description
+                            }
 
-                                feeDetailslist.append(feedata)
+                            feeDetailslist.append(feedata)
 
                     # Manually serialize the sibilingsDetails data
                     sibilinglist = []
                     if sibilingsDetails.exists():
                         for sibiling in sibilingsDetails:
-                            studentInstance = StudentRegistration.objects.get(id=sibiling.sibling.id)
-                            courseInstance = Course.objects.get(id=studentInstance.course.id)
-                            sectionInstance = Section.objects.get(id=studentInstance.section.id)
+                            studentInstance = StudentRegistration.objects.select_related('course', 'section').get(id=sibiling.sibling.id)
                             sibilingsdata = {
                                 'sibling_id': sibiling.sibling.id,
                                 'sibling_firstname': studentInstance.first_name,
                                 'sibling_lastname': studentInstance.last_name,
                                 'college_admission_no': studentInstance.college_admission_no,
-                                'course_name': courseInstance.course_name,
-                                'section_name': sectionInstance.section_name
-
+                                'course_name': studentInstance.course.course_name,
+                                'section_name': studentInstance.section.section_name
                             }
                             sibilinglist.append(sibilingsdata)
-                    # Fetch class and section details for student
-                    courseInstance = Course.objects.get(id=student.course.id)
-                    sectionInstance = Section.objects.get(id=student.section.id)
-
                     # Step 3: Serialize the data using respective serializers
                     student_data = {
                         'studentBasicDetails': {
@@ -12083,15 +12140,10 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
                     #     if request.FILES.getlist('document_pic')[i]:
                     #         document_files.append(request.FILES.getlist('document_pic')[i])
 
-                    document_files = {}
+                    document_files = []
                     for item, item_obj in request.FILES.items():
-                        if item.startswith('document_pic[') and item.endswith(']'):
-                            index_str = item.split('[')[1].split(']')[0]
-                            try:
-                                index = int(index_str)
-                                document_files[index] = item_obj
-                            except ValueError:
-                                pass  # ignore invalid
+                        if item != 'profile_pic':
+                            document_files.append(item_obj)
 
 
                         # if 'document_file' in request.FILES:
@@ -12182,6 +12234,7 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
                     # instance.enrollment_no = studentBasicDetails.get('enrollment_no', instance.enrollment_no)
                     instance.primary_guardian = student_basic_detail.get('primary_guardian', instance.primary_guardian)
                     instance.status = student_basic_detail.get('status', instance.status)
+                    instance.is_active = (instance.status == 'ACTIVE')
                     instance.father_name = student_basic_detail.get('father_name', instance.father_name)
                     instance.father_profession = student_basic_detail.get('father_profession',
                                                                           instance.father_profession)
@@ -12203,17 +12256,41 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
 
                     instance.save()
 
-                    try:
-                        student_course_instance = StudentCourse.objects.filter(student_id=student_id).order_by('-id').first()
-                        if not student_course_instance:
-                            raise StudentCourse.DoesNotExist
-                    except StudentCourse.DoesNotExist:
-                        # If StudentCourse doesn't exist, create it with default values
-                        student_course_instance = StudentCourse.objects.create(
-                            academic_year=instance.academic_year,
-                            student=instance,
+                    student_course_instance = StudentCourse.objects.filter(
+                        student_id=student_id, is_active=True
+                    ).order_by('-id').first()
+                    if not student_course_instance:
+                        student_course_instance = StudentCourse.objects.filter(
+                            student_id=student_id
+                        ).order_by('-id').first()
+
+                    if student_course_instance:
+                        student_course_instance.batch = student_basic_detail.get('batch', student_course_instance.batch)
+                        student_course_instance.course = student_basic_detail.get('course', student_course_instance.course)
+                        student_course_instance.department = student_basic_detail.get('department',
+                                                                                       student_course_instance.department)
+                        student_course_instance.academic_year = student_basic_detail.get('academic_year',
+                                                                                         student_course_instance.academic_year)
+                        student_course_instance.semester = student_basic_detail.get('semester',
+                                                                                    student_course_instance.semester)
+                        student_course_instance.section = student_basic_detail.get('section',
+                                                                                   student_course_instance.section)
+                        student_course_instance.student_status = instance.status or student_course_instance.student_status
+                        student_course_instance.house = instance.house or student_course_instance.house
+                        student_course_instance.updated_by = student_basic_detail.get('updated_by',
+                                                                                     student_course_instance.updated_by)
+
+                        # if student_basic_detail.get('student_status'):
+                        #     instance.student_status = student_basic_detail.get('student_status', instance.student_status)
+                        #     student_course_instance.student
+
+                        student_course_instance.save()
+                    else:
+                        StudentCourse.objects.create(
                             organization=instance.organization,
                             branch=instance.branch,
+                            academic_year=instance.academic_year,
+                            student=instance,
                             batch=instance.batch,
                             course=instance.course,
                             department=instance.department,
@@ -12221,27 +12298,15 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
                             section=instance.section,
                             fee_group=None,
                             fee_applied_from=None,
-                            enrollment_no=None,
-                            house=instance.house,
-                            student_status='active'
+                            enrollment_no=instance.enrollment_no,
+                            house=instance.house if instance.house else House.objects.first(),
+                            transport_availed=False,
+                            route_id=None,
+                            choice_semester="",
+                            student_status=instance.status or "ACTIVE",
+                            created_by=instance.created_by,
+                            updated_by=student_basic_detail.get('updated_by', instance.updated_by)
                         )
-
-                    student_course_instance.batch = student_basic_detail.get('batch', student_course_instance.batch)
-                    student_course_instance.course = student_basic_detail.get('course', student_course_instance.course)
-                    student_course_instance.department = student_basic_detail.get('department',
-                                                                                   student_course_instance.department)
-                    student_course_instance.academic_year = student_basic_detail.get('academic_year',
-                                                                                     student_course_instance.academic_year)
-                    student_course_instance.semester = student_basic_detail.get('semester',
-                                                                                student_course_instance.semester)
-                    student_course_instance.section = student_basic_detail.get('section',
-                                                                               student_course_instance.section)
-
-                    # if student_basic_detail.get('student_status'):
-                    #     instance.student_status = student_basic_detail.get('student_status', instance.student_status)
-                    #     student_course_instance.student
-
-                    student_course_instance.save()
 
                 if profile_pic:
                     instance.profile_pic.save(profile_pic.name, profile_pic)
@@ -12268,13 +12333,57 @@ class StudentRegistrationUpdateAPIView(UpdateAPIView, UtilityGroupMixin):
                     AuthorisedPickup.objects.filter(student=instance.id, is_active=True).update(is_active=False)
                     self.authorizedpickupProcess(authorized_pickup, instance)
 
-                # documentsDetails process
-                if document_detail and len(document_detail):
-                    # Get existing ids
-                    existing_ids = [d.get('id') for d in document_detail if d.get('id')]
-                    # Deactivate documents not in the list
-                    StudentDocument.objects.filter(student=instance.id, is_active=True).exclude(id__in=existing_ids).update(is_active=False)
-                    self.documentsDetailsProcess(request, document_detail, instance, document_files)
+                # documentsDetails process – smart ID-based diff:
+                # 1) Deactivate any doc NOT in the submitted list (handles remove-all + partial remove)
+                # 2) Keep existing docs (preserves images)
+                # 3) Create only genuinely new docs (those without an id)
+                submitted_doc_ids = [
+                    int(d.get('id')) for d in document_detail
+                    if d.get('id') is not None
+                ]
+                StudentDocument.objects.filter(
+                    student=instance.id, is_active=True
+                ).exclude(id__in=submitted_doc_ids).update(is_active=False)
+
+                for idx, doc in enumerate(document_detail):
+                    doc_no = doc.get('document_no', '')
+                    doc_type = doc.get('document_type', '')
+                    doc_id = doc.get('id')
+
+                    # Skip completely empty rows
+                    if not doc_no and not doc_type:
+                        continue
+
+                    start_from = doc.get('start_from')
+                    end_to = doc.get('end_to')
+
+                    if doc_id:
+                        # Existing doc – just refresh metadata, image is untouched
+                        StudentDocument.objects.filter(
+                            id=doc_id, student=instance, is_active=True
+                        ).update(
+                            document_no=doc_no,
+                            document_type=doc_type,
+                            start_from=start_from,
+                            end_to=end_to,
+                        )
+                    else:
+                        # New doc – look up file by position index (matches frontend's document_pic[${idx}])
+                        doc_pic = request.FILES.get(f'document_pic[{idx}]')
+                        new_doc = StudentDocument.objects.create(
+                            student=instance,
+                            document_no=doc_no,
+                            document_type=doc_type,
+                            document_pic=doc_pic,
+                            document_url="",
+                            start_from=start_from,
+                            end_to=end_to,
+                            created_by=instance.created_by,
+                            updated_by=instance.created_by,
+                        )
+                        if doc_pic:
+                            new_doc.document_url = request.build_absolute_uri(new_doc.document_pic.url)
+                            new_doc.save()
 
                 # previousEducationDetails process
                 if previous_education_detail:
@@ -12461,6 +12570,81 @@ class GetFeeStructureMasterBasedOnAcademicYear(ListAPIView):
             process_name='findfeestructuretlistBasedOnAcademic',
             message=error_message,
         )
+
+
+class GetFeeStructureBySessionAPIView(ListAPIView):
+    """
+    Returns all fee structures for a given session (batch).
+    Query params: batch_id, organization_id, branch_id
+    """
+    def list(self, request, *args, **kwargs):
+        try:
+            batch_id = request.query_params.get('batch_id')
+            organization_id = request.query_params.get('organization_id')
+            branch_id = request.query_params.get('branch_id')
+
+            if not batch_id or not organization_id or not branch_id:
+                return Response(
+                    {'message': 'batch_id, organization_id and branch_id are required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            fee_structures = FeeStructureMaster.objects.filter(
+                batch=batch_id,
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            ).select_related('course', 'department', 'academic_year', 'semester').order_by('-created_at')
+
+            if fee_structures.exists():
+                responsedata = []
+                for item in fee_structures:
+                    responsedata.append({
+                        'id': item.id,
+                        'fee_structure_code': item.fee_structure_code,
+                        'fee_structure_description': item.fee_structure_description,
+                        'batch_description': item.batch.batch_description if item.batch else '',
+                        'course_name': item.course.course_name if item.course else '',
+                        'department_description': item.department.department_description if item.department else '',
+                        'academic_year_code': item.academic_year.academic_year_code if item.academic_year else '',
+                        'academic_year_description': item.academic_year.academic_year_description if item.academic_year else '',
+                        'semester_description': item.semester.semester_description if item.semester else '',
+                        'version_no': item.version_no,
+                        'enabled': item.enabled,
+                    })
+                return Response({'message': 'success', 'data': responsedata}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message': 'No Record Found', 'data': []}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SoftDeleteFeeStructureMasterAPIView(APIView):
+    """
+    Soft-deletes a FeeStructureMaster by setting is_active=False.
+    Existing StudentCourse and StudentFeeDetail records linked to this fee structure
+    are NOT removed — students retain their fee records and dues history.
+    The fee structure is simply hidden from all future listings/assignments.
+    """
+    def patch(self, request, pk, *args, **kwargs):
+        try:
+            fee_structure = FeeStructureMaster.objects.get(id=pk, is_active=True)
+            fee_structure.is_active = False
+            if request.user and request.user.is_authenticated:
+                fee_structure.updated_by = request.user.id
+            fee_structure.save()
+            return Response(
+                {'message': 'Fee structure soft-deleted successfully.'},
+                status=status.HTTP_200_OK
+            )
+        except FeeStructureMaster.DoesNotExist:
+            return Response(
+                {'error': 'Fee structure not found or already deleted.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # class StudentFilterListAPIView(ListAPIView):
@@ -12990,11 +13174,14 @@ class StudentRegistrationBasedOnIdAPIView(RetrieveAPIView):
             except AcademicYear.DoesNotExist:
                 raise NotFound("The Academic year ID was not found.")
 
-            try:
-                feeDetails = StudentCourse.objects.get(student=student_instance.id, is_active=True)
-            except StudentCourse.DoesNotExist:
-                return Response({"message": "The student ID was not found in StudentCourse."},
-                                status=status.HTTP_400_BAD_REQUEST)
+            feeDetails = StudentCourse.objects.filter(
+                student=student_instance.id,
+                is_active=True
+            ).order_by('-id').first()
+            if not feeDetails:
+                feeDetails = StudentCourse.objects.filter(
+                    student=student_instance.id
+                ).order_by('-id').first()
 
             try:
                 courseInstance = Course.objects.get(id=student_instance.course.id)
@@ -13008,7 +13195,7 @@ class StudentRegistrationBasedOnIdAPIView(RetrieveAPIView):
                 # raise NotFound("The Section ID was not found.")
 
             try:
-                if feeDetails.fee_group:
+                if feeDetails and feeDetails.fee_group:
                     feemasterInstance = FeeStructureMaster.objects.get(id=feeDetails.fee_group.id)
                 else:
                     feemasterInstance = None
@@ -13016,7 +13203,7 @@ class StudentRegistrationBasedOnIdAPIView(RetrieveAPIView):
                 return Response({"message": "The fee_group ID was not found."}, status=status.HTTP_400_BAD_REQUEST)
 
             try:
-                if feeDetails.fee_applied_from:
+                if feeDetails and feeDetails.fee_applied_from:
                     semesterInstance = Semester.objects.get(id=feeDetails.fee_applied_from.id)
                 else:
                     semesterInstance = None
@@ -13062,7 +13249,7 @@ class StudentRegistrationBasedOnIdAPIView(RetrieveAPIView):
 
             # Process transport details
             transportDetails = {}
-            if feeDetails.transport_availed:
+            if feeDetails and feeDetails.transport_availed:
                 import ast
                 choice_semester = feeDetails.choice_semester
                 if choice_semester:
@@ -15605,7 +15792,7 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
                     # Get All Data For Specific Student ID On Student Fee Details Table
 
                     StudentFeeDetailData = StudentFeeDetail.objects.filter(student=StudentCourseInstance.student,
-                                                                           is_active=True, )
+                                                                           is_active=True, ).order_by('semester__display_order', 'id')
                     feestructuredetailsdata = []
                     element_discount_amount = ''
                     for item in StudentFeeDetailData:
@@ -16018,123 +16205,72 @@ class StudentFeeReceiptCreateAPIView(CreateAPIView):
 
                 StudentPaymentInstance.save()
 
-                # Total amount paid by Student
+                # Total amount settled in this receipt (cash + successfully applied discount)
                 grand_Paid_Amount = total_amount
+                applied_discount_amount = Decimal('0.00')
 
                 # Insert object for particular student
 
                 if discount_fee:
-                    grand_Paid_Amount = grand_Paid_Amount + discount_fee
-                    semester_ids_sorted = list(sorted(set(semester_ids)))  # in future need to be sort based on date
+                    remaining_discount_fee = Decimal(discount_fee)
 
-                    for semester_id in semester_ids_sorted:
-                        # print(prd)
-                        total_payment_amount = 0
-                        total_paid_amount = 0
-                        # pending_payment_amount=0
+                    for fee_detail in fee_detail_list:
+                        pending_amount = (fee_detail.element_amount or Decimal('0.00')) - (
+                            fee_detail.paid_amount or Decimal('0.00')
+                        )
 
-                        # Get period month instance
-                        semesterInstance = Semester.objects.get(id=semester_id, is_active=True)
-                        studentfeedetailsrecord = StudentFeeDetail.objects.filter(student=student_id,
-                                                                                  fee_applied_from=semesterInstance.id,
-                                                                                  is_active=True)
-                        # print(studentfeedetailsrecord)
-                        # print(studentfeedetailsrecord)
-
-                        for feedetailsId in student_fee_details_ids:
-                            try:
-                                # Use get() to fetch the specific student fee detail
-                                matching_record = studentfeedetailsrecord.get(id=feedetailsId)
-
-                                # Add element_amount and paid_amount to the totals
-                                total_payment_amount += matching_record.element_amount
-                                total_paid_amount += matching_record.paid_amount
-                            except StudentFeeDetail.DoesNotExist:
-                                # Log the missing record and continue with the remaining IDs
-                                # print(f"Student Fee Detail with id {feedetailsId} does not exist. Skipping.")
-                                continue  # Skip to the next ID
-
-                        pending_amount = total_payment_amount - total_paid_amount
-
-                        if discount_fee > pending_amount:
-
-                            # Insert record in student fee details DB
-                            studentFeeDetailsInsertfeesInstance = StudentFeeDetail.objects.create(
-                                student=studentcourseInstance.student,
-                                student_course=studentcourseInstance,
-                                fee_group=None,
-                                fee_structure_details=None,
-                                element_name="DISCOUNT",
-                                fee_applied_from=semesterInstance,
-                                semester=semesterInstance,
-                                paid='Y',
-                                academic_year=studentcourseInstance.academic_year,
-                                organization=studentcourseInstance.organization,
-                                branch=studentcourseInstance.branch,
-                                department=studentcourseInstance.department,
-                                multiplying_factor=1,
-                                element_amount=-pending_amount,
-                                total_element_period_amount=-pending_amount,
-                                paid_amount=-pending_amount,
-                                remarks="",
-                                reverse_flag="",
-                                created_by=login_id,
-                                updated_by=login_id,
-
-                            )
-
-                            # Insert Record into StdFeeReceiptDetail
-
-                            stdfeereceiptInstance = StudentFeeReceiptDetail.objects.create(
-                                receipt=StudentFeeReceiptHeaderInstance,
-                                fee_detail=studentFeeDetailsInsertfeesInstance,
-                                amount=-pending_amount,
-                                discount_amount=-pending_amount,
-                                created_by=login_id
-                            )
-                            stdfeereceiptInstance.save()
-
-                            discount_fee -= pending_amount
+                        if pending_amount <= 0:
                             continue
 
-                        elif discount_fee < pending_amount:
-
-                            # Insert record in student fee details DB
-                            studentFeeDetailsInsertfeesInstance = StudentFeeDetail.objects.create(
-                                student=studentcourseInstance.student,
-                                student_course=studentcourseInstance,
-                                fee_group=None,
-                                fee_structure_details=None,
-                                element_name="DISCOUNT",
-                                fee_applied_from=semesterInstance,
-                                semester = semesterInstance,
-                                paid='Y',
-                                academic_year=studentcourseInstance.academic_year,
-                                organization=studentcourseInstance.organization,
-                                branch=studentcourseInstance.branch,
-                                department=studentcourseInstance.department,
-                                multiplying_factor=1,
-                                element_amount=-discount_fee,
-                                total_element_period_amount=-discount_fee,
-                                paid_amount=-discount_fee,
-                                remarks="",
-                                reverse_flag="",
-                                created_by=login_id,
-                                updated_by=login_id,
-
-                            )
-
-                            # Insert Record into StdFeeReceiptDetail
-                            stdfeereceiptInstance = StudentFeeReceiptDetail.objects.create(
-                                receipt=StudentFeeReceiptHeaderInstance,
-                                fee_detail=studentFeeDetailsInsertfeesInstance,
-                                amount=-discount_fee,
-                                discount_amount=-discount_fee,
-                                created_by=login_id
-                            )
-                            stdfeereceiptInstance.save()
-                            discount_fee -= discount_fee
+                        discount_to_apply = min(remaining_discount_fee, pending_amount)
+                        if discount_to_apply <= 0:
                             break
+
+                        discount_semester = fee_detail.semester or fee_detail.fee_applied_from
+                        if not discount_semester:
+                            continue
+
+                        # Insert record in student fee details DB
+                        studentFeeDetailsInsertfeesInstance = StudentFeeDetail.objects.create(
+                            student=studentcourseInstance.student,
+                            student_course=studentcourseInstance,
+                            fee_group=None,
+                            fee_structure_details=None,
+                            element_name="DISCOUNT",
+                            fee_applied_from=discount_semester,
+                            semester=discount_semester,
+                            paid='Y',
+                            academic_year=studentcourseInstance.academic_year,
+                            organization=studentcourseInstance.organization,
+                            branch=studentcourseInstance.branch,
+                            department=studentcourseInstance.department,
+                            multiplying_factor=1,
+                            element_amount=-discount_to_apply,
+                            total_element_period_amount=-discount_to_apply,
+                            paid_amount=-discount_to_apply,
+                            remarks="",
+                            reverse_flag="",
+                            created_by=login_id,
+                            updated_by=login_id,
+
+                        )
+
+                        # Insert Record into StdFeeReceiptDetail
+                        stdfeereceiptInstance = StudentFeeReceiptDetail.objects.create(
+                            receipt=StudentFeeReceiptHeaderInstance,
+                            fee_detail=studentFeeDetailsInsertfeesInstance,
+                            amount=-discount_to_apply,
+                            discount_amount=-discount_to_apply,
+                            created_by=login_id
+                        )
+                        stdfeereceiptInstance.save()
+
+                        applied_discount_amount += discount_to_apply
+                        remaining_discount_fee -= discount_to_apply
+                        if remaining_discount_fee <= 0:
+                            break
+
+                    grand_Paid_Amount = grand_Paid_Amount + applied_discount_amount
 
                 if late_fee:
                     if grand_Paid_Amount > late_fee:
@@ -16476,8 +16612,8 @@ class StudentFeeReceiptCreateAPIView(CreateAPIView):
                     fee_periods.append(studentfeedetailsInstance.semester.semester_description)
 
                     element_name = studentfeedetailsInstance.element_name
-                    paid_amount = studentfeedetailsInstance.paid_amount
-                    # paid_amount = studentfeedetailsInstance.paid_amount + grand_Paid_Amount
+                    # Use the current receipt line amount instead of cumulative paid_amount.
+                    paid_amount = abs(item.amount) if element_name == "DISCOUNT" else item.amount
 
                     # Update paid_element dictionary
                     if element_name in paid_element:
@@ -17292,7 +17428,9 @@ class StudentFeeReceiptSearchBasedOnCondition(ListAPIView):
                 if semester_id:
                     filterdata = filterdata.filter(semester=semester_id)
                 if section_id:
-                    filterdata = filterdata.filter(section=section_id)
+                    # student_fee_receipt_header doesn't have a section column, so we find students in the requested section
+                    student_ids_in_section = StudentCourse.objects.filter(section=section_id).values_list('student', flat=True)
+                    filterdata = filterdata.filter(student__in=student_ids_in_section)
                 if date_from and date_to:
                     filterdata = filterdata.filter(receipt_date__range=(date_from, date_to))
                 # Removed default filter to today's date - students should see ALL receipts when no date filter is provided
@@ -17486,12 +17624,17 @@ class StudentFeeReceiptSearchBasedOnCondition(ListAPIView):
                         # 'studentname': f'{RegistrationInstance.first_name}{RegistrationInstance.middle_name}{RegistrationInstance.last_name}',
                         'student_name': student_name,
                         'father_name': item.student.father_name,
+                        'batch_id': studentcourseInstance.batch.id if hasattr(studentcourseInstance, 'batch') and studentcourseInstance.batch else None,
+                        'batch': studentcourseInstance.batch.batch_description if hasattr(studentcourseInstance, 'batch') and studentcourseInstance.batch else None,
+                        'batch_description': studentcourseInstance.batch.batch_description if hasattr(studentcourseInstance, 'batch') and studentcourseInstance.batch else None,
                         'course_id': studentcourseInstance.course.id,
                         'course_name': studentcourseInstance.course.course_name,
                         'department_id': studentcourseInstance.department.id,
                         'department_description': studentcourseInstance.department.department_description,
                         'academic_year_id': studentcourseInstance.academic_year.id,
                         'academic_year_code': studentcourseInstance.academic_year.academic_year_code,
+                        'current_semester_id': studentcourseInstance.semester.id if hasattr(studentcourseInstance, 'semester') and studentcourseInstance.semester else None,
+                        'current_semester_name': studentcourseInstance.semester.semester_description if hasattr(studentcourseInstance, 'semester') and studentcourseInstance.semester else None,
                         'semester_id': receipt_semester_id,  # Use semester from receipt, not student's current semester
                         'semester_description': receipt_semester_description,  # Use semester from receipt
                         'semester': receipt_semester_description,  # Frontend looks for 'semester' - use receipt semester
@@ -17502,6 +17645,9 @@ class StudentFeeReceiptSearchBasedOnCondition(ListAPIView):
                         # 'payment_reference': item.payment_reference,
 
                         'cancellation_remarks': item.cancellation_remarks,
+                        'cancelled_by_name': item.cancelled_by_name or '',
+                        'cancelled_by_role': item.cancelled_by_role or '',
+                        'remarks': item.remarks or '',
                         'receiptDate': item.receipt_date,
                         'receipt_date': item.receipt_date,  # Frontend looks for 'receipt_date' (lowercase)
                         'amount': total_amount,
@@ -18055,18 +18201,13 @@ class StudentMessageHistoryFilterListAPIView(ListAPIView):
             #     filterdata = filterdata.filter(message_date=fromto)
 
             if date_from:
-                # Convert fromdate to datetime object
-                date_from = datetime.strptime(date_from, "%Y-%m-%d")
                 studentMessageList = studentMessageList.filter(message_date__gte=date_from)
 
-                # If fromto is not provided, set it to current date
             if date_to:
-                date_to = datetime.strptime(date_to, "%Y-%m-%d")
                 studentMessageList = studentMessageList.filter(message_date__lte=date_to)
             else:
-                # If fromto is not provided, use the current date as fromto
-                date_to = datetime.now()
-                studentMessageList = studentMessageList.filter(message_date__lte=date_to)
+                # If date_to is not provided, use the current date as default
+                studentMessageList = studentMessageList.filter(message_date__lte=datetime.now().date())
 
             if message_type:
                 studentMessageList = studentMessageList.filter(message_type=message_type)
@@ -18131,6 +18272,8 @@ class StudentMessageHistoryFilterListAPIView(ListAPIView):
 
                     responsedata.append({
                         'studentId': RegistrationInstance.id,
+                        'batch_id': studentCourseInstance.batch.id if studentCourseInstance.batch else None,
+                        'batch_code': studentCourseInstance.batch.batch_code if studentCourseInstance.batch else None,
                         'course_id': studentCourseInstance.course.id,
                         'course_name': studentCourseInstance.course.course_name,
                         'department_id': studentCourseInstance.department.id,
@@ -18142,7 +18285,7 @@ class StudentMessageHistoryFilterListAPIView(ListAPIView):
                         'section_id': studentCourseInstance.section.id,
                         'section_name': studentCourseInstance.section.section_name,
                         'enrollment_no': studentCourseInstance.enrollment_no,
-                        'studentName': f'{RegistrationInstance.first_name}{RegistrationInstance.middle_name}{RegistrationInstance.last_name}',
+                        'studentName': f"{RegistrationInstance.first_name} {RegistrationInstance.middle_name or ''} {RegistrationInstance.last_name or ''}".replace('  ', ' ').strip(),
                         'college_admission_no': RegistrationInstance.college_admission_no,
                         'registration_no': RegistrationInstance.registration_no,
                         'barcode': RegistrationInstance.barcode,
@@ -18208,12 +18351,16 @@ class StudentFeeReceiptCancelCreateAPIView(CreateAPIView):
                 branch_id = serializer.validated_data.get('branch_id')
                 receipt_id = serializer.validated_data.get('receipt_id')
                 cancel_remark = serializer.validated_data.get('cancel_remark')
+                cancelled_by_name = serializer.validated_data.get('cancelled_by_name', '')
+                cancelled_by_role = serializer.validated_data.get('cancelled_by_role', '')
 
                 # Process the StdFeeReceiptHeader and cancel the status
                 StudentFeeReceiptHeaderInstance = StudentFeeReceiptHeader.objects.get(organization=organization_id,
                                                                                       branch=branch_id, id=receipt_id)
                 StudentFeeReceiptHeaderInstance.receipt_status = 'CANCEL'
                 StudentFeeReceiptHeaderInstance.cancellation_remarks = cancel_remark
+                StudentFeeReceiptHeaderInstance.cancelled_by_name = cancelled_by_name
+                StudentFeeReceiptHeaderInstance.cancelled_by_role = cancelled_by_role
                 StudentFeeReceiptHeaderInstance.save()
 
                 # Process the StdPayment and make is_active=False
@@ -19724,6 +19871,7 @@ class StudentCircularListAPIView(ListAPIView):
             student_id = request.query_params.get('student_id')
             circular_date = request.query_params.get('circular_date')
             initiatedBy = request.query_params.get('initiatedBy')
+            approved_only = request.query_params.get('approved_only')
 
             if organization_id and branch_id:
                 try:
@@ -19773,6 +19921,9 @@ class StudentCircularListAPIView(ListAPIView):
 
             if initiatedBy:
                 student_circular_instance = student_circular_instance.filter(initiated_by=initiatedBy)
+
+            if approved_only and approved_only.strip().upper() in ['Y', 'YES', 'TRUE', '1', 'A']:
+                student_circular_instance = student_circular_instance.filter(circular_status='A', is_cancelled=False)
 
             if student_circular_instance:
                 responsedata = []
@@ -20398,15 +20549,11 @@ class SearchStudentCourseListAPIView(ListAPIView):
             barcode = serializer.validated_data.get('barcode')
             father_name = serializer.validated_data.get('father_name')
             mother_name = serializer.validated_data.get('mother_name')
-            # <<<<<<< HEAD
             college_admission_no = serializer.validated_data.get('college_admission_no')
             hostel_availed = serializer.validated_data.get('hostel_availed')
-            # =======
-            #             college_admission_no = serializer.validated_data.get('college_admission_no')
             mentor_id = serializer.validated_data.get('mentor_id')
             teacher_id = serializer.validated_data.get('teacher_id')
             search_query = serializer.validated_data.get('search_query')
-            # >>>>>>> 98d3432918ff50c89ad218833c4ac8870395291d
 
             # filterdata = StudentCourse.objects.none()
 
@@ -20414,7 +20561,8 @@ class SearchStudentCourseListAPIView(ListAPIView):
                 try:
                     studentCourseList = StudentCourse.objects.filter(organization=organization_id,
                                                                      branch=branch_id,
-                                                                     is_active=True).order_by('-updated_at')
+                                                                     is_active=True,
+                                                                     student__is_active=True).order_by('-created_at')
                 except StudentCourse.DoesNotExist:
                     return Response({"message": "student course record not found !!!"},
                                     status=status.HTTP_404_NOT_FOUND)
@@ -20500,66 +20648,42 @@ class SearchStudentCourseListAPIView(ListAPIView):
 
             # Specific field filters (only if search_query is not provided, or as additional filters)
             if student_name and not search_query:
-                print(f"DEBUG: student_name received: '{student_name}'")
-                name_parts = student_name.strip().split()
-                print(f"DEBUG: name_parts: {name_parts}, length: {len(name_parts)}")
-                print(f"DEBUG: studentCourseList count before name filter: {studentCourseList.count()}")
+                student_name = student_name.strip()
+                name_parts = student_name.split()
                 
                 if len(name_parts) == 1:
-                    first = name_parts[0].strip()
+                    first = name_parts[0]
                     studentCourseList = studentCourseList.filter(
                         Q(student__first_name__icontains=first) |
                         Q(student__middle_name__icontains=first) |
-                        Q(student__last_name__icontains=first),
-                        student__is_active=True
+                        Q(student__last_name__icontains=first)
                     )
-                elif len(name_parts) == 2:  # First + Last
-                    first, last = name_parts
-                    # Debug: Check what students have "sonali" in their name
-                    debug_students = studentCourseList.filter(
-                        Q(student__first_name__icontains=first) |
-                        Q(student__middle_name__icontains=first) |
-                        Q(student__last_name__icontains=first),
-                        student__is_active=True
-                    )[:5]
-                    for s in debug_students:
-                        print(f"DEBUG: Student found with '{first}': first_name='{s.student.first_name}', middle_name='{s.student.middle_name}', last_name='{s.student.last_name}'")
-                    
-                    # More flexible search: first word OR second word can be in ANY name field
+                elif len(name_parts) >= 2:  # First + Last (or more)
+                    first = name_parts[0]
+                    last = name_parts[-1]
                     studentCourseList = studentCourseList.filter(
-                        # Both terms somewhere in the name (more flexible)
                         (Q(student__first_name__icontains=first) | Q(student__middle_name__icontains=first) | Q(student__last_name__icontains=first)) &
-                        (Q(student__first_name__icontains=last) | Q(student__middle_name__icontains=last) | Q(student__last_name__icontains=last)),
-                        student__is_active=True
-                    )
-                    print(f"DEBUG: After 2-word filter, count: {studentCourseList.count()}")
-                elif len(name_parts) == 3:  # First + Middle + Last
-                    first, middle, last = name_parts
-                    studentCourseList = studentCourseList.filter(
-                        student__first_name__icontains=first,
-                        student__middle_name__icontains=middle,
-                        student__last_name__icontains=last,
-                        student__is_active=True
+                        (Q(student__first_name__icontains=last) | Q(student__middle_name__icontains=last) | Q(student__last_name__icontains=last))
                     )
 
             if college_admission_no and not search_query:
                 studentCourseList = studentCourseList.filter(
-                    student__college_admission_no__icontains=college_admission_no)
+                    student__college_admission_no__icontains=college_admission_no.strip())
 
             if admission_no and not search_query:
-                studentCourseList = studentCourseList.filter(student__admission_no__icontains=admission_no)
+                studentCourseList = studentCourseList.filter(student__admission_no__icontains=admission_no.strip())
 
             if registration_no and not search_query:
-                studentCourseList = studentCourseList.filter(student__registration_no=registration_no)
+                studentCourseList = studentCourseList.filter(student__registration_no=registration_no.strip())
 
             if barcode and not search_query:
-                studentCourseList = studentCourseList.filter(student__barcode__icontains=barcode)
+                studentCourseList = studentCourseList.filter(student__barcode__icontains=barcode.strip())
 
-            if father_name and not search_query:
-                studentCourseList = studentCourseList.filter(student__father_name__icontains=father_name)
+            if father_name and father_name.strip() and not search_query:
+                studentCourseList = studentCourseList.filter(student__father_name__icontains=father_name.strip())
 
-            if mother_name and not search_query:
-                studentCourseList = studentCourseList.filter(student__mother_name__icontains=mother_name)
+            if mother_name and mother_name.strip() and not search_query:
+                studentCourseList = studentCourseList.filter(student__mother_name__icontains=mother_name.strip())
 
             if hostel_availed:
                 studentCourseList = studentCourseList.filter(hostel_availed=hostel_availed.capitalize())
@@ -22514,10 +22638,8 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
             to_semester = request.query_params.get('to_semester')
             report = request.query_params.get('report')
             show_fees = request.query_params.get('show_fees')
-            show_balance_fees = request.query_params.get('show_balance_fees')
-
             # organization_id,branch_id,batch_id,course_id,department_id,semester_id,section_id,student_id,status_data,
-            # from_semester,to_semester,report,show_fees,show_balance_fees
+            # from_semester,to_semester,report,show_fees
 
             # Validate academic year ID
             # if not academicyearId:
@@ -22536,6 +22658,9 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
             # filterdata = StudentCourse.objects.filter(academic_year=academicyearId, is_active=True)
 
             # Apply additional filters
+            if batch_id:
+                filterdata = filterdata.filter(batch=batch_id)
+
             if student_id:
                 filterdata = filterdata.filter(student=student_id)
             if course_id:
@@ -22559,44 +22684,6 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                     filterdata = filterdata.filter(student__status__iexact="ACTIVE")
                 elif status_data.upper() in ['FALSE', '0', 'INACTIVE']:
                     filterdata = filterdata.filter(student__status__iexact="INACTIVE")
-
-            if show_fees:
-                filterdata_ids = filterdata.all().values_list('id', flat=True)
-                # GET ALL STUDENT ID INTO STUDENT FEE DETAILS
-                fee_student_ids = StudentFeeDetail.objects.filter(
-                    student_course__in=filterdata_ids,
-                    organization=organization_id,
-                    branch=branch_id,
-
-                    # academic_year=academic_year_id,
-                    is_active=True
-                ).values_list('student_id', flat=True)
-
-
-
-                if show_fees.upper() == "F":
-
-                    # Keep only students who have fee details
-
-                    filterdata = filterdata.filter(student_id__in=fee_student_ids)
-
-
-                elif show_fees.upper() == "A":
-                    # Do nothing, retain all students
-                    pass
-
-                elif show_fees.upper() == "Z":
-                    # Exclude students who have fee detailS
-                    zero_fee_student_list = []
-                    for item in filterdata_ids:
-                        student_amount = StudentFeeDetail.objects.filter(student_course_id=item).aggregate(total=Sum('element_amount'))['total']
-                        if student_amount == 0:
-                            zero_fee_student_list.append(item)
-                        # student_amount = StudentFeeDetail.objects.filter(student_course_id=item).values_list('element_amount',flat=True)
-                    filterdata = filterdata.filter(id__in = zero_fee_student_list)
-
-                    # StudentFeeDetail.objects.filter()
-                    # filterdata = filterdata.exclude(student_id__in=fee_student_ids)
 
             if filterdata:
                 responsedata = []
@@ -22684,16 +22771,36 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                         total_fees = Decimal('0.00')
                         total_paid_fees = Decimal('0.00')
                         discount_fees = Decimal('0.00')
+                        semester_wise_details = {}
 
                         # Calculate fee amounts
                         for fee in feesrecord:
                             if fee.element_name == 'DISCOUNT':
                                 discount_fees += fee.paid_amount
-
-
                             else:
                                 total_fees += fee.element_amount or 0
                                 total_paid_fees += fee.paid_amount
+                            
+                            # Build the complete breakdown
+                            sem_name = "Unknown"
+                            if fee.semester:
+                                sem_name = fee.semester.semester_description
+                            elif fee.fee_applied_from:
+                                sem_name = fee.fee_applied_from.semester_description
+                                
+                            elem = fee.element_name
+                            if sem_name not in semester_wise_details:
+                                semester_wise_details[sem_name] = {}
+                            if elem not in semester_wise_details[sem_name]:
+                                semester_wise_details[sem_name][elem] = {'amount': Decimal('0.00'), 'paid': Decimal('0.00'), 'balance': Decimal('0.00')}
+                            
+                            if fee.element_name == 'DISCOUNT':
+                                # We can just track discounts inside the "DISCOUNT" element key
+                                semester_wise_details[sem_name][elem]['paid'] += fee.paid_amount or Decimal('0.00')
+                            else:
+                                semester_wise_details[sem_name][elem]['amount'] += fee.element_amount or Decimal('0.00')
+                                semester_wise_details[sem_name][elem]['paid'] += fee.paid_amount or Decimal('0.00')
+                                semester_wise_details[sem_name][elem]['balance'] += (fee.element_amount or Decimal('0.00')) - (fee.paid_amount or Decimal('0.00'))
 
                         remaining_fees = total_fees - total_paid_fees - discount_fees
 
@@ -22702,6 +22809,35 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                         total_paid_fees = Decimal('0.00')
                         discount_fees = Decimal('0.00')
                         remaining_fees = Decimal('0.00')
+                        semester_wise_details = {}
+
+                    receipt_remarks_queryset = StudentFeeReceiptHeader.objects.filter(
+                        organization=organization_id,
+                        branch=branch_id,
+                        batch=item.batch.id,
+                        course=item.course.id,
+                        department=item.department.id,
+                        academic_year=item.academic_year.id,
+                        student=RegistrationInstance.id,
+                        is_active=True
+                    ).exclude(remarks__isnull=True).exclude(remarks__exact='').order_by('-created_at')
+
+                    if semester_id:
+                        receipt_remarks_queryset = receipt_remarks_queryset.filter(semester=semester_id)
+                    elif from_semester and to_semester:
+                        receipt_remarks_queryset = receipt_remarks_queryset.filter(
+                            semester__id__range=[from_semester, to_semester]
+                        )
+                    elif from_semester:
+                        receipt_remarks_queryset = receipt_remarks_queryset.filter(semester__id__gte=from_semester)
+                    elif to_semester:
+                        receipt_remarks_queryset = receipt_remarks_queryset.filter(semester__id__lte=to_semester)
+
+                    remarks_list = []
+                    for remark_text in receipt_remarks_queryset.values_list('remarks', flat=True):
+                        cleaned_remark = (remark_text or '').strip()
+                        if cleaned_remark and cleaned_remark not in remarks_list:
+                            remarks_list.append(cleaned_remark)
 
                     # Get student name
                     name_part = filter(None, [
@@ -22741,12 +22877,20 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                         'total_fees': total_fees,
                         'total_paid': total_paid_fees,
                         'discount_fees': discount_fees,
-                        'remaining_fees': remaining_fees
+                        'remarks': ', '.join(remarks_list),
+                        'remaining_fees': remaining_fees,
+                        'semester_wise_details': semester_wise_details
                     })
 
-                # Logic to filter records where remaining_fees > 0 if showbalancefees is true
-                if show_balance_fees and show_balance_fees.lower() in ['true', '1']:
+                selected_fee_mode = (show_fees or 'F').upper()
+                if selected_fee_mode == 'F':
+                    responsedata = [data for data in responsedata if data['total_fees'] > 0]
+                elif selected_fee_mode == 'Z':
+                    responsedata = [data for data in responsedata if data['total_fees'] == 0]
+                elif selected_fee_mode == 'B':
                     responsedata = [data for data in responsedata if data['remaining_fees'] > 0]
+                elif selected_fee_mode == 'A':
+                    pass
 
                 if responsedata:
                     return Response({"message": "success!!", "data": responsedata}, status=status.HTTP_200_OK)
@@ -23153,6 +23297,7 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                 for stdfees in studentfeedetailsrecord:
                     semester_id = None
                     semester_name = None
+                    semester_display_order = None
                     
                     # PRIORITY 1: use semester field (Most reliable)
                     if stdfees.semester:
@@ -23160,6 +23305,7 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                             semesterInstance = stdfees.semester
                             semester_id = semesterInstance.id
                             semester_name = semesterInstance.semester_description
+                            semester_display_order = semesterInstance.display_order
                         except Exception:
                             pass
 
@@ -23169,17 +23315,21 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                             semesterInstance = stdfees.fee_applied_from
                             semester_id = semesterInstance.id
                             semester_name = semesterInstance.semester_description
+                            semester_display_order = semesterInstance.display_order
                         except Exception:
                             pass
                     
                     # Fallback string if still nothing
                     if not semester_name:
-                         semester_name = "-"
+                        semester_name = "-"
+                    if semester_display_order is None:
+                        semester_display_order = 999999
 
                     data = {
                         'element_name': stdfees.element_name,
                         'fee_applied_from': semester_id,
                         'semester_name': semester_name,
+                        'semester_display_order': semester_display_order,
                         'total_amount': stdfees.element_amount,
                         'paid_amount': stdfees.paid_amount,
                         'remaining_amount': f'{stdfees.element_amount - stdfees.paid_amount}'
@@ -23192,6 +23342,17 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                         total_paid += stdfees.paid_amount
 
                     feesdetails.append(data)
+
+                feesdetails.sort(
+                    key=lambda fee: (
+                        fee.get('semester_display_order', 999999),
+                        fee.get('semester_name') or '',
+                        fee.get('element_name') or '',
+                    )
+                )
+
+                for fee in feesdetails:
+                    fee.pop('semester_display_order', None)
 
             # make response data
             name_part = filter(None, [
@@ -23485,8 +23646,16 @@ class GetStudentFeeBalanceReceiptListAPIView(ListAPIView):
                 )
             # print(studentIds,type(studentIds))
 
-            semester_list = Semester.objects.filter(organization=organization_id, branch=branch_id,
-                                                    course=course_id, department=department_id).order_by('id')
+            filter_kwargs = {
+                'organization': organization_id,
+                'branch': branch_id
+            }
+            if course_id:
+                filter_kwargs['course'] = course_id
+            if department_id:
+                filter_kwargs['department'] = department_id
+
+            semester_list = Semester.objects.filter(**filter_kwargs).order_by('id')
             
             if fee_due_from and fee_due_to:
                 # Validate sorting orders
@@ -23528,10 +23697,10 @@ class GetStudentFeeBalanceReceiptListAPIView(ListAPIView):
             # )
 
             finalresponsedata = []
-            receiptNoList = []
-            receiptDateList = []
 
             for stdId in studentIds:
+                receiptNoList = []
+                receiptDateList = []
 
                 # Initialize dictionaries for aggregating the amounts
                 elementList = {}  # To store the amounts for each element name
@@ -23540,37 +23709,50 @@ class GetStudentFeeBalanceReceiptListAPIView(ListAPIView):
                 discountFees = 0
                 # student class instance
                 try:
-                    student_course_instance = StudentCourse.objects.get(student_id=stdId, is_active=True)
+                    student_course_instance = StudentCourse.objects.get(
+                        organization=organization_id,
+                        branch=branch_id,
+                        student_id=stdId,
+                        is_active=True
+                    )
                 except ObjectDoesNotExist:
                     return Response({'message': 'student course Not Found!!'}, status=status.HTTP_404_NOT_FOUND)
 
                 try:
                     # Query the StudentFeeDetail model for the student
                     student_fee_details_records = StudentFeeDetail.objects.filter(
+                        organization=organization_id,
+                        branch=branch_id,
                         student_id=stdId,
-                        fee_applied_from__in=semester_list_filtered,
-                        is_active=True  # Only include active records
-                    )
+                        is_active=True
+                    ).filter(
+                        Q(fee_applied_from__in=semester_list_filtered) |
+                        Q(semester__in=semester_list_filtered)
+                    ).distinct()
+                    # Only include active records
 
                     if student_fee_details_records.exists():
 
                         for fee_record in student_fee_details_records:
+                            fee_amount = fee_record.element_amount or 0
+                            fee_paid = fee_record.paid_amount or 0
+
                             # Check element exist in element list or not
                             if fee_record.element_name not in elementList:
-                                elementList[fee_record.element_name] = fee_record.element_amount
+                                elementList[fee_record.element_name] = fee_amount
                             else:
-                                elementList[fee_record.element_name] += fee_record.element_amount
+                                elementList[fee_record.element_name] += fee_amount
 
                             # Check if element_name is "DISCOUNT"
                             if fee_record.element_name == "DISCOUNT":
-                                discountFees += fee_record.element_amount
+                                discountFees += fee_amount
 
                             if fee_record.element_name == "PREVIOUS YEAR FEES":
                                 continue
 
                             else:
-                                totalFees += fee_record.element_amount
-                                paidFees += fee_record.paid_amount
+                                totalFees += fee_amount
+                                paidFees += fee_paid
 
                             # Receipt Details Retrieval
                             try:
@@ -24242,57 +24424,80 @@ class StudentCertificateCreateAPIView(CreateAPIView):
     def create(self, request, *args, **kwargs):
         try:
             certificate_type = request.query_params.get('certificate_type')
+            if not certificate_type:
+                certificate_type = request.data.get('document_type', '') or ''
+            if not certificate_type:
+                return Response({'message': 'document_type is required'}, status=status.HTTP_400_BAD_REQUEST)
             if certificate_type == 'TC':
                 # serializer_class = StudentTransferCertificateSerializer
                 serializer = StudentTCSerializer(data = request.data)
                 if serializer.is_valid():
                     data = serializer.data
-                    student_instance = StudentRegistration.objects.get(id=data.get('student_id'))
-                    student_transfer_certificate_last_instance = StudentTransferCertificate.objects.last()
-                    if student_transfer_certificate_last_instance:
-                        last_tc_number = student_transfer_certificate_last_instance.tc_number
-                        last_tc_number = last_tc_number.split("/")[-1]
-                        tc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/tc/{int(last_tc_number)+1}"
-                    else:
-                        tc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/tc/{1}"
+                    student_instance = StudentRegistration.objects.get(id=data.get('student'))
+                    
+                    # Use document_no from request if provided, otherwise generate the old format
+                    tc_number = data.get('document_no') or request.data.get('document_no')
+                    if not tc_number:
+                        student_transfer_certificate_last_instance = StudentTransferCertificate.objects.last()
+                        if student_transfer_certificate_last_instance:
+                            last_tc_number = student_transfer_certificate_last_instance.tc_number
+                            last_tc_number = last_tc_number.split("/")[-1]
+                            tc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/tc/{int(last_tc_number)+1}"
+                        else:
+                            tc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/tc/{1}"
 
-                    student_transfer_certificate_instance = StudentTransferCertificate.objects.filter(student_id=data.get('student_id'))
+                    student_transfer_certificate_instance = StudentTransferCertificate.objects.filter(student_id=data.get('student'))
                     if student_transfer_certificate_instance:
                         return Response({"message":"transfer certificate already issued !!!"}, status=status.HTTP_200_OK)
                     else:
                         StudentTransferCertificate.objects.create(
                             organization=student_instance.organization,
                             branch=student_instance.branch,
-                            student = student_instance,
-                            tc_number = tc_number,
-                            issue_date = data.get('issue_date'),
-                            reason_of_leaving = data.get('reason_of_leaving'),
-                            student_behaviour = data.get('student_behaviour'),
-                            readmission_eligibility = data.get('readmission_eligibility'),
-                            certificate_status = data.get('certificate_status'),
-                            created_at = datetime.now(),
-                            created_by = 1
+                            student=student_instance,
+                            tc_number=tc_number,
+                            issue_date=data.get('issue_date') or None,
+                            date_of_leaving=data.get('date_of_leaving') or None,
+                            reason_of_leaving=data.get('reason_for_tc') or data.get('reason_of_leaving') or '',
+                            student_behaviour=data.get('general_conduct') or data.get('student_behaviour') or '',
+                            dob=data.get('dob') or '',
+                            date_of_admission=data.get('date_of_admission') or '',
+                            registration_number=data.get('registration_number') or '',
+                            nationality=data.get('nationality') or '',
+                            religion_caste=data.get('religion_caste') or '',
+                            permanent_address=data.get('permanent_address') or '',
+                            class_last_studied=data.get('class_last_studied') or '',
+                            general_conduct=data.get('general_conduct') or '',
+                            qualified_for_promotion=data.get('qualified_for_promotion') or '',
+                            reason_for_tc=data.get('reason_for_tc') or '',
+                            from_month=data.get('from_month') or '',
+                            to_month=data.get('to_month') or '',
+                            created_at=datetime.now(),
+                            created_by=1
                         )
                         return Response({"message":"transfer certificate created."}, status=status.HTTP_200_OK)
                 else:
-                    return Response({"message":serializer.error_messages},status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"message":serializer.errors},status=status.HTTP_400_BAD_REQUEST)
 
             elif certificate_type == 'CC':
                 # serializer_class = StudentCharacterCertificateSerializer
                 serializer = StudentCCSerializer(data = request.data)
                 if serializer.is_valid():
                     data = serializer.data
-                    student_instance = StudentRegistration.objects.get(id=data.get('student_id'))
-                    student_character_certificate_last_instance = StudentCharacterCertificate.objects.last()
-                    if student_character_certificate_last_instance:
-                        last_cc_number = student_character_certificate_last_instance.cc_number
-                        last_cc_number = last_cc_number.split("/")[-1]
-                        cc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/cc/{int(last_cc_number) + 1}"
-                    else:
-                        cc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/cc/{1}"
+                    student_instance = StudentRegistration.objects.get(id=data.get('student'))
+                    
+                    # Use document_no from request if provided, otherwise generate the old format
+                    cc_number = data.get('document_no') or request.data.get('document_no')
+                    if not cc_number:
+                        student_character_certificate_last_instance = StudentCharacterCertificate.objects.last()
+                        if student_character_certificate_last_instance:
+                            last_cc_number = student_character_certificate_last_instance.cc_number
+                            last_cc_number = last_cc_number.split("/")[-1]
+                            cc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/cc/{int(last_cc_number) + 1}"
+                        else:
+                            cc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/cc/{1}"
 
                     student_character_certificate_instance = StudentCharacterCertificate.objects.filter(
-                        student_id=data.get('student_id'))
+                        student_id=data.get('student'))
                     if student_character_certificate_instance:
                         return Response({"message":"character certificate already issued !!!"}, status=status.HTTP_200_OK)
                     else:
@@ -24301,33 +24506,38 @@ class StudentCertificateCreateAPIView(CreateAPIView):
                             branch=student_instance.branch,
                             student=student_instance,
                             cc_number=cc_number,
-                            issue_date=data.get('issue_date'),
-                            student_behaviour=data.get('student_behaviour'),
-                            certificate_status=data.get('certificate_status'),
+                            issue_date=data.get('issue_date') or None,
+                            from_month=data.get('from_month') or '',
+                            to_month=data.get('to_month') or '',
+                            father_name=data.get('father_name') or '',
                             created_at=datetime.now(),
                             created_by=1
                         )
                         return Response({"message":"success"}, status=status.HTTP_200_OK)
 
                 else:
-                    return Response({"message": serializer.error_messages}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
             elif certificate_type.upper() == 'BC':
                 # serializer_class = StudentBonafideCertificateSerializer
                 serializer = StudentBCSerializer(data = request.data)
                 if serializer.is_valid():
                     data = serializer.data
-                    student_instance = StudentRegistration.objects.get(id=data.get('student_id'))
-                    student_bonafide_certificate_last_instance = StudentBonafideCertificate.objects.last()
-                    if student_bonafide_certificate_last_instance:
-                        last_bc_number = student_bonafide_certificate_last_instance.bc_number
-                        last_bc_number = last_bc_number.split("/")[-1]
-                        bc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/bc/{int(last_bc_number) + 1}"
-                    else:
-                        bc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/bc/{1}"
+                    student_instance = StudentRegistration.objects.get(id=data.get('student'))
+                    
+                    # Use document_no from request if provided, otherwise generate the old format
+                    bc_number = data.get('document_no') or request.data.get('document_no')
+                    if not bc_number:
+                        student_bonafide_certificate_last_instance = StudentBonafideCertificate.objects.last()
+                        if student_bonafide_certificate_last_instance:
+                            last_bc_number = student_bonafide_certificate_last_instance.bc_number
+                            last_bc_number = last_bc_number.split("/")[-1]
+                            bc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/bc/{int(last_bc_number) + 1}"
+                        else:
+                            bc_number = f"{student_instance.organization.organization_code}/{student_instance.branch.branch_code}/{student_instance.batch.batch_code}/bc/{1}"
 
                     student_bonafide_certificate_instance = StudentBonafideCertificate.objects.filter(
-                        student_id=data.get('student_id'))
+                        student_id=data.get('student'))
 
                     if student_bonafide_certificate_instance:
                         return Response({"message":"bonafide certificate already issued !!!"}, status=status.HTTP_200_OK)
@@ -24337,15 +24547,36 @@ class StudentCertificateCreateAPIView(CreateAPIView):
                             branch=student_instance.branch,
                             student=student_instance,
                             bc_number=bc_number,
-                            issue_date=data.get('issue_date'),
-                            purpose = data.get('purpose'),
-                            certificate_status=data.get('certificate_status'),
+                            issue_date=data.get('issue_date') or None,
+                            purpose=data.get('purpose') or '',
+                            course_name=data.get('course_name') or '',
+                            academic_year=data.get('academic_year') or '',
+                            admission_quota=data.get('admission_quota') or '',
+                            current_year=data.get('current_year') or '',
+                            year_from=data.get('year_from') or '',
+                            year_to=data.get('year_to') or '',
+                            course_fee_y1=data.get('course_fee_y1') or '',
+                            course_fee_y2=data.get('course_fee_y2') or '',
+                            course_fee_y3=data.get('course_fee_y3') or '',
+                            course_fee_y4=data.get('course_fee_y4') or '',
+                            hostel_fee_y1=data.get('hostel_fee_y1') or '',
+                            hostel_fee_y2=data.get('hostel_fee_y2') or '',
+                            hostel_fee_y3=data.get('hostel_fee_y3') or '',
+                            hostel_fee_y4=data.get('hostel_fee_y4') or '',
+                            misc_fee_y1=data.get('misc_fee_y1') or '',
+                            misc_fee_y2=data.get('misc_fee_y2') or '',
+                            misc_fee_y3=data.get('misc_fee_y3') or '',
+                            misc_fee_y4=data.get('misc_fee_y4') or '',
+                            grand_total_y1=data.get('grand_total_y1') or '',
+                            grand_total_y2=data.get('grand_total_y2') or '',
+                            grand_total_y3=data.get('grand_total_y3') or '',
+                            grand_total_y4=data.get('grand_total_y4') or '',
                             created_at=datetime.now(),
                             created_by=1
                         )
                         return Response({"message": "success"}, status=status.HTTP_200_OK)
                 else:
-                    return Response({"message": serializer.error_messages}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
             elif certificate_type.upper() == 'FC':
             # serializer_class = StudentBonafideCertificateSerializer
@@ -24748,12 +24979,24 @@ class StudentCertificateUpdateView(generics.UpdateAPIView):
                 except StudentTransferCertificate.DoesNotExist:
                     return Response({"message":"record doesn't exist"},status=status.HTTP_204_NO_CONTENT)
 
-                instance.issue_date = data.get('issue_date')
-                instance.date_of_leaving = data.get('date_of_leaving')
-                instance.reason_of_leaving = data.get('reason_of_leaving')
-                instance.student_behaviour = data.get('student_behaviour')
-                instance.certificate_status = data.get('certificate_status')
-                instance.readmission_eligibility = data.get('readmission_eligibility')
+                instance.issue_date = data.get('issue_date') or None
+                instance.date_of_leaving = data.get('date_of_leaving') or None
+                instance.reason_of_leaving = data.get('reason_for_tc') or data.get('reason_of_leaving') or ''
+                instance.student_behaviour = data.get('general_conduct') or data.get('student_behaviour') or ''
+                instance.certificate_status = data.get('certificate_status') or instance.certificate_status
+                instance.readmission_eligibility = data.get('readmission_eligibility') or instance.readmission_eligibility
+                instance.dob = data.get('dob') or instance.dob
+                instance.date_of_admission = data.get('date_of_admission') or instance.date_of_admission
+                instance.registration_number = data.get('registration_number') or instance.registration_number
+                instance.nationality = data.get('nationality') or instance.nationality
+                instance.religion_caste = data.get('religion_caste') or instance.religion_caste
+                instance.permanent_address = data.get('permanent_address') or instance.permanent_address
+                instance.class_last_studied = data.get('class_last_studied') or instance.class_last_studied
+                instance.general_conduct = data.get('general_conduct') or instance.general_conduct
+                instance.qualified_for_promotion = data.get('qualified_for_promotion') or instance.qualified_for_promotion
+                instance.reason_for_tc = data.get('reason_for_tc') or instance.reason_for_tc
+                instance.from_month = data.get('from_month') or instance.from_month
+                instance.to_month = data.get('to_month') or instance.to_month
                 instance.updated_at = datetime.now()
                 instance.updated_by = 1
                 instance.save()
@@ -24766,9 +25009,12 @@ class StudentCertificateUpdateView(generics.UpdateAPIView):
                 except StudentCharacterCertificate.DoesNotExist:
                     return Response({"message":"record doesn't exist"},status=status.HTTP_204_NO_CONTENT)
 
-                instance.issue_date = data.get('issue_date')
-                instance.student_behaviour = data.get('student_behaviour')
-                instance.certificate_status = data.get('certificate_status')
+                instance.issue_date = data.get('issue_date') or None
+                instance.student_behaviour = data.get('student_behaviour') or instance.student_behaviour
+                instance.certificate_status = data.get('certificate_status') or instance.certificate_status
+                instance.from_month = data.get('from_month') or instance.from_month
+                instance.to_month = data.get('to_month') or instance.to_month
+                instance.father_name = data.get('father_name') or instance.father_name
                 instance.updated_at = datetime.now()
                 instance.updated_by = 1
                 instance.save()
@@ -24781,9 +25027,31 @@ class StudentCertificateUpdateView(generics.UpdateAPIView):
                 except StudentBonafideCertificate.DoesNotExist:
                     return Response({"message":"record doesn't exist"},status=status.HTTP_204_NO_CONTENT)
 
-                instance.issue_date = data.get('issue_date')
-                instance.purpose = data.get('purpose')
-                instance.certificate_status = data.get('certificate_status')
+                instance.issue_date = data.get('issue_date') or None
+                instance.purpose = data.get('purpose') or instance.purpose
+                instance.certificate_status = data.get('certificate_status') or instance.certificate_status
+                instance.course_name = data.get('course_name') or instance.course_name
+                instance.academic_year = data.get('academic_year') or instance.academic_year
+                instance.admission_quota = data.get('admission_quota') or instance.admission_quota
+                instance.current_year = data.get('current_year') or instance.current_year
+                instance.year_from = data.get('year_from') or instance.year_from
+                instance.year_to = data.get('year_to') or instance.year_to
+                instance.course_fee_y1 = data.get('course_fee_y1') or instance.course_fee_y1
+                instance.course_fee_y2 = data.get('course_fee_y2') or instance.course_fee_y2
+                instance.course_fee_y3 = data.get('course_fee_y3') or instance.course_fee_y3
+                instance.course_fee_y4 = data.get('course_fee_y4') or instance.course_fee_y4
+                instance.hostel_fee_y1 = data.get('hostel_fee_y1') or instance.hostel_fee_y1
+                instance.hostel_fee_y2 = data.get('hostel_fee_y2') or instance.hostel_fee_y2
+                instance.hostel_fee_y3 = data.get('hostel_fee_y3') or instance.hostel_fee_y3
+                instance.hostel_fee_y4 = data.get('hostel_fee_y4') or instance.hostel_fee_y4
+                instance.misc_fee_y1 = data.get('misc_fee_y1') or instance.misc_fee_y1
+                instance.misc_fee_y2 = data.get('misc_fee_y2') or instance.misc_fee_y2
+                instance.misc_fee_y3 = data.get('misc_fee_y3') or instance.misc_fee_y3
+                instance.misc_fee_y4 = data.get('misc_fee_y4') or instance.misc_fee_y4
+                instance.grand_total_y1 = data.get('grand_total_y1') or instance.grand_total_y1
+                instance.grand_total_y2 = data.get('grand_total_y2') or instance.grand_total_y2
+                instance.grand_total_y3 = data.get('grand_total_y3') or instance.grand_total_y3
+                instance.grand_total_y4 = data.get('grand_total_y4') or instance.grand_total_y4
                 instance.updated_at = datetime.now()
                 instance.updated_by = 1
                 instance.save()
@@ -24837,6 +25105,7 @@ class GetStudentCertificateDetailBasedOnDocumentTypeStudentId(APIView):
             branch_id = request.query_params.get('branch_id')
             student_id = request.query_params.get('student_id')
             document_type = request.query_params.get('document_type')
+            transfer_certificate_id = request.query_params.get('transfer_certificate_id')
 
             if not (organization_id and branch_id):
                 return Response({'message': 'organization_id and branch_id is  required!'},
@@ -24851,13 +25120,18 @@ class GetStudentCertificateDetailBasedOnDocumentTypeStudentId(APIView):
             if document_type.upper() == 'TC':
                 if student_id:
                     try:
-                        instance = StudentTransferCertificate.objects.get(student_id = student_id)
+                        if transfer_certificate_id and transfer_certificate_id != '0':
+                            instance = StudentTransferCertificate.objects.get(id=transfer_certificate_id, student_id=student_id)
+                        else:
+                            instance = StudentTransferCertificate.objects.filter(student_id=student_id).latest('created_at')
                     except StudentTransferCertificate.DoesNotExist:
                         return Response({"message":"record not found !!!"},status=status.HTTP_204_NO_CONTENT)
 
+                    student_name = " ".join(filter(None, [instance.student.first_name, instance.student.middle_name, instance.student.last_name]))
                     data = {
+                        "id": instance.id,
                         "student_id": instance.student.id,
-                        "student_name": instance.student.id,
+                        "student_name": student_name,
                         "organization_id": instance.student.organization.id,
                         "organization": instance.student.organization.organization_description,
                         "branch_id": instance.student.branch.id,
@@ -24873,26 +25147,45 @@ class GetStudentCertificateDetailBasedOnDocumentTypeStudentId(APIView):
                         "semester_id": instance.student.semester.id,
                         "semester": instance.student.semester.semester_description,
                         "section_id": instance.student.section.id,
-                        "section": instance.student.section.section_description,
+                        "section": instance.student.section.section_name,
                         "tc_number": instance.tc_number,
+                        "document_no": instance.tc_number,
                         "issue_date": instance.issue_date,
                         "date_of_leaving": instance.date_of_leaving,
-                        "reason_of_leaving":instance.reason_of_leaving,
-                        "student_behaviour":instance.student_behaviour,
-                        "certificate_status":instance.certificate_status,
-                        "readmission_eligibility":instance.readmission_eligibility,
+                        "reason_of_leaving": instance.reason_of_leaving,
+                        "student_behaviour": instance.student_behaviour,
+                        "certificate_status": instance.certificate_status,
+                        "readmission_eligibility": instance.readmission_eligibility,
+                        "dob": instance.dob,
+                        "date_of_admission": instance.date_of_admission,
+                        "registration_number": instance.registration_number,
+                        "nationality": instance.nationality,
+                        "religion_caste": instance.religion_caste,
+                        "permanent_address": instance.permanent_address,
+                        "class_last_studied": instance.class_last_studied,
+                        "general_conduct": instance.general_conduct,
+                        "qualified_for_promotion": instance.qualified_for_promotion,
+                        "reason_for_tc": instance.reason_for_tc,
+                        "from_month": instance.from_month,
+                        "to_month": instance.to_month,
                     }
                     return Response({"message":"success","data":data},status=status.HTTP_200_OK)
             elif document_type.upper() == 'CC':
                 if student_id:
                     try:
-                        instance = StudentCharacterCertificate.objects.get(student_id = student_id)
+                        if transfer_certificate_id and transfer_certificate_id != '0':
+                            instance = StudentCharacterCertificate.objects.get(id=transfer_certificate_id, student_id=student_id)
+                        else:
+                            instance = StudentCharacterCertificate.objects.filter(student_id=student_id).latest('created_at')
                     except StudentCharacterCertificate.DoesNotExist:
                         return Response({"message":"record not found !!!"},status=status.HTTP_204_NO_CONTENT)
 
+                    student_name = " ".join(filter(None, [instance.student.first_name, instance.student.middle_name, instance.student.last_name]))
                     data = {
+                        "id": instance.id,
                         "student_id": instance.student.id,
-                        "student_name": instance.student.id,
+                        "student_name": student_name,
+                        "father_name": instance.father_name or instance.student.father_name,
                         "organization_id": instance.student.organization.id,
                         "organization": instance.student.organization.organization_description,
                         "branch_id": instance.student.branch.id,
@@ -24908,20 +25201,30 @@ class GetStudentCertificateDetailBasedOnDocumentTypeStudentId(APIView):
                         "semester_id": instance.student.semester.id,
                         "semester": instance.student.semester.semester_description,
                         "section_id": instance.student.section.id,
-                        "section": instance.student.section.section_description,
-                        "cc_number":instance.cc_number
+                        "section": instance.student.section.section_name,
+                        "cc_number": instance.cc_number,
+                        "document_no": instance.cc_number,
+                        "issue_date": instance.issue_date,
+                        "certificate_status": instance.certificate_status,
+                        "from_month": instance.from_month,
+                        "to_month": instance.to_month,
                     }
                     return Response({"message":"success","data":data},status=status.HTTP_200_OK)
             elif document_type.upper() == 'BC':
                 if student_id:
                     try:
-                        instance = StudentBonafideCertificate.objects.get(student_id=student_id)
+                        if transfer_certificate_id and transfer_certificate_id != '0':
+                            instance = StudentBonafideCertificate.objects.get(id=transfer_certificate_id, student_id=student_id)
+                        else:
+                            instance = StudentBonafideCertificate.objects.filter(student_id=student_id).latest('created_at')
                     except StudentBonafideCertificate.DoesNotExist:
                         return Response({"message": "record not found !!!"}, status=status.HTTP_204_NO_CONTENT)
 
+                    student_name = " ".join(filter(None, [instance.student.first_name, instance.student.middle_name, instance.student.last_name]))
                     data = {
+                        "id": instance.id,
                         "student_id": instance.student.id,
-                        "student_name": instance.student.id,
+                        "student_name": student_name,
                         "organization_id": instance.student.organization.id,
                         "organization": instance.student.organization.organization_description,
                         "branch_id": instance.student.branch.id,
@@ -24937,8 +25240,33 @@ class GetStudentCertificateDetailBasedOnDocumentTypeStudentId(APIView):
                         "semester_id": instance.student.semester.id,
                         "semester": instance.student.semester.semester_description,
                         "section_id": instance.student.section.id,
-                        "section": instance.student.section.section_description,
-
+                        "section": instance.student.section.section_name,
+                        "bc_number": instance.bc_number,
+                        "document_no": instance.bc_number,
+                        "issue_date": instance.issue_date,
+                        "certificate_status": instance.certificate_status,
+                        "course_name": instance.course_name,
+                        "academic_year_str": instance.academic_year,
+                        "admission_quota": instance.admission_quota,
+                        "current_year": instance.current_year,
+                        "session": instance.year_from,
+                        "purpose": instance.purpose,
+                        "course_fee_y1": instance.course_fee_y1,
+                        "course_fee_y2": instance.course_fee_y2,
+                        "course_fee_y3": instance.course_fee_y3,
+                        "course_fee_y4": instance.course_fee_y4,
+                        "hostel_fee_y1": instance.hostel_fee_y1,
+                        "hostel_fee_y2": instance.hostel_fee_y2,
+                        "hostel_fee_y3": instance.hostel_fee_y3,
+                        "hostel_fee_y4": instance.hostel_fee_y4,
+                        "misc_fee_y1": instance.misc_fee_y1,
+                        "misc_fee_y2": instance.misc_fee_y2,
+                        "misc_fee_y3": instance.misc_fee_y3,
+                        "misc_fee_y4": instance.misc_fee_y4,
+                        "grand_total_y1": instance.grand_total_y1,
+                        "grand_total_y2": instance.grand_total_y2,
+                        "grand_total_y3": instance.grand_total_y3,
+                        "grand_total_y4": instance.grand_total_y4,
                     }
                     return Response({"message":"success","data":data},status=status.HTTP_200_OK)
             elif document_type.upper() == 'FC':
@@ -24966,7 +25294,7 @@ class GetStudentCertificateDetailBasedOnDocumentTypeStudentId(APIView):
                         "semester_id": instance.student.semester.id,
                         "semester": instance.student.semester.semester_description,
                         "section_id": instance.student.section.id,
-                        "section": instance.student.section.section_description,
+                        "section": instance.student.section.section_name,
 
                     }
                     return Response({"message":"success","data":data},status=status.HTTP_200_OK)
@@ -25037,146 +25365,135 @@ class StudentCertificatePDFGenerateAPIView(APIView):
                         instance = StudentTransferCertificate.objects.get(student_id = student_id)
                     except StudentTransferCertificate.DoesNotExist:
                         return Response({"message":"record not found !!!"},status=status.HTTP_204_NO_CONTENT)
-                    if instance.certificate_status.upper() == 'APPROVED':
-                        data = {
-                            "student_id": instance.student.id,
-                            "student_name": student_name,
-                            "document_type": "TC",
-                            "organization_id": instance.student.organization.id,
-                            "organization": instance.student.organization.organization_description,
-                            "branch_id": instance.student.branch.id,
-                            "branch": instance.student.branch.branch_name,
-                            "batch_id": instance.student.batch.id,
-                            "batch": instance.student.batch.batch_code,
-                            "course_id": instance.student.course.id,
-                            "course": instance.student.course.course_name,
-                            "department_id": instance.student.department.id,
-                            "department": instance.student.department.department_description,
-                            "academic_year_id": instance.student.academic_year.id,
-                            "academic_year": instance.student.academic_year.academic_year_code,
-                            "semester_id": instance.student.semester.id,
-                            "semester": instance.student.semester.semester_description,
-                            "section_id": instance.student.section.id,
-                            "section": instance.student.section.section_name,
-                            "tc_number": instance.tc_number,
-                            "issue_date": instance.issue_date,
-                            "date_of_leaving": instance.date_of_leaving,
-                            "reason_of_leaving":instance.reason_of_leaving,
-                            "student_behaviour":instance.student_behaviour,
-                            "certificate_status":instance.certificate_status,
-                            "readmission_eligibility":instance.readmission_eligibility,
-                        }
-                        return Response({"message":"success","data":data},status=status.HTTP_200_OK)
-                    else:
-                        return Response({"message": "Certificate is not approved !!!"},
-                                        status=status.HTTP_400_BAD_REQUEST)
+                    # Allow PDF generation for all certificates (no approval required)
+                    data = {
+                        "student_id": instance.student.id,
+                        "student_name": student_name,
+                        "document_type": "TC",
+                        "organization_id": instance.student.organization.id,
+                        "organization": instance.student.organization.organization_description,
+                        "branch_id": instance.student.branch.id,
+                        "branch": instance.student.branch.branch_name,
+                        "batch_id": instance.student.batch.id,
+                        "batch": instance.student.batch.batch_code,
+                        "course_id": instance.student.course.id,
+                        "course": instance.student.course.course_name,
+                        "department_id": instance.student.department.id,
+                        "department": instance.student.department.department_description,
+                        "academic_year_id": instance.student.academic_year.id,
+                        "academic_year": instance.student.academic_year.academic_year_code,
+                        "semester_id": instance.student.semester.id,
+                        "semester": instance.student.semester.semester_description,
+                        "section_id": instance.student.section.id,
+                        "section": instance.student.section.section_name,
+                        "tc_number": instance.tc_number,
+                        "issue_date": instance.issue_date,
+                        "date_of_leaving": instance.date_of_leaving,
+                        "reason_of_leaving":instance.reason_of_leaving,
+                        "student_behaviour":instance.student_behaviour,
+                        "certificate_status":instance.certificate_status,
+                        "readmission_eligibility":instance.readmission_eligibility,
+                    }
+                    return Response({"message":"success","data":data},status=status.HTTP_200_OK)
             elif document_type.upper() == 'CC':
                 if student_id:
                     try:
                         instance = StudentCharacterCertificate.objects.get(student_id = student_id)
                     except StudentCharacterCertificate.DoesNotExist:
                         return Response({"message":"record not found !!!"},status=status.HTTP_204_NO_CONTENT)
-                    if instance.certificate_status.upper() == 'APPROVED':
-                        data = {
-                            "student_id": instance.student.id,
-                            "student_name": instance.student.id,
-                            "document_type": "CC",
-                            "organization_id": instance.student.organization.id,
-                            "organization": instance.student.organization.organization_description,
-                            "branch_id": instance.student.branch.id,
-                            "branch": instance.student.branch.branch_name,
-                            "batch_id": instance.student.batch.id,
-                            "batch": instance.student.batch.batch_code,
-                            "course_id": instance.student.course.id,
-                            "course": instance.student.course.course_name,
-                            "department_id": instance.student.department.id,
-                            "department": instance.student.department.department_description,
-                            "academic_year_id": instance.student.academic_year.id,
-                            "academic_year": instance.student.academic_year.academic_year_code,
-                            "semester_id": instance.student.semester.id,
-                            "semester": instance.student.semester.semester_description,
-                            "section_id": instance.student.section.id,
-                            "section": instance.student.section.section_name,
-                            "cc_number":instance.cc_number,
-                            "issue_date": instance.issue_date,
-                            "student_behaviour": instance.student_behaviour,
-                            "certificate_status": instance.certificate_status
-                        }
-                        return Response({"message":"success","data":data},status=status.HTTP_200_OK)
-                    else:
-                        return Response({"message": "Certificate is not approved !!!"},status=status.HTTP_400_BAD_REQUEST)
+                    # Allow PDF generation for all certificates (no approval required)
+                    data = {
+                        "student_id": instance.student.id,
+                        "student_name": instance.student.id,
+                        "document_type": "CC",
+                        "organization_id": instance.student.organization.id,
+                        "organization": instance.student.organization.organization_description,
+                        "branch_id": instance.student.branch.id,
+                        "branch": instance.student.branch.branch_name,
+                        "batch_id": instance.student.batch.id,
+                        "batch": instance.student.batch.batch_code,
+                        "course_id": instance.student.course.id,
+                        "course": instance.student.course.course_name,
+                        "department_id": instance.student.department.id,
+                        "department": instance.student.department.department_description,
+                        "academic_year_id": instance.student.academic_year.id,
+                        "academic_year": instance.student.academic_year.academic_year_code,
+                        "semester_id": instance.student.semester.id,
+                        "semester": instance.student.semester.semester_description,
+                        "section_id": instance.student.section.id,
+                        "section": instance.student.section.section_name,
+                        "cc_number":instance.cc_number,
+                        "issue_date": instance.issue_date,
+                        "student_behaviour": instance.student_behaviour,
+                        "certificate_status": instance.certificate_status
+                    }
+                    return Response({"message":"success","data":data},status=status.HTTP_200_OK)
             elif document_type.upper() == 'BC':
                 if student_id:
                     try:
                         instance = StudentBonafideCertificate.objects.get(student_id=student_id)
                     except StudentBonafideCertificate.DoesNotExist:
                         return Response({"message": "record not found !!!"}, status=status.HTTP_204_NO_CONTENT)
-                    if instance.certificate_status.upper() == 'APPROVED':
-                        data = {
-                            "student_id": instance.student.id,
-                            "student_name": instance.student.id,
-                            "document_type": "BC",
-                            "organization_id": instance.student.organization.id,
-                            "organization": instance.student.organization.organization_description,
-                            "branch_id": instance.student.branch.id,
-                            "branch": instance.student.branch.branch_name,
-                            "batch_id": instance.student.batch.id,
-                            "batch": instance.student.batch.batch_code,
-                            "course_id": instance.student.course.id,
-                            "course": instance.student.course.course_name,
-                            "department_id": instance.student.department.id,
-                            "department": instance.student.department.department_description,
-                            "academic_year_id": instance.student.academic_year.id,
-                            "academic_year": instance.student.academic_year.academic_year_code,
-                            "semester_id": instance.student.semester.id,
-                            "semester": instance.student.semester.semester_description,
-                            "section_id": instance.student.section.id,
-                            "section": instance.student.section.section_name,
-                            "bc_number": instance.bc_number,
-                            "issue_date": instance.issue_date,
-                            "purpose": instance.purpose,
-                            "certificate_status": instance.certificate_status
-                        }
-                        return Response({"message":"success","data":data},status=status.HTTP_200_OK)
-                    else:
-                        return Response({"message": "Certificate is not approved !!!"},
-                                        status=status.HTTP_400_BAD_REQUEST)
+                    # Allow PDF generation for all certificates (no approval required)
+                    data = {
+                        "student_id": instance.student.id,
+                        "student_name": instance.student.id,
+                        "document_type": "BC",
+                        "organization_id": instance.student.organization.id,
+                        "organization": instance.student.organization.organization_description,
+                        "branch_id": instance.student.branch.id,
+                        "branch": instance.student.branch.branch_name,
+                        "batch_id": instance.student.batch.id,
+                        "batch": instance.student.batch.batch_code,
+                        "course_id": instance.student.course.id,
+                        "course": instance.student.course.course_name,
+                        "department_id": instance.student.department.id,
+                        "department": instance.student.department.department_description,
+                        "academic_year_id": instance.student.academic_year.id,
+                        "academic_year": instance.student.academic_year.academic_year_code,
+                        "semester_id": instance.student.semester.id,
+                        "semester": instance.student.semester.semester_description,
+                        "section_id": instance.student.section.id,
+                        "section": instance.student.section.section_name,
+                        "bc_number": instance.bc_number,
+                        "issue_date": instance.issue_date,
+                        "purpose": instance.purpose,
+                        "certificate_status": instance.certificate_status
+                    }
+                    return Response({"message":"success","data":data},status=status.HTTP_200_OK)
             elif document_type.upper() == 'FC':
                 if student_id:
                     try:
                         instance = StudentFeeCertificate.objects.get(student_id=student_id)
                     except StudentFeeCertificate.DoesNotExist:
                         return Response({"message": "record not found !!!"}, status=status.HTTP_204_NO_CONTENT)
-                    if instance.certificate_status.upper() == 'APPROVED':
-                        data = {
-                            "student_id": instance.student.id,
-                            "student_name": instance.student.id,
-                            "document_type": "FC",
-                            "organization_id": instance.student.organization.id,
-                            "organization": instance.student.organization.organization_description,
-                            "branch_id": instance.student.branch.id,
-                            "branch": instance.student.branch.branch_name,
-                            "batch_id": instance.student.batch.id,
-                            "batch": instance.student.batch.batch_code,
-                            "course_id": instance.student.course.id,
-                            "course": instance.student.course.course_name,
-                            "department_id": instance.student.department.id,
-                            "department": instance.student.department.department_description,
-                            "academic_year_id": instance.student.academic_year.id,
-                            "academic_year": instance.student.academic_year.academic_year_code,
-                            "semester_id": instance.student.semester.id,
-                            "semester": instance.student.semester.semester_description,
-                            "section_id": instance.student.section.id,
-                            "section": instance.student.section.section_name,
-                            "fc_number": instance.fc_number,
-                            "issue_date": instance.issue_date,
-                            "purpose": instance.purpose,
-                            "certificate_status": instance.certificate_status
-                        }
-                        return Response({"message":"success","data":data},status=status.HTTP_200_OK)
-                    else:
-                        return Response({"message": "Certificate is not approved !!!"},
-                                        status=status.HTTP_400_BAD_REQUEST)
+                    # Allow PDF generation for all certificates (no approval required)
+                    data = {
+                        "student_id": instance.student.id,
+                        "student_name": instance.student.id,
+                        "document_type": "FC",
+                        "organization_id": instance.student.organization.id,
+                        "organization": instance.student.organization.organization_description,
+                        "branch_id": instance.student.branch.id,
+                        "branch": instance.student.branch.branch_name,
+                        "batch_id": instance.student.batch.id,
+                        "batch": instance.student.batch.batch_code,
+                        "course_id": instance.student.course.id,
+                        "course": instance.student.course.course_name,
+                        "department_id": instance.student.department.id,
+                        "department": instance.student.department.department_description,
+                        "academic_year_id": instance.student.academic_year.id,
+                        "academic_year": instance.student.academic_year.academic_year_code,
+                        "semester_id": instance.student.semester.id,
+                        "semester": instance.student.semester.semester_description,
+                        "section_id": instance.student.section.id,
+                        "section": instance.student.section.section_name,
+                        "fc_number": instance.fc_number,
+                        "issue_date": instance.issue_date,
+                        "purpose": instance.purpose,
+                        "certificate_status": instance.certificate_status
+                    }
+                    return Response({"message":"success","data":data},status=status.HTTP_200_OK)
             else:
                 return Response({"message":"invalid document_type"},status=status.HTTP_204_NO_CONTENT)
 
@@ -25460,50 +25777,89 @@ class StudentAttendanceSearchListAPIView(ListAPIView):
             to_date = serializers.validated_data.get('to_date')
             student_id = serializers.validated_data.get('student_id')
 
-            if organization_id and branch_id:
-                try:
-                    studentAttendanceList = Attendance.objects.filter(organization=organization_id, branch=branch_id,
-                                                                      is_active=True).order_by('-updated_at')
-                except Attendance.DoesNotExist:
-                    return Response({"message": "student attendance record not found !!!"},
-                                    status=status.HTTP_404_NOT_FOUND)
-            else:
+            if not (organization_id and branch_id):
                 return Response({"message": "organization_id and branch_id is required !!!"},
                                 status=status.HTTP_404_NOT_FOUND)
 
+            # Build the current active class roster first, then overlay saved attendance.
+            studentRecord = StudentCourse.objects.filter(
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True,
+                student__is_active=True
+            ).exclude(student__status__iexact='INACTIVE').select_related(
+                'organization', 'branch', 'batch', 'course', 'department',
+                'academic_year', 'semester', 'section', 'student'
+            ).order_by('student__first_name', 'student__middle_name', 'student__last_name')
+
             if batch_id:
-                studentAttendanceList = studentAttendanceList.filter(batch=batch_id)
+                studentRecord = studentRecord.filter(batch=batch_id)
 
             if course_id:
-                studentAttendanceList = studentAttendanceList.filter(course=course_id)
+                studentRecord = studentRecord.filter(course=course_id)
 
             if department_id:
-                studentAttendanceList = studentAttendanceList.filter(department=department_id)
+                studentRecord = studentRecord.filter(department=department_id)
 
             if academic_year_id:
-                studentAttendanceList = studentAttendanceList.filter(academic_year=academic_year_id)
+                studentRecord = studentRecord.filter(academic_year=academic_year_id)
 
             if semester_id:
-                studentAttendanceList = studentAttendanceList.filter(semester=semester_id)
+                studentRecord = studentRecord.filter(semester=semester_id)
 
             if section_id:
-                studentAttendanceList = studentAttendanceList.filter(section=section_id)
-
-            if date:
-                studentAttendanceList = studentAttendanceList.filter(attendance_date=date)
-
-            if from_date and not to_date:
-                studentAttendanceList = studentAttendanceList.filter(attendance_date__range=(from_date,datetime.now()))
-            if not from_date and to_date:
-                studentAttendanceList = studentAttendanceList.filter(attendance_date__lte=to_date)
-
-            if from_date and to_date:
-                studentAttendanceList = studentAttendanceList.filter(attendance_date__range=(from_date,to_date))
+                studentRecord = studentRecord.filter(section=section_id)
 
             if student_id:
-                studentAttendanceList =  studentAttendanceList.filter(student_id=student_id)
+                studentRecord = studentRecord.filter(student_id=student_id)
 
-            student_attendance_first_lecture = studentAttendanceList.filter(lecture_period=1)
+            if not studentRecord.exists():
+                return Response({'message': 'No Record Found'}, status=status.HTTP_404_NOT_FOUND)
+
+            attendanceBaseList = Attendance.objects.filter(
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            ).select_related(
+                'organization', 'branch', 'batch', 'course', 'department',
+                'academic_year', 'semester', 'section', 'student'
+            )
+
+            if batch_id:
+                attendanceBaseList = attendanceBaseList.filter(batch=batch_id)
+
+            if course_id:
+                attendanceBaseList = attendanceBaseList.filter(course=course_id)
+
+            if department_id:
+                attendanceBaseList = attendanceBaseList.filter(department=department_id)
+
+            if academic_year_id:
+                attendanceBaseList = attendanceBaseList.filter(academic_year=academic_year_id)
+
+            if semester_id:
+                attendanceBaseList = attendanceBaseList.filter(semester=semester_id)
+
+            if section_id:
+                attendanceBaseList = attendanceBaseList.filter(section=section_id)
+
+            if date:
+                attendanceBaseList = attendanceBaseList.filter(attendance_date=date)
+
+            if from_date and not to_date:
+                attendanceBaseList = attendanceBaseList.filter(attendance_date__range=(from_date, datetime.now()))
+            if not from_date and to_date:
+                attendanceBaseList = attendanceBaseList.filter(attendance_date__lte=to_date)
+
+            if from_date and to_date:
+                attendanceBaseList = attendanceBaseList.filter(attendance_date__range=(from_date, to_date))
+
+            if student_id:
+                attendanceBaseList = attendanceBaseList.filter(student_id=student_id)
+
+            student_attendance_first_lecture = attendanceBaseList.filter(lecture_period=1)
+
+            studentAttendanceList = attendanceBaseList
 
             if lecture_period_id:
                 studentAttendanceList = studentAttendanceList.filter(lecture_period=lecture_period_id)
@@ -25548,219 +25904,52 @@ class StudentAttendanceSearchListAPIView(ListAPIView):
             # except:
             #     AttendanceRecord=[]
 
+            attendance_by_student = {item.student_id: item for item in studentAttendanceList}
+            first_lecture_sms_by_student = {item.student_id: item.is_sms_sent for item in student_attendance_first_lecture}
+
             ResponseData = []
+            for record in studentRecord:
+                attendance_item = attendance_by_student.get(record.student_id)
+                student_name = " ".join(filter(None, [
+                    record.student.first_name,
+                    record.student.middle_name,
+                    record.student.last_name
+                ]))
 
-            if studentAttendanceList:
-                if student_attendance_first_lecture:
-                    for item,first_item in zip(studentAttendanceList,student_attendance_first_lecture):
+                data = {
+                    "id": attendance_item.id if attendance_item else None,
+                    "organization_id": record.organization.id,
+                    "organization": record.organization.organization_code,
+                    "branch_id": record.branch.id,
+                    "branch": record.branch.branch_name,
+                    "batch_id": record.batch.id,
+                    "batch": record.batch.batch_code,
+                    "course_id": record.course.id,
+                    "course_name": record.course.course_name,
+                    "department_id": record.department.id,
+                    "department": record.department.department_description,
+                    "academic_year_id": record.academic_year.id,
+                    "academic_year": record.academic_year.academic_year_code,
+                    "semester_id": record.semester.id,
+                    "semester": record.semester.semester_description,
+                    "section_id": record.section.id,
+                    "section_name": record.section.section_name,
+                    "attendance_date": attendance_item.attendance_date if attendance_item else date,
+                    "student_id": record.student.id,
+                    "registration_no": record.student.registration_no,
+                    "student_name": student_name,
+                    "college_admission_no": record.student.college_admission_no,
+                    "barcode": record.student.barcode,
+                    "primary_guardian": record.student.primary_guardian,
+                    "enrollment_no": record.enrollment_no,
+                    "present": attendance_item.present if attendance_item else '',
+                    "remarks": attendance_item.remarks if attendance_item else "",
+                    "is_sms_sent": first_lecture_sms_by_student.get(record.student_id, False),
+                    "father_contact_number": attendance_item.father_contact_number if attendance_item and attendance_item.father_contact_number else record.student.father_contact_number,
+                    "mother_contact_number": attendance_item.mother_contact_number if attendance_item and attendance_item.mother_contact_number else record.student.mother_contact_number
+                }
 
-                        try:
-
-                            StudentCourseInstance = StudentCourse.objects.get(student=item.student.id, is_active=True)
-                        except:
-                            return Response({'message': 'Student course record not found'},
-                                            status=status.HTTP_404_NOT_FOUND)
-
-                        data = {
-                            "id": item.id,
-                            "organization_id": item.organization.id,
-                            "organization": item.organization.organization_code,
-                            "branch_id": item.branch.id,
-                            "branch": item.branch.branch_name,
-                            "batch_id": item.batch.id,
-                            "batch": item.batch.batch_code,
-                            "course_id": item.course.id,
-                            "course_name": item.course.course_name,
-                            "department_id": item.department.id,
-                            "department": item.department.department_description,
-                            "academic_year_id": item.academic_year.id,
-                            "academic_year": item.academic_year.academic_year_code,
-                            "semester_id": item.semester.id,
-                            "semester": item.semester.semester_description,
-                            "section_id": item.section.id,
-                            "section_name": item.section.section_name,
-                            # "class_period_id": item.class_period_id.id,
-                            # "class_period": item.class_period_id.period_name,
-                            # "subject_id": item.subject_id.id,
-                            # "subjectname": item.subject_id.subject_code,
-                            # "teacher_id": item.teacher_id.id,
-                            # "teachername": item.teacher_id.first_name,
-                            "attendance_date": item.attendance_date,
-                            "student_id": item.student.id,
-                            "registration_no": item.student.registration_no,
-                            "student_name": f"{item.student.first_name} {item.student.last_name}",
-                            "college_admission_no": item.student.college_admission_no,
-                            "barcode": item.student.barcode,
-                            "primary_guardian": item.student.primary_guardian,
-                            "enrollment_no": StudentCourseInstance.enrollment_no,
-                            "present": item.present,
-                            "remarks": item.remarks,
-                            "is_sms_sent": first_item.is_sms_sent if first_item else False,
-                            # "is_sms_sent": item.is_sms_sent,
-                            "father_contact_number": item.father_contact_number,  # this data i fetch on attendance
-                            "mother_contact_number": item.mother_contact_number
-                        }
-
-                        ResponseData.append(data)
-                else:
-                    for item in studentAttendanceList:
-
-                        try:
-
-                            StudentCourseInstance = StudentCourse.objects.get(student=item.student.id, is_active=True)
-                        except:
-                            return Response({'message': 'Student course record not found'},
-                                            status=status.HTTP_404_NOT_FOUND)
-
-                        data = {
-                            "id": item.id,
-                            "organization_id": item.organization.id,
-                            "organization": item.organization.organization_code,
-                            "branch_id": item.branch.id,
-                            "branch": item.branch.branch_name,
-                            "batch_id": item.batch.id,
-                            "batch": item.batch.batch_code,
-                            "course_id": item.course.id,
-                            "course_name": item.course.course_name,
-                            "department_id": item.department.id,
-                            "department": item.department.department_description,
-                            "academic_year_id": item.academic_year.id,
-                            "academic_year": item.academic_year.academic_year_code,
-                            "semester_id": item.semester.id,
-                            "semester": item.semester.semester_description,
-                            "section_id": item.section.id,
-                            "section_name": item.section.section_name,
-                            # "class_period_id": item.class_period_id.id,
-                            # "class_period": item.class_period_id.period_name,
-                            # "subject_id": item.subject_id.id,
-                            # "subjectname": item.subject_id.subject_code,
-                            # "teacher_id": item.teacher_id.id,
-                            # "teachername": item.teacher_id.first_name,
-                            "attendance_date": item.attendance_date,
-                            "student_id": item.student.id,
-                            "registration_no": item.student.registration_no,
-                            "student_name": " ".join(filter(None, [item.student.first_name, item.student.last_name])),
-                            "college_admission_no": item.student.college_admission_no,
-                            "barcode": item.student.barcode,
-                            "primary_guardian": item.student.primary_guardian,
-                            "enrollment_no": StudentCourseInstance.enrollment_no,
-                            "present": item.present,
-                            "remarks": item.remarks,
-                            "is_sms_sent": False,
-                            # "is_sms_sent": item.is_sms_sent,
-                            "father_contact_number": item.father_contact_number,  # this data i fetch on attendance
-                            "mother_contact_number": item.mother_contact_number
-                        }
-
-                        ResponseData.append(data)
-            else:
-
-                try:
-                    studentRecord = StudentCourse.objects.filter(academic_year=academic_year_id, course=course_id,
-                                                                 section=section_id, is_active=True)
-                except:
-                    return Response({'message': 'Record Not Found!'}, status=status.HTTP_404_NOT_FOUND)
-
-                if studentRecord:
-                    if student_attendance_first_lecture:
-                        for record,first_item in zip(studentRecord,student_attendance_first_lecture):
-                            academicyearInstance = AcademicYear.objects.get(id=academic_year_id, is_active=True)
-
-                            courseInstance = Course.objects.get(id=course_id, is_active=True)
-
-                            sectionInstance = Section.objects.get(id=section_id, is_active=True)
-
-                            data = {
-                                "organization_id": record.organization.id,
-                                "organization": record.organization.organization_code,
-                                "branch_id": record.branch.id,
-                                "branch": record.branch.branch_name,
-                                "batch_id": record.batch.id,
-                                "batch": record.batch.batch_code,
-                                "course_id": record.course.id,
-                                "course_name": record.course.course_name,
-                                "department_id": record.department.id,
-                                "department": record.department.department_description,
-                                "academic_year_id": record.academic_year.id,
-                                "academic_year": record.academic_year.academic_year_code,
-                                "semester_id": record.semester.id,
-                                "semester": record.semester.semester_description,
-                                "section_id": record.section.id,
-                                "section_name": record.section.section_name,
-                                "student_id": record.student.id,
-                                "student_name": " ".join(filter(None, [record.student.first_name, record.student.last_name])),
-                                "college_admission_no": record.student.college_admission_no,
-                                "barcode": record.student.barcode,
-                                "primary_guardian": record.student.primary_guardian,
-                                "enrollment_no": record.enrollment_no,
-                                "registration_no": record.student.registration_no,
-                                "present": '',
-                                # "present": 'P',
-                                "remarks": "",
-                                "father_contact_number": record.student.father_contact_number,
-                                "mother_contact_number": record.student.mother_contact_number,
-                                "attendance_date": date,
-                                "is_sms_sent": first_item.is_sms_sent if first_item else False
-                                # "academic_year_id": academic_year_id,
-                                # "academicyear": academicyearInstance.academic_year_code,
-                                # "course_id": courseInstance.id,
-                                # "course_name": courseInstance.course_name,
-                                # "section_id": sectionInstance.id,
-                                # "section_name": sectionInstance.section_name
-                            }
-
-                            ResponseData.append(data)
-                    else:
-                        for record in studentRecord:
-                            academicyearInstance = AcademicYear.objects.get(id=academic_year_id, is_active=True)
-
-                            courseInstance = Course.objects.get(id=course_id, is_active=True)
-
-                            sectionInstance = Section.objects.get(id=section_id, is_active=True)
-
-                            data = {
-                                "organization_id": record.organization.id,
-                                "organization": record.organization.organization_code,
-                                "branch_id": record.branch.id,
-                                "branch": record.branch.branch_name,
-                                "batch_id": record.batch.id,
-                                "batch": record.batch.batch_code,
-                                "course_id": record.course.id,
-                                "course_name": record.course.course_name,
-                                "department_id": record.department.id,
-                                "department": record.department.department_description,
-                                "academic_year_id": record.academic_year.id,
-                                "academic_year": record.academic_year.academic_year_code,
-                                "semester_id": record.semester.id,
-                                "semester": record.semester.semester_description,
-                                "section_id": record.section.id,
-                                "section_name": record.section.section_name,
-                                "student_id": record.student.id,
-                                "student_name": " ".join(filter(None, [record.student.first_name, record.student.last_name])),
-                                "college_admission_no": record.student.college_admission_no,
-                                "barcode": record.student.barcode,
-                                "primary_guardian": record.student.primary_guardian,
-                                "enrollment_no": record.enrollment_no,
-                                "registration_no": record.student.registration_no,
-                                "present": '',
-                                # "present": 'P',
-                                "remarks": "",
-                                "father_contact_number": record.student.father_contact_number,
-                                "mother_contact_number": record.student.mother_contact_number,
-                                "attendance_date": date,
-                                "is_sms_sent": False
-                                # "academic_year_id": academic_year_id,
-                                # "academicyear": academicyearInstance.academic_year_code,
-                                # "course_id": courseInstance.id,
-                                # "course_name": courseInstance.course_name,
-                                # "section_id": sectionInstance.id,
-                                # "section_name": sectionInstance.section_name
-                            }
-
-                            ResponseData.append(data)
-
-                else:
-                    return Response({'message': 'No Record Found'}, status=status.HTTP_204_NO_CONTENT)
+                ResponseData.append(data)
 
             return Response({'message': 'success', 'data': ResponseData}, status=status.HTTP_200_OK)
 
@@ -27532,7 +27721,7 @@ class VerifyOTPView(APIView):
                     otp_obj = PasswordResetOTP.objects.filter(
                         user_login=user_login_instance, otp=otp, is_verified=False
                     ).latest("created_at")
-                except (UserLogin.DoesNotExist, PasswordResetOTP.DoesNotExist):
+                except ObjectDoesNotExist:
                     return Response({"error": "Invalid OTP"}, status=400)
                 if otp_obj.is_expired():
                     return Response({"error": "OTP expired"}, status=400)
@@ -27551,7 +27740,7 @@ class VerifyOTPView(APIView):
                     otp_obj = PasswordResetOTP.objects.filter(
                         user_login=user_login_instance, otp=otp, is_verified=False
                     ).latest("created_at")
-                except (UserLogin.DoesNotExist, PasswordResetOTP.DoesNotExist):
+                except ObjectDoesNotExist:
                     return Response({"error": "Invalid OTP"}, status=400)
 
                 if otp_obj.is_expired():

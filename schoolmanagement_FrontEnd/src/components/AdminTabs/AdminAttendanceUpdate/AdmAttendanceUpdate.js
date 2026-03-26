@@ -106,52 +106,6 @@ const AdmAttendanceEntry = () => {
     semesterId
   );
 
-  useEffect(() => {
-    if (!formData.semester) {
-      setFormData((prev) => {
-        if (!prev.addmitted_section) {
-          return prev;
-        }
-        return {
-          ...prev,
-          addmitted_section: "",
-          feeappfrom: "",
-          subject: "",
-          teacher: "",
-        };
-      });
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(formData.addmitted_section)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setFormData((prev) => {
-      if (Number(prev.addmitted_section) === Number(nextSectionId)) {
-        return prev;
-      }
-      return {
-        ...prev,
-        addmitted_section: nextSectionId,
-        feeappfrom: "",
-        subject: "",
-        teacher: "",
-      };
-    });
-
-    localStorage.setItem("selectedStudentSectionId", String(nextSectionId));
-  }, [formData.semester, SectionList]);
-
   // ✅ Fetch Lecture List
   const {
     LectureList,
@@ -374,13 +328,44 @@ const AdmAttendanceEntry = () => {
       const result = await response.json();
       console.log("📥 Save Response:", result);
 
-      if (response.ok && result.message === "Success") {
-        alert("✅ Attendance saved successfully!");
-      } else {
-        alert(
-          `❌ Failed to save attendance: ${result.message || "Unknown error."}`
-        );
+    if (response.ok && result.message === "Success") {
+      alert("✅ Attendance saved successfully!");
+
+      // Clear attendance table
+      setAttendanceData([]);
+
+      // Reset attendance status
+      setAttendanceStatus("");
+
+      // Disable edit mode
+      setIsEditing(false);
+
+      // Clear form fields
+      setFormData({
+        batch: "",
+        course: "",
+        branch: "",
+        academic_year: "",
+        semester: "",
+        addmitted_section: "",
+        feeappfrom: "",
+        subject: "",
+        teacher: "",
+      });
+
+      // Reset date to today
+      const today = new Date().toISOString().split("T")[0];
+      setAssignmentDate(today);
+
+      // Clear date input
+      if (dateRef.current) {
+        dateRef.current.value = today;
       }
+    } else {
+      alert(
+        `❌ Failed to save attendance: ${result.message || "Unknown error."}`,
+      );
+    }
     } catch (error) {
       console.error("❌ Error while saving attendance:", error);
       alert("Error while saving attendance: " + error.message);
@@ -952,10 +937,6 @@ const AdmAttendanceEntry = () => {
                           setFormData((prev) => ({
                             ...prev,
                             semester: opt?.value || "",
-                            addmitted_section: "",
-                            feeappfrom: "",
-                            subject: "",
-                            teacher: "",
                           }))
                         }
                         placeholder={
@@ -975,7 +956,6 @@ const AdmAttendanceEntry = () => {
                       </label>
                       <Select
                         className="detail"
-                        isDisabled={true}
                         isLoading={loadingSections}
                         options={
                           SectionList?.map((s) => ({
@@ -1001,17 +981,19 @@ const AdmAttendanceEntry = () => {
                               }
                             : null
                         }
-                        onChange={() => {}}
+                        onChange={(opt) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            addmitted_section: opt?.value || "",
+                          }))
+                        }
                         placeholder={
                           loadingSections
                             ? "Loading Sections..."
                             : errorSections
                             ? "Error loading sections"
-                            : formData.semester
-                            ? "Section auto selected"
-                            : "Select Semester first"
+                            : "Select Section"
                         }
-                        isClearable={false}
                       />
                     </div>
 
@@ -1332,7 +1314,7 @@ const AdmAttendanceEntry = () => {
                         <th>Admission No</th>
                         <th>Student Name</th>
                         <th>Mark Attendance</th>
-                        {/* <th>BarCode</th> */}
+                        <th>Roll no</th>
                         <th>Primary Guardian</th>
                         <th>Father Mobile No</th>
                         <th>Mother Mobile No</th>
@@ -1377,7 +1359,7 @@ const AdmAttendanceEntry = () => {
                                 <option value="A">Absent</option>
                               </select>
                             </td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
                             <td>{student.primary_guardian}</td>
                             <td>
                               <input

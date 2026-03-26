@@ -442,7 +442,7 @@
 //                         type="text"
 //                         id="barcode"
 //                         className="form-control"
-//                         placeholder="Enter barcode"
+//                         placeholder="Enter Roll No"
 //                         name="barcode"
 //                         value={formData.barcode}
 //                         onChange={handleInputChange}

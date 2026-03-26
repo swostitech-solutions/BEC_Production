@@ -95,9 +95,35 @@ const AttendancePage = () => {
       const result = JSON.parse(text);
       console.log("✅ Attendance data received:", result);
 
-      // Set table data
+      // Set table data — aggregate rows by session + course + department
+      // (API returns per academic_year/semester/section, but table only shows session/course/department)
       const classData = Array.isArray(result.data) ? result.data : [];
-      setRows(classData);
+
+      // Aggregate rows with same session + course_name + department
+      const aggregatedMap = {};
+      classData.forEach((row) => {
+        const key = `${row.session || ""}||${row.course_name || ""}||${row.department || ""}`;
+        if (!aggregatedMap[key]) {
+          aggregatedMap[key] = {
+            session: row.session,
+            course_name: row.course_name,
+            department: row.department,
+            total_student: 0,
+            total_present: 0,
+            total_absent: 0,
+            total_leave: 0,
+            not_marked_student: 0,
+          };
+        }
+        aggregatedMap[key].total_student += row.total_student || 0;
+        aggregatedMap[key].total_present += row.total_present || 0;
+        aggregatedMap[key].total_absent += row.total_absent || 0;
+        aggregatedMap[key].total_leave += row.total_leave || 0;
+        aggregatedMap[key].not_marked_student += row.not_marked_student || 0;
+      });
+
+      const aggregatedData = Object.values(aggregatedMap);
+      setRows(aggregatedData);
 
       // Calculate totals for pie chart by aggregating class-wise data
       let totalPresent = 0;
@@ -298,33 +324,29 @@ const AttendancePage = () => {
                     <table className="table table-bordered">
                       <thead>
                         <tr>
+                          <th>Session</th>
                           <th>Course</th>
-                          <th>Section</th>
                           <th>Department</th>
                           <th>Total Students</th>
                           <th>Present</th>
                           <th>Absent</th>
-                          {/* <th>Leave</th> */}
-                          {/* <th>Not Marked</th> */}
                         </tr>
                       </thead>
                       <tbody>
                         {Array.isArray(rows) && rows.length > 0 ? (
                           rows.map((row, index) => (
                             <tr key={index}>
+                              <td>{row.session}</td>
                               <td>{row.course_name}</td>
-                              <td>{row.section_name}</td>
                               <td>{row.department}</td>
                               <td>{row.total_student}</td>
                               <td>{row.total_present}</td>
                               <td>{row.total_absent}</td>
-                              {/* <td>{row.total_leave}</td>
-                              <td>{row.not_marked_student}</td> */}
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="7" className="text-center text-muted">
+                            <td colSpan="6" className="text-center text-muted">
                               No records found.
                             </td>
                           </tr>

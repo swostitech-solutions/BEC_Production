@@ -8,7 +8,7 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
+const AdmOtherDetails = ({ formData, setFormData, requiredErrors = {} }) => {
   const { id } = useParams();
   const [errors, setErrors] = useState([]);
 
@@ -201,7 +201,7 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
   return (
     <div className="container-fluid form-container">
       <div className="table-responsive">
-        <table className="table">
+        <table className="table table-bordered ">
           <thead>
             <tr>
               <th>S.No.</th>
@@ -238,17 +238,10 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       }}
                       required
                     />
-                    {submitErrors.emegencyContact?.[index]?.name && (
-                      <span
-                        style={{
-                          color: "red",
-                          fontSize: "0.8em",
-                          marginTop: "4px",
-                          display: "block",
-                        }}
-                      >
-                        {submitErrors.emegencyContact[index].name}
-                      </span>
+                    {requiredErrors.emegencyContact?.[index]?.name && (
+                      <small style={{ color: "red" }}>
+                        {requiredErrors.emegencyContact[index].name}
+                      </small>
                     )}
                   </td>
 
@@ -266,17 +259,10 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       }}
                       required
                     />
-                    {submitErrors.emegencyContact?.[index]?.relationship && (
-                      <span
-                        style={{
-                          color: "red",
-                          fontSize: "0.8em",
-                          marginTop: "4px",
-                          display: "block",
-                        }}
-                      >
-                        {submitErrors.emegencyContact[index].relationship}
-                      </span>
+                    {requiredErrors.emegencyContact?.[index]?.relationship && (
+                      <small style={{ color: "red" }}>
+                        {requiredErrors.emegencyContact[index].relationship}
+                      </small>
                     )}
                   </td>
 
@@ -305,17 +291,10 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       </span>
                     )}
                     {!errors[index] &&
-                      submitErrors.emegencyContact?.[index]?.Mobile_Number && (
-                        <span
-                          style={{
-                            color: "red",
-                            fontSize: "0.8em",
-                            marginTop: "4px",
-                            display: "block",
-                          }}
-                        >
-                          {submitErrors.emegencyContact[index].Mobile_Number}
-                        </span>
+                      requiredErrors.emegencyContact?.[index]?.Mobile_Number && (
+                        <small style={{ color: "red" }}>
+                          {requiredErrors.emegencyContact[index].Mobile_Number}
+                        </small>
                       )}
                   </td>
 

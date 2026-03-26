@@ -2,8 +2,32 @@ import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { ApiUrl } from "../../../ApiUrl";
 
-const App = ({ goToTab, languageData, setExperienceDataInParent, setLanguageData }) => {
-  const languages = ["HINDI", "ENGLISH", "SANSKRIT", "URDU"];
+const App = ({
+  goToTab,
+  languageData,
+  setExperienceDataInParent,
+  setLanguageData,
+}) => {
+  const languages = [
+    "HINDI",
+    "ENGLISH",
+    "BENGALI",
+    "MARATHI",
+    "TELUGU",
+    "TAMIL",
+    "GUJARATI",
+    "URDU",
+    "KANNADA",
+    "ODIA",
+    "MALAYALAM",
+    "PUNJABI",
+    "ASSAMESE",
+    "MAITHILI",
+    "SANTALI",
+    "KASHMIRI",
+    "SANSKRIT",
+    "OTHERS",
+  ];
 
   // Mapping language to code dynamically
   const languageCodes = {
@@ -11,6 +35,20 @@ const App = ({ goToTab, languageData, setExperienceDataInParent, setLanguageData
     ENGLISH: "2",
     SANSKRIT: "3",
     URDU: "4",
+    BENGALI: "5",
+    MARATHI: "6",
+    TELUGU: "7",
+    TAMIL: "8",
+    GUJARATI: "9",
+    KANNADA: "10",
+    ODIA: "11",
+    MALAYALAM: "12",
+    PUNJABI: "13",
+    ASSAMESE: "14",
+    MAITHILI: "15",
+    SANTALI: "16",
+    KASHMIRI: "17",
+    OTHERS: "18",
   };
 
   // Initialize selectedLanguages from parent if available (handles when user navigates back)
@@ -20,10 +58,10 @@ const App = ({ goToTab, languageData, setExperienceDataInParent, setLanguageData
       return languages.filter((lang) =>
         codes.some((c) => {
           const found = Object.entries(languageCodes).find(
-            ([_, code]) => (code || "").toString() === c.trim()
+            ([_, code]) => (code || "").toString() === c.trim(),
           );
           return found && found[0] === lang;
-        })
+        }),
       );
     }
     return [];
@@ -43,15 +81,33 @@ const App = ({ goToTab, languageData, setExperienceDataInParent, setLanguageData
     setSelectedLanguages(newLanguages);
 
     if (setLanguageData) {
-      const codemap = { HINDI: "1", ENGLISH: "2", SANSKRIT: "3", URDU: "4" };
-      const codes = newLanguages.map(lang => codemap[lang]).join(",");
+      const codemap = {
+        HINDI: "1",
+        ENGLISH: "2",
+        SANSKRIT: "3",
+        URDU: "4",
+        BENGALI: "5",
+        MARATHI: "6",
+        TELUGU: "7",
+        TAMIL: "8",
+        GUJARATI: "9",
+        KANNADA: "10",
+        ODIA: "11",
+        MALAYALAM: "12",
+        PUNJABI: "13",
+        ASSAMESE: "14",
+        MAITHILI: "15",
+        SANTALI: "16",
+        KASHMIRI: "17",
+        OTHERS: "18",
+      };
+      const codes = newLanguages.map((lang) => codemap[lang]).join(",");
       setLanguageData({
         employee_language_id: languageId || 0,
-        language_code: codes
+        language_code: codes,
       });
     }
   };
-
 
   useEffect(() => {
     if (languageData && languageData.language_code) {
@@ -60,11 +116,12 @@ const App = ({ goToTab, languageData, setExperienceDataInParent, setLanguageData
       const foundLanguages = languages.filter((lang) =>
         codes.some((c) => {
           const found = Object.entries(languageCodes).find(
-            ([_, code]) => (code || "").toString() === c.trim()
+            ([_, code]) => (code || "").toString() === c.trim(),
           );
           return found && found[0] === lang;
-        })
-      ); if (foundLanguages.length > 0) {
+        }),
+      );
+      if (foundLanguages.length > 0) {
         setSelectedLanguages(foundLanguages);
       }
       setLanguageId(languageData.employee_language_id || 0);
@@ -140,8 +197,9 @@ const App = ({ goToTab, languageData, setExperienceDataInParent, setLanguageData
           {languages.map((language, index) => (
             <li
               key={index}
-              className={`list-group-item ${selectedLanguages.includes(language) ? "active text-white" : ""
-                }`}
+              className={`list-group-item ${
+                selectedLanguages.includes(language) ? "active text-white" : ""
+              }`}
               style={{ cursor: "pointer" }}
               onClick={() => handleLanguageClick(language)}
             >

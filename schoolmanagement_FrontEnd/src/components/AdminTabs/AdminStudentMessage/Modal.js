@@ -9,6 +9,7 @@ import useFetchBranch from "../../hooks/useFetchBranch";
 import useFetchAcademicYearByFilter from "../../hooks/useFetchAcademicYearByFilter";
 import useFetchSemesterByFilter from "../../hooks/useFetchSemesterByFilter";
 import useFetchSectionByFilter from "../../hooks/useFetchSectionByFilter";
+import ReactPaginate from "react-paginate";
 
 const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
   const [selectedClass, setSelectedClass] = useState("");
@@ -72,7 +73,16 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     motherName: "",
     schoolAdmissionNo: "",
   });
+const [currentPage, setCurrentPage] = useState(0);
+const rowsPerPage = 10;
+const offset = currentPage * rowsPerPage;
 
+const currentData = studentData.slice(offset, offset + rowsPerPage);
+
+const pageCount = Math.ceil(studentData.length / rowsPerPage);
+const handlePageClick = (event) => {
+  setCurrentPage(event.selected);
+};
   useEffect(() => {
     const fetchStudentCourseData = async () => {
       try {
@@ -219,6 +229,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
       const result = await response.json();
 
       setStudentData(result.data || []);
+      setCurrentPage(0);
     } catch (err) {
       console.error("Search Error:", err);
     }
@@ -246,6 +257,9 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
 
     setStudentData(fullStudentData);
     setSelectedStudents(new Set());
+    setStudentData(fullStudentData);
+    setSelectedStudents(new Set());
+    setCurrentPage(0);
   };
 
   return (
@@ -344,13 +358,13 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         placeholder="Admission No"
                       />
                     </div>
-                    {/* <div className="col-3">
+                    <div className="col-3">
                       <label
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
                         {" "}
-                        Student Barcode{" "}
+                        Roll No{" "}
                       </label>
                       <input
                         type="text"
@@ -360,7 +374,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         onChange={handleInputChange}
                         placeholder="Barcode"
                       />
-                    </div> */}
+                    </div>
                     <div className="col-3">
                       <label className="form-label">Session</label>
                       <Select
@@ -376,7 +390,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             ? {
                                 value: selectedBatch,
                                 label: BatchList.find(
-                                  (b) => b.id === selectedBatch
+                                  (b) => b.id === selectedBatch,
                                 )?.batch_description,
                               }
                             : null
@@ -409,7 +423,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             ? {
                                 value: selectedCourse,
                                 label: CourseList.find(
-                                  (c) => c.id === selectedCourse
+                                  (c) => c.id === selectedCourse,
                                 )?.course_name,
                               }
                             : null
@@ -439,7 +453,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             ? {
                                 value: selectedDepartment,
                                 label: BranchList.find(
-                                  (d) => d.id === selectedDepartment
+                                  (d) => d.id === selectedDepartment,
                                 )?.department_description,
                               }
                             : null
@@ -467,12 +481,12 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         }
                         value={
                           AcademicYearList?.find(
-                            (a) => a.id === selectedAcademicYear
+                            (a) => a.id === selectedAcademicYear,
                           )
                             ? {
                                 value: selectedAcademicYear,
                                 label: AcademicYearList.find(
-                                  (a) => a.id === selectedAcademicYear
+                                  (a) => a.id === selectedAcademicYear,
                                 )?.academic_year_description,
                               }
                             : null
@@ -502,7 +516,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             ? {
                                 value: selectedSemester,
                                 label: SemesterList.find(
-                                  (s) => s.id === selectedSemester
+                                  (s) => s.id === selectedSemester,
                                 )?.semester_description,
                               }
                             : null
@@ -531,7 +545,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             ? {
                                 value: selectedSection,
                                 label: SectionList.find(
-                                  (s) => s.id === selectedSection
+                                  (s) => s.id === selectedSection,
                                 )?.section_name,
                               }
                             : null
@@ -620,11 +634,11 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Roll No</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {studentData.map((student, index) => {
+                        {currentData.map((student, index) => {
                           return (
                             <tr key={index}>
                               <td>
@@ -645,12 +659,33 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                               <td>{student.section_name}</td>
                               <td>{student.father_name}</td>
                               <td>{student.mother_name}</td>
-                              {/* <td>{student.barcode}</td> */}
+                              <td>{student.barcode}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
+                    {studentData.length > rowsPerPage && (
+                      <ReactPaginate
+                        previousLabel={"Previous"}
+                        nextLabel={"Next"}
+                        breakLabel={"..."}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={5}
+                        onPageChange={handlePageClick}
+                        containerClassName={
+                          "pagination justify-content-center mt-3"
+                        }
+                        pageClassName={"page-item"}
+                        pageLinkClassName={"page-link"}
+                        previousClassName={"page-item"}
+                        previousLinkClassName={"page-link"}
+                        nextClassName={"page-item"}
+                        nextLinkClassName={"page-link"}
+                        activeClassName={"active"}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

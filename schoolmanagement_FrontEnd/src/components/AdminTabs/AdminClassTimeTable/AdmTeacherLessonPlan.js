@@ -37,8 +37,7 @@ const AdmTeacherLessonPlan = () => {
   const [lessonPlanData, setLessonPlanData] = useState([]);
   const [updatedData, setUpdatedData] = useState([]);
   const [uploadedFiles, setUploadedFiles] = useState({});  // Track files by row index
-  const [rowErrors, setRowErrors] = useState({});
-  const [statusMessage, setStatusMessage] = useState("");
+  const [rowValidationErrors, setRowValidationErrors] = useState({});  // Per-row inline errors
 
   // Custom Hooks with dependencies (matching Lesson Plan page exactly)
   const { BatchList, loading: loadingBatch } = useFetchSessionList(organizationId, branchId);
@@ -166,29 +165,6 @@ const AdmTeacherLessonPlan = () => {
       setSectionOptions([]);
     }
   }, [SectionList]);
-
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) {
-      return;
-    }
-
-    const hasSelected = selectedSection?.value
-      ? sectionOptions.some(
-          (section) => Number(section.value) === Number(selectedSection.value)
-        )
-      : false;
-
-    if (hasSelected) {
-      return;
-    }
-
-    setSelectedSection(sectionOptions[0]);
-  }, [selectedSemester, sectionOptions]);
 
   // Fetch Teachers
   useEffect(() => {
@@ -362,13 +338,13 @@ const AdmTeacherLessonPlan = () => {
     setUpdatedData((prevData) =>
       prevData.map((row, i) => (i === index ? { ...row, [field]: value } : row))
     );
-    setRowErrors((prev) => ({
-      ...prev,
-      [index]: {
-        ...(prev[index] || {}),
-        [field]: "",
-      },
-    }));
+    // Clear that field's error when user types
+    if (rowValidationErrors[index]?.[field]) {
+      setRowValidationErrors((prev) => ({
+        ...prev,
+        [index]: { ...prev[index], [field]: "" },
+      }));
+    }
   };
 
   // Handle file selection
@@ -387,25 +363,28 @@ const AdmTeacherLessonPlan = () => {
 
     const { lecture_plan_id, taught_date, percentage_completed, remarks } = rowData;
 
-    const newRowError = {};
-    if (!taught_date) newRowError.taught_date = "Taught Date is required.";
-    if (!percentage_completed) newRowError.percentage_completed = "% Course Coverage is required.";
-    if (!remarks) newRowError.remarks = "Remarks is required.";
+    // Inline validation
+    const newErrors = {};
+    if (!taught_date) newErrors.taught_date = "Taught Date is required.";
+    if (!percentage_completed && percentage_completed !== 0) newErrors.percentage_completed = "% Course Coverage is required.";
+    else if (percentage_completed !== "" && (isNaN(parseFloat(percentage_completed)) || parseFloat(percentage_completed) < 0 || parseFloat(percentage_completed) > 100)) {
+      newErrors.percentage_completed = "Must be between 0 and 100.";
+    }
+    if (!remarks || !remarks.trim()) newErrors.remarks = "Remarks are required.";
 
-    if (Object.keys(newRowError).length > 0) {
-      setRowErrors((prev) => ({ ...prev, [index]: newRowError }));
+    if (Object.keys(newErrors).length > 0) {
+      setRowValidationErrors((prev) => ({ ...prev, [index]: newErrors }));
       return;
     }
-
-    setRowErrors((prev) => ({ ...prev, [index]: {} }));
-    setStatusMessage("");
+    // Clear errors for this row
+    setRowValidationErrors((prev) => { const updated = { ...prev }; delete updated[index]; return updated; });
 
     const userId = sessionStorage.getItem("userId");
     const orgId = sessionStorage.getItem("organization_id");
     const branchId = sessionStorage.getItem("branch_id");
 
     if (!userId) {
-      setStatusMessage("Error: User not logged in. Please log in again.");
+      alert("User not logged in. Please log in again.");
       return;
     }
 
@@ -447,7 +426,7 @@ const AdmTeacherLessonPlan = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Update API Error Response:", errorText);
-        setStatusMessage(`Error: Failed to update. Server error: ${response.status}`);
+        alert(`Failed to update. Server error: ${response.status}`);
         return;
       }
 
@@ -455,7 +434,7 @@ const AdmTeacherLessonPlan = () => {
       console.log("Update Response:", result);
 
       if (result.message === "success") {
-        setStatusMessage("Lesson plan updated successfully!");
+        alert("Lesson plan updated successfully!");
 
         // Refresh the lesson plan data
         const apiUrl = `${ApiUrl.apiurl}LECTURE_PLAN/GetProfessorLecturePlanList/?organization_id=${orgId}&branch_id=${branchId}&batch_id=${selectedSession.value}&course_id=${selectedCourse.value}&department_id=${selectedBranch.value}&academic_year_id=${selectedAcademicYear.value}&semester_id=${selectedSemester.value}&section_id=${selectedSection.value}&professor_id=${selectedMentor.value}&subject_id=${selectedSubject.value}`;
@@ -483,11 +462,11 @@ const AdmTeacherLessonPlan = () => {
           }
         }
       } else {
-        setStatusMessage("Error: Failed to update: " + (result.error || result.message || "Unknown error"));
+        alert("Failed to update: " + (result.error || result.message || "Unknown error"));
       }
     } catch (error) {
       console.error("Error updating lesson plan:", error);
-      setStatusMessage("Error: Error updating lesson plan: " + error.message);
+      alert("Error updating lesson plan: " + error.message);
     }
   };
 
@@ -503,8 +482,7 @@ const AdmTeacherLessonPlan = () => {
     setSelectedMentor(null);
     setLessonPlanData([]);
     setUpdatedData([]);
-    setRowErrors({});
-    setStatusMessage("");
+    setRowValidationErrors({});
   };
 
   // Handle Close button - navigate to dashboard
@@ -593,11 +571,6 @@ const AdmTeacherLessonPlan = () => {
                     Close
                   </button>
                 </div>
-                {statusMessage && (
-                  <div className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}>
-                    {statusMessage}
-                  </div>
-                )}
               </div>
 
               <div className="row mt-3 mx-2">
@@ -703,17 +676,9 @@ const AdmTeacherLessonPlan = () => {
                           options={sectionOptions}
                           className="detail"
                           value={selectedSection}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester
-                              ? "Select Semester first"
-                              : sectionOptions.length > 0
-                                ? "Section auto selected"
-                                : "Loading Section..."
-                          }
+                          onChange={handleSectionChange}
+                          placeholder="Select Section"
                           classNamePrefix="section-dropdown"
-                          isDisabled={true}
-                          isClearable={false}
                         />
                       </div>
 
@@ -763,7 +728,7 @@ const AdmTeacherLessonPlan = () => {
                             <td>
                               <input
                                 type="date"
-                                className="form-control"
+                                className={`form-control${rowValidationErrors[index]?.taught_date ? " is-invalid" : ""}`}
                                 value={updatedData[index]?.taught_date || ""}
                                 onChange={(e) =>
                                   handleInputChange(
@@ -773,31 +738,32 @@ const AdmTeacherLessonPlan = () => {
                                   )
                                 }
                               />
-                              {rowErrors[index]?.taught_date && (
-                                <div className="text-danger small mt-1">{rowErrors[index].taught_date}</div>
+                              {rowValidationErrors[index]?.taught_date && (
+                                <small className="text-danger">{rowValidationErrors[index].taught_date}</small>
                               )}
                             </td>
                             <td>
                               <input
-                                type="text"
-                                className="form-control"
+                                type="number"
+                                min="0"
+                                max="100"
+                                className={`form-control${rowValidationErrors[index]?.percentage_completed ? " is-invalid" : ""}`}
                                 value={updatedData[index]?.percentage_completed || ""}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    index,
-                                    "percentage_completed",
-                                    e.target.value
-                                  )
-                                }
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 100)) {
+                                    handleInputChange(index, "percentage_completed", val);
+                                  }
+                                }}
                               />
-                              {rowErrors[index]?.percentage_completed && (
-                                <div className="text-danger small mt-1">{rowErrors[index].percentage_completed}</div>
+                              {rowValidationErrors[index]?.percentage_completed && (
+                                <small className="text-danger">{rowValidationErrors[index].percentage_completed}</small>
                               )}
                             </td>
                             <td>
                               <input
                                 type="text"
-                                className="form-control"
+                                className={`form-control${rowValidationErrors[index]?.remarks ? " is-invalid" : ""}`}
                                 value={updatedData[index]?.remarks || ""}
                                 onChange={(e) =>
                                   handleInputChange(
@@ -807,15 +773,14 @@ const AdmTeacherLessonPlan = () => {
                                   )
                                 }
                               />
-                              {rowErrors[index]?.remarks && (
-                                <div className="text-danger small mt-1">{rowErrors[index].remarks}</div>
+                              {rowValidationErrors[index]?.remarks && (
+                                <small className="text-danger">{rowValidationErrors[index].remarks}</small>
                               )}
                             </td>
                             <td>
                               <input
                                 type="file"
                                 className="form-control"
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                                 onChange={(e) => handleFileChange(index, e.target.files[0])}
                               />
                             </td>

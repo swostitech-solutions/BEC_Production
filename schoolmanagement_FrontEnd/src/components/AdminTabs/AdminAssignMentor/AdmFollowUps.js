@@ -13,7 +13,6 @@ const AdmAttendanceEntry = () => {
   const [selectedMentor, setSelectedMentor] = useState(null);
   const [selectedCommunicatedWith, setSelectedCommunicatedWith] = useState(null);
   const [selectedCommunicatedVia, setSelectedCommunicatedVia] = useState(null);
-  const [pageMessage, setPageMessage] = useState("");
 
   const dateFromRef = useRef(null);
   const dateToRef = useRef(null);
@@ -30,7 +29,6 @@ const AdmAttendanceEntry = () => {
     setSelectedCommunicatedVia(null);
     setStudents([]);
     setData([]);
-    setPageMessage("");
   };
 
   // Options for communicated_with dropdown
@@ -119,11 +117,9 @@ const AdmAttendanceEntry = () => {
     const academicYearId = localStorage.getItem("academicSessionId");
 
     if (!branchId || !orgId || !academicYearId) {
-      setPageMessage("Error: Mandatory fields are missing: organization, branch, or academic year");
+      alert("Mandatory fields are missing: organization, branch, or academic year");
       return;
     }
-
-    setPageMessage("");
 
     // Build query parameters
     const params = new URLSearchParams({
@@ -139,7 +135,6 @@ const AdmAttendanceEntry = () => {
 
     if (selectedMentor?.value) {
       params.append("teacher_id", selectedMentor.value);
-      params.append("mentor_id", selectedMentor.value);
     }
 
     if (dateFromRef.current?.value) {
@@ -171,7 +166,7 @@ const AdmAttendanceEntry = () => {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      setPageMessage("Error: An error occurred while fetching data: " + error.message);
+      alert("An error occurred while fetching data: " + error.message);
       setData([]);
     }
   };
@@ -240,13 +235,6 @@ const AdmAttendanceEntry = () => {
                     Close
                   </button>
                 </div>
-                {pageMessage && (
-                  <div
-                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
-                  >
-                    {pageMessage}
-                  </div>
-                )}
               </div>
 
               <div className="row mt-3 mx-2">

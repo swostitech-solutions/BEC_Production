@@ -31,7 +31,7 @@ const AdmAttendanceEntry = () => {
   const [expenseData, setExpenseData] = useState([]);
   // const [expenseCategory, setExpenseCategory] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  // const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
 
   // Pagination states
@@ -44,6 +44,7 @@ const AdmAttendanceEntry = () => {
     if (toClassRef.current) toClassRef.current.value = "";
     if (admissionNoRef.current) admissionNoRef.current.value = "";
     setPartyName("");
+    setSelectedCategory(null);
     setExpenseData([]);
     setCurrentPage(0);
   };
@@ -103,7 +104,6 @@ const AdmAttendanceEntry = () => {
   const handleSearch = async () => {
     const fromDate = dateRef.current?.value;
     const toDate = toClassRef.current?.value;
-    const expenseCategoryValue = fromClassRef.current?.value;
     const reference = admissionNoRef.current?.value;
 
     try {
@@ -112,11 +112,11 @@ const AdmAttendanceEntry = () => {
         batch_id: academicSessionId,
         from_date: fromDate || '',
         to_date: toDate || '',
-        expense_category: expenseCategoryValue || '',
-        reference: reference || '',
+        PartyReference: reference || '',
       };
 
       if (partyId) params.party_id = partyId;
+      if (selectedCategory) params.ExpenseCategoryId = selectedCategory.value;
 
       const response = await api.get('EXPENSE/EXPENSE_HEADER/ExpenseSearchList/', { params });
       const data = response.data;
@@ -196,9 +196,9 @@ const AdmAttendanceEntry = () => {
       return;
     }
     const doc = new jsPDF();
-    const logoPath = "/Assets/logobec.png";
+    const logoPath = "/Assets/sparsh.jpeg";
     doc.setFontSize(16);
-    doc.text("Bhubaneswar Engineering College", 80, 20);
+    doc.text("Sparsh College of Nursing and Allied Sciences", 80, 20);
     const img = new Image();
     img.src = logoPath;
     img.onload = () => {
@@ -272,96 +272,192 @@ const AdmAttendanceEntry = () => {
 
   const handleView = async (expense_header_id) => {
     try {
-      const response = await api.get(`EXPENSE/EXPENSE_HEADER/ExpanseDetailsRetrieve/${expense_header_id}`);
+      const response = await api.get(
+        `EXPENSE/EXPENSE_HEADER/ExpanseDetailsRetrieve/${expense_header_id}`,
+      );
+
       const result = response.data;
 
       if (result.message === "success") {
-        setSelectedExpense(result.data);
-        setShowReceiptModal(true);
+        generateAndOpenPDF(result.data); // 👈 directly open PDF
       } else {
-        console.error("Failed to fetch Expense details: " + result.message);
+        console.error("Failed to fetch Expense details");
       }
     } catch (error) {
       console.error("Error fetching expense details:", error);
     }
   };
 
-  const handleCloseReceiptModal = () => {
-    setShowReceiptModal(false);
-    setSelectedExpense(null);
-  };
+  // const handleCloseReceiptModal = () => {
+  //   setShowReceiptModal(false);
+  //   setSelectedExpense(null);
+  // };
 
-  const handleDownloadReceipt = () => {
-    if (!selectedExpense) return;
-    const doc = new jsPDF();
+//   const handleDownloadReceipt = () => {
+//     if (!selectedExpense) return;
+//     const doc = new jsPDF();
 
-    doc.setFontSize(18);
-    doc.text("Expense Receipt", 105, 20, null, null, "center");
+//     doc.setFontSize(18);
+//     doc.text("Expense Receipt", 105, 20, null, null, "center");
 
-    doc.setFontSize(14);
-    doc.text("Bhubaneswar Engineering College", 105, 30, null, null, "center");
+//     doc.setFontSize(14);
+//     doc.text("Sparsh College of Nursing and Allied Sciences", 105, 30, null, null, "center");
 
-    doc.setFontSize(12);
-    doc.text(`Expense No: ${selectedExpense.expense_no}`, 15, 45);
-    doc.text(`Date: ${selectedExpense.date}`, 140, 45);
-    doc.text(`Party Name: ${selectedExpense.party_name || ""}`, 15, 55);
-    doc.text(`Reference: ${selectedExpense.party_reference || ""}`, 140, 55);
+//     doc.setFontSize(12);
+//     doc.text(`Expense No: ${selectedExpense.expense_no}`, 15, 45);
+//     doc.text(`Date: ${selectedExpense.date}`, 140, 45);
+//     doc.text(`Party Name: ${selectedExpense.party_name || ""}`, 15, 55);
+//     doc.text(`Reference: ${selectedExpense.party_reference || ""}`, 140, 55);
 
-    const tableColumn = ["Sr.No", "Category", "Remarks", "Amount"];
-    const tableRows = [];
+//     const tableColumn = ["Sr.No", "Category", "Remarks", "Amount"];
+//     const tableRows = [];
 
-    if (selectedExpense.ExpenseDetailsdata && Array.isArray(selectedExpense.ExpenseDetailsdata)) {
-      selectedExpense.ExpenseDetailsdata.forEach((item, index) => {
-        const rowData = [
-          index + 1,
-          item.expense_category_name || "",
-          item.remarks || "",
-          Number(item.amount || 0).toFixed(2)
-        ];
-        tableRows.push(rowData);
-      });
-    }
+//     if (selectedExpense.ExpenseDetailsdata && Array.isArray(selectedExpense.ExpenseDetailsdata)) {
+//       selectedExpense.ExpenseDetailsdata.forEach((item, index) => {
+//         const rowData = [
+//           index + 1,
+//           item.expense_category_name || "",
+//           item.remarks || "",
+//           Number(item.amount || 0).toFixed(2)
+//         ];
+//         tableRows.push(rowData);
+//       });
+//     }
 
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 65,
-      theme: 'grid',
+//     doc.autoTable({
+//       head: [tableColumn],
+//       body: tableRows,
+//       startY: 65,
+//       theme: 'grid',
+//     });
+
+//     let currentY = doc.lastAutoTable.finalY + 10;
+
+//     // Payment Details Section
+//     if (selectedExpense.PaymentDetailsData && Array.isArray(selectedExpense.PaymentDetailsData) && selectedExpense.PaymentDetailsData.length > 0) {
+//       doc.text("Payment Details", 15, currentY);
+//       const payColumn = ["Method", "Amount", "Details"];
+//       const payRows = selectedExpense.PaymentDetailsData.map(p => {
+//         let details = "-";
+//         if (p.payment_method === 'Bank') {
+//           const bankName = p.bank_name || p.bankName || "";
+//           const acc = p.bank_account || p.bank_accountId || "";
+//           details = `${bankName} ${acc ? `(${acc})` : ''}`;
+//         }
+//         return [p.payment_method, Number(p.applied_amount || 0).toFixed(2), details];
+//       });
+
+//       doc.autoTable({
+//         head: [payColumn],
+//         body: payRows,
+//         startY: currentY + 5,
+//         theme: 'grid'
+//       });
+//       currentY = doc.lastAutoTable.finalY + 10;
+//     }
+
+//     // Totals
+//     doc.text(`Total Amount: ${Number(selectedExpense.total_amount).toFixed(2)}`, 140, currentY);
+//     doc.text(`Paid Amount: ${Number(selectedExpense.paid_amount).toFixed(2)}`, 140, currentY + 10);
+//     doc.text(`Balance Amount: ${Number(selectedExpense.balance_amount).toFixed(2)}`, 140, currentY + 20);
+// const pdfBlob = doc.output("blob");
+// const pdfUrl = URL.createObjectURL(pdfBlob);
+// window.open(pdfUrl);
+    
+//   };
+
+const generateAndOpenPDF = (selectedExpense) => {
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("Expense Receipt", 105, 20, null, null, "center");
+
+  doc.setFontSize(14);
+  doc.text(
+    "Sparsh College of Nursing and Allied Sciences",
+    105,
+    30,
+    null,
+    null,
+    "center",
+  );
+
+  doc.setFontSize(12);
+  doc.text(`Expense No: ${selectedExpense.expense_no}`, 15, 45);
+  doc.text(`Date: ${selectedExpense.date}`, 140, 45);
+  doc.text(`Party Name: ${selectedExpense.party_name || ""}`, 15, 55);
+  doc.text(`Reference: ${selectedExpense.party_reference || ""}`, 140, 55);
+
+  const tableColumn = ["Sr.No", "Category", "Remarks", "Amount"];
+  const tableRows = [];
+
+  selectedExpense.ExpenseDetailsdata?.forEach((item, index) => {
+    tableRows.push([
+      index + 1,
+      item.expense_category_name || "",
+      item.remarks || "",
+      Number(item.amount || 0).toFixed(2),
+    ]);
+  });
+
+  doc.autoTable({
+    head: [tableColumn],
+    body: tableRows,
+    startY: 65,
+    theme: "grid",
+  });
+
+  let currentY = doc.lastAutoTable.finalY + 10;
+
+  if (selectedExpense.PaymentDetailsData?.length > 0) {
+    doc.text("Payment Details", 15, currentY);
+
+    const payRows = selectedExpense.PaymentDetailsData.map((p) => {
+      let details = "-";
+      if (p.payment_method === "Bank") {
+        const bankName = p.bank_name || "";
+        const acc = p.bank_account || "";
+        details = `${bankName} ${acc ? `(${acc})` : ""}`;
+      }
+
+      return [
+        p.payment_method,
+        Number(p.applied_amount || 0).toFixed(2),
+        details,
+      ];
     });
 
-    let currentY = doc.lastAutoTable.finalY + 10;
+    doc.autoTable({
+      head: [["Method", "Amount", "Details"]],
+      body: payRows,
+      startY: currentY + 5,
+      theme: "grid",
+    });
 
-    // Payment Details Section
-    if (selectedExpense.PaymentDetailsData && Array.isArray(selectedExpense.PaymentDetailsData) && selectedExpense.PaymentDetailsData.length > 0) {
-      doc.text("Payment Details", 15, currentY);
-      const payColumn = ["Method", "Amount", "Details"];
-      const payRows = selectedExpense.PaymentDetailsData.map(p => {
-        let details = "-";
-        if (p.payment_method === 'Bank') {
-          const bankName = p.bank_name || p.bankName || "";
-          const acc = p.bank_account || p.bank_accountId || "";
-          details = `${bankName} ${acc ? `(${acc})` : ''}`;
-        }
-        return [p.payment_method, Number(p.applied_amount || 0).toFixed(2), details];
-      });
+    currentY = doc.lastAutoTable.finalY + 10;
+  }
 
-      doc.autoTable({
-        head: [payColumn],
-        body: payRows,
-        startY: currentY + 5,
-        theme: 'grid'
-      });
-      currentY = doc.lastAutoTable.finalY + 10;
-    }
+  doc.text(
+    `Total Amount: ${Number(selectedExpense.total_amount).toFixed(2)}`,
+    140,
+    currentY,
+  );
+  doc.text(
+    `Paid Amount: ${Number(selectedExpense.paid_amount).toFixed(2)}`,
+    140,
+    currentY + 10,
+  );
+  doc.text(
+    `Balance Amount: ${Number(selectedExpense.balance_amount).toFixed(2)}`,
+    140,
+    currentY + 20,
+  );
 
-    // Totals
-    doc.text(`Total Amount: ${Number(selectedExpense.total_amount).toFixed(2)}`, 140, currentY);
-    doc.text(`Paid Amount: ${Number(selectedExpense.paid_amount).toFixed(2)}`, 140, currentY + 10);
-    doc.text(`Balance Amount: ${Number(selectedExpense.balance_amount).toFixed(2)}`, 140, currentY + 20);
-
-    doc.save(`Receipt_${selectedExpense.expense_no}.pdf`);
-  };
-
+  // ✅ OPEN IN NEW TAB (NO DOWNLOAD)
+  const pdfBlob = doc.output("blob");
+  const pdfUrl = URL.createObjectURL(pdfBlob);
+  window.open(pdfUrl, "_blank");
+};
   return (
     <div className="container-fluid">
       <div className="row">
@@ -519,21 +615,12 @@ const AdmAttendanceEntry = () => {
                           id="expense-category"
                           classNamePrefix="react-select"
                           options={expenseCategory.map((category) => ({
-                            value: category.expense_category,
+                            value: category.expense_category_id,
                             label: category.expense_category,
                           }))}
-                          value={
-                            selectedCategory
-                              ? {
-                                value: selectedCategory,
-                                label: selectedCategory,
-                              }
-                              : null
-                          }
+                          value={selectedCategory}
                           onChange={(selectedOption) =>
-                            setSelectedCategory(
-                              selectedOption ? selectedOption.value : ""
-                            )
+                            setSelectedCategory(selectedOption || null)
                           }
                           placeholder="Select"
                         />
@@ -567,6 +654,7 @@ const AdmAttendanceEntry = () => {
                           <th>Expense No</th>
                           <th>Expense Date</th>
                           <th>Party Name</th>
+                          <th>Expense Category</th>
                           <th>Reference</th>
                           <th>Payment Method</th>
                           <th>Total</th>
@@ -583,6 +671,7 @@ const AdmAttendanceEntry = () => {
                               <td>{expense.expense_no}</td>
                               <td>{expense.date}</td>
                               <td>{expense.party_name}</td>
+                              <td>{expense.expense_category}</td>
                               <td>{expense.party_reference}</td>
                               <td>
                                 {Array.isArray(expense.payment_method)
@@ -627,7 +716,7 @@ const AdmAttendanceEntry = () => {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="10" className="text-center">
+                            <td colSpan="11" className="text-center">
                               No records found
                             </td>
                           </tr>
@@ -704,98 +793,7 @@ const AdmAttendanceEntry = () => {
           </div>
         </div>
       </div>
-      <Modal show={showReceiptModal} onHide={handleCloseReceiptModal} size="lg" centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Expense Receipt</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedExpense && (
-            <div>
-              <div className="d-flex justify-content-between mb-3">
-                <div>
-                  <strong>Party Name:</strong> {selectedExpense.party_name} <br />
-                  <strong>Reference:</strong> {selectedExpense.party_reference}
-                </div>
-                <div>
-                  <strong>Expense No:</strong> {selectedExpense.expense_no} <br />
-                  <strong>Date:</strong> {selectedExpense.date}
-                </div>
-              </div>
-
-              <h6 className="mt-3">Expense Details</h6>
-              <Table striped bordered hover size="sm">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Category</th>
-                    <th>Remarks</th>
-                    <th>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedExpense.ExpenseDetailsdata && selectedExpense.ExpenseDetailsdata.map((item, index) => (
-                    <tr key={index}>
-                      <td>{index + 1}</td>
-                      <td>{item.expense_category_name}</td>
-                      <td>{item.remarks}</td>
-                      <td>{Number(item.amount).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-
-              {/* Payment Details Section in Modal */}
-              {selectedExpense.PaymentDetailsData && selectedExpense.PaymentDetailsData.length > 0 && (
-                <>
-                  <h6 className="mt-3">Payment Details</h6>
-                  <Table striped bordered hover size="sm">
-                    <thead>
-                      <tr>
-                        <th>Method</th>
-                        <th>Amount</th>
-                        <th>Details</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedExpense.PaymentDetailsData.map((p, index) => {
-                        let details = "-";
-                        if (p.payment_method === 'Bank') {
-                          const bankName = p.bank_name || p.bankName || "";
-                          const acc = p.bank_account || p.bank_accountId || "";
-                          details = `${bankName} ${acc ? `(${acc})` : ''}`;
-                        }
-                        return (
-                          <tr key={index}>
-                            <td>{p.payment_method}</td>
-                            <td>{Number(p.applied_amount || 0).toFixed(2)}</td>
-                            <td>{details}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                </>
-              )}
-
-              <div className="d-flex justify-content-end mt-3">
-                <div style={{ textAlign: 'right' }}>
-                  <p><strong>Total Amount:</strong> {Number(selectedExpense.total_amount).toFixed(2)}</p>
-                  <p><strong>Paid Amount:</strong> {Number(selectedExpense.paid_amount).toFixed(2)}</p>
-                  <p><strong>Balance Amount:</strong> {Number(selectedExpense.balance_amount).toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseReceiptModal}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleDownloadReceipt}>
-            Download Receipt
-          </Button>
-        </Modal.Footer>
-      </Modal>
+    
     </div>
   );
 };

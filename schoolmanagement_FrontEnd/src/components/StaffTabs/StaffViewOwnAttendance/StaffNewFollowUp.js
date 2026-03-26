@@ -17,6 +17,8 @@ const StaffNewFollowUp = () => {
   const [selectedCommunicatedWith, setSelectedCommunicatedWith] =
     useState(null);
   const [selectedCommunicatedVia, setSelectedCommunicatedVia] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
 
   const userId = sessionStorage.getItem("userId");
 
@@ -29,6 +31,27 @@ const StaffNewFollowUp = () => {
     setSelectedCommunicatedVia(null);
     setCommunicationDetails("");
     setRemarks("");
+    setFieldErrors({});
+    setSubmitMessage({ type: "", text: "" });
+  };
+
+  const clearFieldError = (field) => {
+    setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const validateRequiredFields = () => {
+    const errors = {};
+
+    if (!selectedDate) errors.selectedDate = "Date is required";
+    if (!selectedMentor) errors.selectedMentor = "Mentor is required";
+    if (!selectedStudent) errors.selectedStudent = "Student is required";
+    if (!selectedCommunicatedWith)
+      errors.selectedCommunicatedWith = "Communicated with is required";
+    if (!selectedCommunicatedVia)
+      errors.selectedCommunicatedVia = "Communicated via is required";
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   useEffect(() => {
@@ -111,7 +134,10 @@ const StaffNewFollowUp = () => {
         }
       } catch (error) {
         console.error("Error fetching students:", error);
-        alert("Failed to fetch students. Please try again.");
+        setSubmitMessage({
+          type: "danger",
+          text: "Failed to fetch students. Please try again.",
+        });
         setStudents([]);
       }
     };
@@ -140,15 +166,9 @@ const StaffNewFollowUp = () => {
   ];
 
   const handleSave = async () => {
-    // Validation
-    if (
-      !selectedDate ||
-      !selectedMentor ||
-      !selectedStudent ||
-      !selectedCommunicatedWith ||
-      !selectedCommunicatedVia
-    ) {
-      alert("Please fill all required fields.");
+    setSubmitMessage({ type: "", text: "" });
+
+    if (!validateRequiredFields()) {
       return;
     }
 
@@ -192,7 +212,10 @@ const StaffNewFollowUp = () => {
 
     // Validate required fields
     if (!orgId || orgId === 0) {
-      alert("Missing organization information. Please ensure you are properly logged in.");
+      setSubmitMessage({
+        type: "danger",
+        text: "Missing organization information. Please ensure you are properly logged in.",
+      });
       console.error("Organization ID not found. Available keys:", {
         sessionStorage: sessionStorage.getItem("organization_id"),
         localStorage: localStorage.getItem("organization_id") || localStorage.getItem("orgId")
@@ -201,7 +224,10 @@ const StaffNewFollowUp = () => {
     }
 
     if (!branchId || branchId === 0) {
-      alert("Missing branch/batch information. Please ensure you are properly logged in.");
+      setSubmitMessage({
+        type: "danger",
+        text: "Missing branch/batch information. Please ensure you are properly logged in.",
+      });
       console.error("Branch ID not found. Available keys:", {
         sessionStorage: sessionStorage.getItem("branch_id"),
         localStorage: localStorage.getItem("branch_id") || localStorage.getItem("branchId") || localStorage.getItem("batch_id")
@@ -210,7 +236,10 @@ const StaffNewFollowUp = () => {
     }
 
     if (!academicYearId || academicYearId === 0) {
-      alert("Missing academic year information. Please select a student first.");
+      setSubmitMessage({
+        type: "danger",
+        text: "Missing academic year information. Please select a student first.",
+      });
       console.error("Academic Year ID not found. Student data:", selectedStudent);
       return;
     }
@@ -242,19 +271,28 @@ const StaffNewFollowUp = () => {
           mentorId = matchingMentor.id;
           console.log("Found existing mentor ID:", mentorId, "for employee ID:", selectedMentor.value);
         } else {
-          alert("Error: Mentor record not found for the logged-in teacher. Please contact administrator.");
+          setSubmitMessage({
+            type: "danger",
+            text: "Mentor record not found for the logged-in teacher. Please contact administrator.",
+          });
           console.error("No mentor found for employee:", selectedMentor.value, "org:", orgId, "branch:", branchId);
           console.log("Available mentors:", mentorData);
           return;
         }
       } else {
-        alert("Error: No mentor records found. Please contact administrator.");
+        setSubmitMessage({
+          type: "danger",
+          text: "No mentor records found. Please contact administrator.",
+        });
         console.error("No mentors returned from API:", mentorData);
         return;
       }
     } catch (error) {
       console.error("Error fetching mentor ID:", error);
-      alert("Failed to fetch mentor information. Please try again.");
+      setSubmitMessage({
+        type: "danger",
+        text: "Failed to fetch mentor information. Please try again.",
+      });
       return;
     }
 
@@ -290,15 +328,24 @@ const StaffNewFollowUp = () => {
       const data = await response.json();
 
       if (response.ok && data.message?.toLowerCase().includes("success")) {
-        alert("Communication record saved successfully!");
         // Clear the form
         handleClear();
+        setSubmitMessage({
+          type: "success",
+          text: "Communication record saved successfully!",
+        });
       } else {
-        alert(`Error: ${data.message || data.error || "Something went wrong!"}`);
+        setSubmitMessage({
+          type: "danger",
+          text: data.message || data.error || "Something went wrong!",
+        });
       }
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("Failed to save data: " + error.message);
+      setSubmitMessage({
+        type: "danger",
+        text: "Failed to save data: " + error.message,
+      });
     }
   };
 
@@ -354,43 +401,61 @@ const StaffNewFollowUp = () => {
                 </div>
               </div>
 
+              {submitMessage.text && (
+                <div className={`alert alert-${submitMessage.type}`} role="alert">
+                  {submitMessage.text}
+                </div>
+              )}
+
               <div className="row mt-3 mx-2">
                 <div className="col-12 custom-section-box">
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                     <div className="row flex-grow-1 mt-2">
                       <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="date" className="form-label">
-                          Date
+                          Date <span style={{ color: "red" }}>*</span>
                         </label>
                         <input
                           type="date"
                           id="date"
                           className="form-control detail"
                           value={selectedDate}
-                          onChange={(e) => setSelectedDate(e.target.value)}
+                          onChange={(e) => {
+                            setSelectedDate(e.target.value);
+                            clearFieldError("selectedDate");
+                          }}
                           placeholder="Select date"
                         />
+                        {fieldErrors.selectedDate && (
+                          <small className="text-danger">{fieldErrors.selectedDate}</small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="mentor" className="form-label ">
-                          Mentor
+                          Mentor <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="mentor"
                           options={mentors}
                           className="detail"
                           value={selectedMentor}
-                          onChange={setSelectedMentor}
+                          onChange={(option) => {
+                            setSelectedMentor(option);
+                            clearFieldError("selectedMentor");
+                          }}
                           placeholder="Select Mentor"
                           classNamePrefix="mentor-dropdown"
                           isDisabled={true}
                         />
+                        {fieldErrors.selectedMentor && (
+                          <small className="text-danger">{fieldErrors.selectedMentor}</small>
+                        )}
                       </div>
                       {/* Student Dropdown (Appears only if mentor is selected) */}
                       <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="student-name" className="form-label ">
-                          Student Name
+                          Student Name <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="student-name"
@@ -400,8 +465,14 @@ const StaffNewFollowUp = () => {
                           placeholder="Select Student"
                           isDisabled={!selectedMentor} // Disables dropdown until a mentor is selected
                           value={selectedStudent}
-                          onChange={setSelectedStudent}
+                          onChange={(option) => {
+                            setSelectedStudent(option);
+                            clearFieldError("selectedStudent");
+                          }}
                         />
+                        {fieldErrors.selectedStudent && (
+                          <small className="text-danger">{fieldErrors.selectedStudent}</small>
+                        )}
                       </div>
                       {/* Communicated With Dropdown */}
                       <div className="col-12 col-md-3 mb-4 ">
@@ -417,9 +488,15 @@ const StaffNewFollowUp = () => {
                           className="flex-grow-1 detail"
                           options={communicatedWithOptions}
                           value={selectedCommunicatedWith}
-                          onChange={setSelectedCommunicatedWith}
+                          onChange={(option) => {
+                            setSelectedCommunicatedWith(option);
+                            clearFieldError("selectedCommunicatedWith");
+                          }}
                           placeholder="Select "
                         />
+                        {fieldErrors.selectedCommunicatedWith && (
+                          <small className="text-danger">{fieldErrors.selectedCommunicatedWith}</small>
+                        )}
                       </div>
 
                       {/* Communicated Via Dropdown */}
@@ -437,8 +514,14 @@ const StaffNewFollowUp = () => {
                           options={communicatedViaOptions}
                           placeholder="Select"
                           value={selectedCommunicatedVia}
-                          onChange={setSelectedCommunicatedVia}
+                          onChange={(option) => {
+                            setSelectedCommunicatedVia(option);
+                            clearFieldError("selectedCommunicatedVia");
+                          }}
                         />
+                        {fieldErrors.selectedCommunicatedVia && (
+                          <small className="text-danger">{fieldErrors.selectedCommunicatedVia}</small>
+                        )}
                       </div>
                       {/* Communication Details Input Field */}
                       <div className="col-12 col-md-6 mb-4 ">

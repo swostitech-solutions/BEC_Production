@@ -466,7 +466,7 @@
 //                       className="table-responsive"
 //                       style={{ maxHeight: "400px", overflowY: "auto" }}
 //                     >
-//                       <table className="table">
+//                       <table className="table table-bordered ">
 //                         <thead className="thead-dark">
 //                           <tr>
 //                             <th>Receipt No.</th>
@@ -537,7 +537,7 @@
 //                       className="table-responsive"
 //                       style={{ maxHeight: "400px", overflowY: "auto" }}
 //                     >
-//                       <table className="table">
+//                       <table className="table table-bordered ">
 //                         <thead className="thead-dark">
 //                           <tr>
 //                             <th>Expense No.</th>
@@ -598,7 +598,7 @@
 //                       className="table-responsive"
 //                       style={{ maxHeight: "400px", overflowY: "auto" }}
 //                     >
-//                       <table className="table">
+//                       <table className="table table-bordered ">
 //                         <thead className="thead-dark">
 //                           <tr>
 //                             <th>Income No.</th>
@@ -652,7 +652,7 @@
 //                 <Col md={6}>
 //                   <div className="border p-3">
 //                     <h5 style={{ color: "black" }}>CALCULATION</h5>
-//                     <table className="table">
+//                     <table className="table table-bordered ">
 //                       <tbody>
 //                         <tr>
 //                           <td>
@@ -733,6 +733,7 @@ import html2pdf from "html2pdf.js";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import "jspdf-autotable";
+import { openFeeReceiptPdf } from "../AdminFeeSearch/feeReceiptPdf";
 
 
 
@@ -860,8 +861,7 @@ const AdmAttendanceEntry = () => {
       const result = response.data;
 
       if (result.receipt_data) {
-        //  Directly generate PDF from result data
-        await generatePDF(result.receipt_data);
+        openFeeReceiptPdf(result.receipt_data);
       } else {
         alert(result.message || "Failed to fetch receipt details.");
       }
@@ -893,8 +893,8 @@ const AdmAttendanceEntry = () => {
       });
 
     try {
-      const becLogo = await toBase64("/Assets/logobec.png");
-      doc.addImage(becLogo, "JPEG", 10, 10, 20, 20);
+      const sparshLogo = await toBase64("/Assets/sparsh.jpeg");
+      doc.addImage(sparshLogo, "JPEG", 10, 10, 20, 20);
     } catch (error) {
       console.error("Error adding image:", error);
     }
@@ -903,7 +903,7 @@ const AdmAttendanceEntry = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(16);
-    const headerText = "Bhubaneswar Engineering College";
+    const headerText = "Sparsh College of Nursing and Allied Sciences";
     const textWidth =
       (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
       doc.internal.scaleFactor;
@@ -1146,7 +1146,7 @@ const AdmAttendanceEntry = () => {
       const pageWidth = doc.internal.pageSize.getWidth();
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(16);
-      const headerText = "Bhubaneswar Engineering College";
+      const headerText = "Sparsh College of Nursing and Allied Sciences";
       const textWidth =
         (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
         doc.internal.scaleFactor;
@@ -1380,7 +1380,7 @@ const AdmAttendanceEntry = () => {
         resolve(canvas.toDataURL("image/jpeg"));
       };
       img.onerror = (err) => reject(err);
-      img.src = "/Assets/logobec.png";
+      img.src = "/Assets/sparsh.jpeg";
     });
   };
 
@@ -1405,7 +1405,7 @@ const AdmAttendanceEntry = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     doc.setFont("Helvetica", "bold");
     doc.setFontSize(16);
-    const headerText = "Bhubaneswar Engineering College";
+    const headerText = "Sparsh College of Nursing and Allied Sciences";
     const textWidth =
       (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
       doc.internal.scaleFactor;
@@ -1616,7 +1616,7 @@ const AdmAttendanceEntry = () => {
         const pageWidth = doc.internal.pageSize.getWidth();
         doc.setFont("Helvetica", "bold");
         doc.setFontSize(16);
-        const headerText = "Bhubaneswar Engineering College";
+        const headerText = "Sparsh College of Nursing and Allied Sciences";
         const textWidth =
           (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
           doc.internal.scaleFactor;
@@ -1832,7 +1832,7 @@ const AdmAttendanceEntry = () => {
                         className="table-responsive"
                         style={{ maxHeight: "400px", overflowY: "auto" }}
                       >
-                        <table className="table">
+                        <table className="table table-bordered ">
                           <thead className="thead-dark">
                             <tr>
                               <th>Receipt No.</th>
@@ -1907,7 +1907,7 @@ const AdmAttendanceEntry = () => {
                         className="table-responsive"
                         style={{ maxHeight: "400px", overflowY: "auto" }}
                       >
-                        <table className="table">
+                        <table className="table table-bordered ">
                           <thead className="thead-dark">
                             <tr>
                               <th>Expense No.</th>
@@ -1968,7 +1968,7 @@ const AdmAttendanceEntry = () => {
                         className="table-responsive"
                         style={{ maxHeight: "400px", overflowY: "auto" }}
                       >
-                        <table className="table">
+                        <table className="table table-bordered ">
                           <thead className="thead-dark">
                             <tr>
                               <th>Income No.</th>

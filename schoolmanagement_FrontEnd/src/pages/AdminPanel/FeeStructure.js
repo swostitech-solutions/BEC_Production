@@ -197,7 +197,7 @@ const FeeStructure = () => {
                       className="form-check-label"
                       htmlFor="copyFeeStructureTab"
                     >
-                      Copy Fee Structure
+                      View Fee Structure
                     </label>
                   </div>
                 </div>

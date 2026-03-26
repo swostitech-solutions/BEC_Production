@@ -897,16 +897,16 @@ class UpdateHostelDetailsUpdateAPIView(UpdateAPIView):
 
             # Update the student record
             #     prev choice semesters
-                if studentCourseInstance.hostel_choice_semester:
-                    choice_semesters = ast.literal_eval(studentCourseInstance.hostel_choice_semester)
-                else:
-                    choice_semesters = []
-                # new choice semester
-                for item in choice_semester_ids:
-                    choice_semesters.append(item)
-                studentCourseInstance.temp_hostel_choice_semester = choice_semester_ids
+                # Use the provided choices directly since frontend sends all active choices
+                # Make sure to remove duplicates and keep it as a list of integers
+                choice_semesters = list(set([int(x) for x in choice_semester_ids])) if choice_semester_ids else []
+                
+                # Convert list to string format like "[1, 2]" as expected by the field
+                choice_semesters_str = str(choice_semesters) if choice_semesters else "[]"
+                
+                studentCourseInstance.temp_hostel_choice_semester = str(choice_semesters)
                 studentCourseInstance.hostel_availed = hostel_avail
-                studentCourseInstance.hostel_choice_semester = choice_semesters    # updated choice semester
+                studentCourseInstance.hostel_choice_semester = choice_semesters_str    # updated choice semester
                 studentCourseInstance.save()
 
             return Response({'message':'success'},status=status.HTTP_200_OK)

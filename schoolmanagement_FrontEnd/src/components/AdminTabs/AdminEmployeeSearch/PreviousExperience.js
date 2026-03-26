@@ -255,11 +255,16 @@ const PreviousExperience = ({ goToTab, setExperienceData, experienceData }) => {
   };
 
   const handleAdd = () => {
-    const { organization, monthYearFrom, monthYearTo, reasonForLeaving } =
+    const { organization, monthYearFrom, monthYearTo, reasonForLeaving, experienceLetterProvided } =
       formData;
 
     if (!organization || !monthYearFrom || !monthYearTo || !reasonForLeaving) {
       alert("Please fill all fields before adding.");
+      return;
+    }
+
+    if (!experienceLetterProvided) {
+      alert("Please check 'Experience Letter Provided' before adding.");
       return;
     }
 

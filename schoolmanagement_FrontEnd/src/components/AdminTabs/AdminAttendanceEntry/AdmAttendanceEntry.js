@@ -181,7 +181,7 @@
 //                           type="text"
 //                           id="barcode"
 //                           className="form-control detail"
-//                           placeholder="Enter barcode"
+//                           placeholder="Enter Roll No"
 //                           ref={barcodeRef}
 //                         />
 //                       </div>
@@ -268,7 +268,7 @@
 //                         <th>Section</th>
 //                         <th>Roll No</th>
 //                         <th>School Admission No</th>
-//                         <th>BarCode</th>
+//                         <th>Roll no</th>
 //                         <th>Student Name</th>
 //                         <th>Primary Guardian</th>
 //                         <th>Father Mobile No</th>
@@ -520,13 +520,13 @@ const AdmAttendanceEntry = () => {
 
                       <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="barcode" className="form-label">
-                          Barcode
+                          Roll No
                         </label>
                         <input
                           type="text"
                           id="barcode"
                           className="form-control detail"
-                          placeholder="Enter barcode"
+                          placeholder="Enter Roll No"
                           ref={barcodeRef}
                         />
                       </div>
@@ -613,7 +613,7 @@ const AdmAttendanceEntry = () => {
                         <th>Section</th>
                         <th>Roll No</th>
                         <th>School Admission No</th>
-                        <th>BarCode</th>
+                        <th>Roll no</th>
                         <th>Student Name</th>
                         <th>Primary Guardian</th>
                         <th>Father Mobile No</th>

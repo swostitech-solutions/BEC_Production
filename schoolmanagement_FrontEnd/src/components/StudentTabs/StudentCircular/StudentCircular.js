@@ -99,6 +99,7 @@ function Circular() {
       if (studentData.section_id) {
         params.append("section_ids", JSON.stringify([studentData.section_id]));
       }
+      params.append("approved_only", "Y");
 
       const apiUrl = `${ApiUrl.apiurl}CircularMessage/GetAllCircularMessageList/?${params.toString()}`;
       console.log("Fetching circulars from:", apiUrl);
@@ -118,9 +119,9 @@ function Circular() {
       console.log("Circulars response:", result);
 
       if (result.message === "Success" && Array.isArray(result.data)) {
-        // Filter only active and non-cancelled circulars
+        // Student panel should only show approved, non-cancelled circulars.
         const activeCirculars = result.data.filter(
-          (circular) => !circular.is_cancelled && circular.circular_status !== "C"
+          (circular) => !circular.is_cancelled && circular.circular_status === "A"
         );
         // Sort by date (newest first)
         activeCirculars.sort((a, b) => new Date(b.circular_date) - new Date(a.circular_date));

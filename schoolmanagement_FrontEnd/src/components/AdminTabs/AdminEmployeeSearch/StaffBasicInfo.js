@@ -14,8 +14,8 @@ const StaffInfo = ({
   setAddressDetails,
   setBasicInfoDataInParent,
   basicInfoData,
-  externalRequiredFieldErrors = {},
-  onClearRequiredFieldError,
+  requiredErrors = {},
+  setRequiredErrors,
 }) => {
   // const [frontCover, setFrontCover] = useState(null);
   const navigate = useNavigate();
@@ -69,41 +69,19 @@ const StaffInfo = ({
   // Validation errors for phone fields
   const [phoneNumberError, setPhoneNumberError] = useState("");
   const [emergencyContactError, setEmergencyContactError] = useState("");
-  const [requiredFieldErrors, setRequiredFieldErrors] = useState({});
-  const [formErrorMessage, setFormErrorMessage] = useState("");
-  const displayRequiredFieldErrors = {
-    ...requiredFieldErrors,
-    ...externalRequiredFieldErrors,
-  };
 
-  const handleRequiredFieldChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    setFormErrorMessage("");
-
-    setRequiredFieldErrors((prev) => {
-      if (!prev[field]) return prev;
-      const updated = { ...prev };
-      delete updated[field];
-      return updated;
-    });
-
-    if (onClearRequiredFieldError) {
-      onClearRequiredFieldError(field);
-    }
-  };
-
-  // Initialize frontCover from basicInfoData if available (must be a valid image URL)
+  // Initialize frontCover from basicInfoData if available
+  // Priority: preview from new upload > existing DB path
   const [frontCover, setFrontCover] = useState(() => {
-    if (
-      basicInfoData &&
-      basicInfoData.profilePicture &&
-      typeof basicInfoData.profilePicture === 'string' &&
-      (basicInfoData.profilePicture.startsWith('data:') || basicInfoData.profilePicture.startsWith('http'))
-    ) {
-      return basicInfoData.profilePicture;
+    if (basicInfoData) {
+      // profilePicturePreview holds the base64 of a newly uploaded pic
+      if (basicInfoData.profilePicturePreview && typeof basicInfoData.profilePicturePreview === 'string') {
+        return basicInfoData.profilePicturePreview;
+      }
+      const picUrl = basicInfoData.profile_photo_path || basicInfoData.profilePicture;
+      if (picUrl && typeof picUrl === 'string' && picUrl.length > 0) {
+        return picUrl;
+      }
     }
     return null;
   });
@@ -112,52 +90,88 @@ const StaffInfo = ({
   const hasInitialized = React.useRef(false);
 
   // Update formData and frontCover when basicInfoData changes (only once in edit mode)
-  useEffect(() => {
-    if (basicInfoData === null) {
-      hasInitialized.current = false;
-      setFormData({
-        employeeId: "",
-        orgId: "",
-        branchId: "",
-        location: "JAYDEV VIHAR",
-        employeeCode: "",
-        nuid: "",
-        title: "",
-        firstName: "",
-        middleName: "",
-        lastName: "",
-        dob: "",
-        placeOfBirth: "",
-        maritalStatus: "",
-        bloodGroup: "",
-        nationality: "",
-        religion: "",
-        gender: "",
-        motherTongue: "",
-        employeeType: "",
-        email: "",
-        officeEmail: "",
-        phoneNumber: "",
-        emergencyContactNumber: "",
-        status: "ACTIVE",
-        createdBy: "",
-        profilePicture: null,
-      });
-      setFrontCover(null);
-    } else if (basicInfoData && Object.keys(basicInfoData).length > 0 && basicInfoData.firstName && !hasInitialized.current) {
-      console.log("📝 Initializing StaffBasicInfo with basicInfoData (one-time):", basicInfoData);
-      hasInitialized.current = true;  // Mark as initialized
-      setFormData(basicInfoData);
+ useEffect(() => {
+   if (hasInitialized.current) return;
 
-      // Update profile picture preview if available
-      if (basicInfoData.profile_photo_path || basicInfoData.profilePicture) {
-        const picUrl = basicInfoData.profile_photo_path || basicInfoData.profilePicture;
-        if (typeof picUrl === 'string' && (picUrl.startsWith('data:') || picUrl.startsWith('http'))) {
-          setFrontCover(picUrl);
-        }
-      }
-    }
-  }, [basicInfoData]);
+   // ✅ WAIT until all dropdown data is loaded
+   if (
+     !employeeDetails ||
+     bloodGroups.length === 0 ||
+     nationalities.length === 0 ||
+     religions.length === 0 ||
+     languages.length === 0
+   ) {
+     return;
+   }
+
+   console.log("🔥 Mapping after dropdown data loaded");
+
+   const bloodGroupObj = bloodGroups.find(
+     (bg) =>
+       bg.id === parseInt(employeeDetails.blood_group) ||
+       (bg.blood_name || "").toLowerCase().trim() ===
+         (employeeDetails.blood_group || "").toString().toLowerCase().trim(),
+   );
+
+   const nationalityObj = nationalities.find(
+     (n) =>
+       n.id === parseInt(employeeDetails.nationality) ||
+       (n.nationality_name || "").toLowerCase().trim() ===
+         (employeeDetails.nationality || "").toString().toLowerCase().trim(),
+   );
+
+   const religionObj = religions.find(
+     (r) =>
+       r.id === parseInt(employeeDetails.religion) ||
+       (r.religion_name || "").toLowerCase().trim() ===
+         (employeeDetails.religion || "").toString().toLowerCase().trim(),
+   );
+
+   const motherTongueObj = languages.find(
+     (l) =>
+       l.id === parseInt(employeeDetails.mother_tongue) ||
+       (l.mother_tongue_name || "").toLowerCase().trim() ===
+         (employeeDetails.mother_tongue || "").toString().toLowerCase().trim(),
+   );
+
+   hasInitialized.current = true;
+
+   setFormData((prev) => ({
+     ...prev,
+     employeeId: employeeDetails.id || "",
+     employeeCode: employeeDetails.employee_code || "",
+     title: employeeDetails.title || "",
+     firstName: employeeDetails.first_name || "",
+     middleName: employeeDetails.middle_name || "",
+     lastName: employeeDetails.last_name || "",
+     dob: employeeDetails.date_of_birth || "",
+     placeOfBirth: employeeDetails.place_of_birth || "",
+     maritalStatus: employeeDetails.marital_status || "",
+
+     // ✅ FIXED mapping
+     bloodGroup: bloodGroupObj ? bloodGroupObj.id : "",
+     nationality: nationalityObj ? nationalityObj.id : "",
+     religion: religionObj ? religionObj.id : "",
+     motherTongue: motherTongueObj ? motherTongueObj.id : "",
+
+     gender: employeeDetails.gender_id
+       ? parseInt(employeeDetails.gender_id)
+       : "",
+
+     employeeType:
+       employeeDetails.employee_type_id || employeeDetails.employee_type || "",
+
+     email: employeeDetails.email || "",
+     officeEmail: employeeDetails.office_email || "",
+     phoneNumber: employeeDetails.phone_number || "",
+     emergencyContactNumber: employeeDetails.emergency_contact_number || "",
+
+     status: employeeDetails.is_active ? "ACTIVE" : "INACTIVE",
+     profilePicture: employeeDetails.profile || "",
+   }));
+
+   setFrontCover(employeeDetails.profile || "");
+ }, [employeeDetails, bloodGroups, nationalities, religions, languages]);
 
   // Sync data to parent whenever formData or frontCover changes
   useEffect(() => {
@@ -170,6 +184,12 @@ const StaffInfo = ({
 
 
   useEffect(() => {
+    // If the component has already initialized from the full database fetch (basicInfoData),
+    // DO NOT allow the location.state (employeeDetails) to overwrite the verified data!
+    if (hasInitialized.current) {
+        return;
+    }
+
     if (employeeDetails) {
       const bloodGroupObj = bloodGroups.find(
         (bg) =>
@@ -184,8 +204,6 @@ const StaffInfo = ({
           (n.nationality_name || "").toLowerCase().trim() === (employeeDetails.nationality || "").toString().toLowerCase().trim() ||
           (n.nationality_code || "").toLowerCase().trim() === (employeeDetails.nationality || "").toString().toLowerCase().trim()
       );
-      console.log("Matching Religion:", employeeDetails.religion);
-      console.log("Available Religions:", religions);
 
       const religionObj = religions.find(
         (r) =>
@@ -193,7 +211,6 @@ const StaffInfo = ({
           (r.religion_name || "").toLowerCase().trim() === (employeeDetails.religion || "").toString().toLowerCase().trim() ||
           (r.religion_code || "").toLowerCase().trim() === (employeeDetails.religion || "").toString().toLowerCase().trim()
       );
-      console.log("Found Religion Obj:", religionObj);
       const motherTongueObj = languages.find(
         (l) =>
           l.id === parseInt(employeeDetails.mother_tongue) ||
@@ -216,7 +233,8 @@ const StaffInfo = ({
       }
 
       //  Directly use employee_type_id
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         employeeId: employeeDetails.id || "",
         employeeCode: employeeDetails.employee_code || "",
         nuid: employeeDetails.nuid || "",
@@ -240,16 +258,12 @@ const StaffInfo = ({
         officeEmail: employeeDetails.office_email || "",
         phoneNumber: employeeDetails.phone_number || "",
         emergencyContactNumber: employeeDetails.emergency_contact_number || "",
-        status: employeeDetails.is_active ? "ACTIVE" : "INACTIVE",
+        status: employeeDetails.hasOwnProperty('is_active') 
+                  ? (employeeDetails.is_active ? "ACTIVE" : "INACTIVE") 
+                  : (employeeDetails.status ? String(employeeDetails.status).toUpperCase() : "ACTIVE"),
         profilePicture: employeeDetails.profile || "",
-      });
+      }));
 
-      // Debug logs
-      console.log("Employee Details:", employeeDetails);
-      console.log("Gender ID from API:", employeeDetails.gender_id);
-      console.log("Mother Tongue ID from API:", employeeDetails.mother_tongue_id);
-      console.log("Gender value set:", employeeDetails.gender_id ? parseInt(employeeDetails.gender_id) : "");
-      console.log("Mother Tongue value set:", employeeDetails.mother_tongue_id ? parseInt(employeeDetails.mother_tongue_id) : "");
       // Set profile image preview
       setFrontCover(employeeDetails.profile || "");
     }
@@ -279,16 +293,27 @@ const StaffInfo = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFrontCover(reader.result); // Preview as base64
+        const base64 = reader.result;
+        setFrontCover(base64); // Preview as base64
+        // Also persist the preview in formData so parent stores it
+        // and it can be restored when user navigates back to this tab
+        setFormData((prev) => ({
+          ...prev,
+          profilePicture: file,
+          profilePicturePreview: base64,
+        }));
       };
       reader.readAsDataURL(file);
-
-      // If needed, store the actual file to upload later
-      setFormData((prev) => ({
-        ...prev,
-        profilePicture: file,
-      }));
     }
+  };
+
+  const clearRequiredError = (fieldName) => {
+    if (!setRequiredErrors || !requiredErrors[fieldName]) return;
+    setRequiredErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[fieldName];
+      return updated;
+    });
   };
 
   useEffect(() => {
@@ -324,39 +349,47 @@ const StaffInfo = ({
 
   const handleNext = async () => {
     const requiredFields = [
-      "employeeCode",
-      "firstName",
-      "lastName",
       "dob",
+      "bloodGroup",
       "nationality",
       "religion",
-      "gender",
       "motherTongue",
       "employeeType",
-      "status",
-      "phoneNumber",
     ];
+    const missingFields = requiredFields.filter((field) => !formData[field]);
 
-    const validationErrors = {};
-    requiredFields.forEach((field) => {
-      const value = formData[field];
-      const isEmpty =
-        value === null ||
-        value === undefined ||
-        (typeof value === "string" && value.trim() === "");
-
-      if (isEmpty) {
-        validationErrors[field] = "This field is required";
-      }
-    });
-
-    if (Object.keys(validationErrors).length > 0) {
-      setRequiredFieldErrors(validationErrors);
+    if (missingFields.length > 0) {
+      alert(`Please fill in: ${missingFields.join(", ")}`);
       return;
     }
 
-    setRequiredFieldErrors({});
-    setFormErrorMessage("");
+    // Validate Mobile Number
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
+      alert("Mobile Number is required.");
+      setPhoneNumberError("Mobile Number is required.");
+      return;
+    }
+    if (!/^\d{10}$/.test(formData.phoneNumber)) {
+      alert("Mobile Number must be exactly 10 digits.");
+      setPhoneNumberError("Mobile Number must be exactly 10 digits.");
+      return;
+    }
+
+    // Validate Email ID
+   if (!formData.email || formData.email.trim() === "") {
+     setRequiredErrors((prev) => ({
+       ...prev,
+       email: "Email ID is required.",
+     }));
+     return;
+   }
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+  setRequiredErrors((prev) => ({
+    ...prev,
+    email: "Please enter a valid Email ID.",
+  }));
+  return;
+}
 
     try {
       // Data is already synced to parent via useEffect - no need for sessionStorage
@@ -403,7 +436,8 @@ const StaffInfo = ({
       goToTab(1);
     } catch (error) {
       console.error("Error in handleNext:", error);
-      setFormErrorMessage("Error while proceeding to next tab: " + error.message);
+      alert("Error while proceeding to next tab: " + error.message);
+      goToTab(1); // Proceed anyway if error occurs
     }
   };
 
@@ -415,11 +449,6 @@ const StaffInfo = ({
       <div className="row">
         <div className="col-12">
           <div className="card-body">
-            {formErrorMessage && (
-              <div className="alert alert-danger" role="alert">
-                {formErrorMessage}
-              </div>
-            )}
             <div className="row  mx-2">
               <div className="col-12 custom-section-box">
                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
@@ -436,20 +465,23 @@ const StaffInfo = ({
                           className="form-control detail"
                           placeholder="Enter employee code"
                           value={formData.employeeCode}
-                          onChange={(e) =>
-                            handleRequiredFieldChange("employeeCode", e.target.value)
-                          }
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              employeeCode: e.target.value,
+                            });
+                            clearRequiredError("employeeCode");
+                          }}
                         />
                       </div>
-                      {displayRequiredFieldErrors.employeeCode && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.employeeCode}
-                        </div>
+                      {requiredErrors.employeeCode && (
+                        <small className="text-danger">
+                          {requiredErrors.employeeCode}
+                        </small>
                       )}
                     </div>
 
-                    {/* NUID field hidden as per client request — field is optional (null=True, blank=True in DB) */}
-                    {/* <div className="col-md-3 mb-3">
+                    <div className="col-md-3 mb-3">
                       <label htmlFor="nuid-code" className="form-label">
                         NUID
                       </label>
@@ -468,7 +500,7 @@ const StaffInfo = ({
                           }
                         />
                       </div>
-                    </div> */}
+                    </div>
 
                     <div className="col-12 col-md-1 mb-3">
                       <label htmlFor="select" className="form-label">
@@ -483,7 +515,7 @@ const StaffInfo = ({
                           titleOptions.find(
                             (option) =>
                               option.value.toLowerCase() ===
-                              formData.title.toLowerCase()
+                              formData.title.toLowerCase(),
                           ) || null
                         }
                         onChange={(selected) =>
@@ -504,9 +536,13 @@ const StaffInfo = ({
                           className="form-control detail"
                           placeholder="Enter First name"
                           value={formData.firstName}
-                          onChange={(e) =>
-                            handleRequiredFieldChange("firstName", e.target.value)
-                          }
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              firstName: e.target.value,
+                            });
+                            clearRequiredError("firstName");
+                          }}
                         />
                         <input
                           type="text"
@@ -526,42 +562,44 @@ const StaffInfo = ({
                           placeholder="Enter last name"
                           value={formData.lastName}
                           onChange={(e) =>
-                            handleRequiredFieldChange("lastName", e.target.value)
+                            setFormData({
+                              ...formData,
+                              lastName: e.target.value,
+                            })
                           }
                         />
                       </div>
-                      {displayRequiredFieldErrors.firstName && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.firstName}
-                        </div>
-                      )}
-                      {displayRequiredFieldErrors.lastName && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.lastName}
-                        </div>
+                      {requiredErrors.firstName && (
+                        <small className="text-danger">
+                          {requiredErrors.firstName}
+                        </small>
                       )}
                     </div>
 
                     <div className="col-md-3 mb-3">
                       <label htmlFor="birth-date" className="form-label">
-                        Date of Birth
+                        Date Of Birth
                         <span style={{ color: "red" }}>*</span>
                       </label>
                       <div className="d-flex align-items-center">
                         <input
                           type="date"
-                          id="employee-code"
+                          id="dob"
                           className="form-control detail"
                           value={formData.dob}
-                          onChange={(e) =>
-                            handleRequiredFieldChange("dob", e.target.value)
-                          }
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              dob: e.target.value,
+                            });
+                            clearRequiredError("dob");
+                          }}
                         />
                       </div>
-                      {displayRequiredFieldErrors.dob && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.dob}
-                        </div>
+                      {requiredErrors.dob && (
+                        <small className="text-danger">
+                          {requiredErrors.dob}
+                        </small>
                       )}
                     </div>
 
@@ -596,7 +634,7 @@ const StaffInfo = ({
                         className="detail"
                         options={maritalStatusOptions}
                         value={maritalStatusOptions.find(
-                          (option) => option.value === formData.maritalStatus
+                          (option) => option.value === formData.maritalStatus,
                         )}
                         onChange={(selectedOption) =>
                           setFormData({
@@ -626,10 +664,13 @@ const StaffInfo = ({
                             label: item.blood_name,
                           }))
                           .find(
-                            (option) => option.value === formData.bloodGroup
+                            (option) => option.value === formData.bloodGroup,
                           )}
                         onChange={(selectedOption) =>
-                          handleRequiredFieldChange("bloodGroup", selectedOption?.value || "")
+                          setFormData({
+                            ...formData,
+                            bloodGroup: selectedOption.value, // store ID (value)
+                          })
                         }
                       />
                     </div>
@@ -653,16 +694,20 @@ const StaffInfo = ({
                             label: item.nationality_name,
                           }))
                           .find(
-                            (option) => option.value === formData.nationality
+                            (option) => option.value === formData.nationality,
                           )}
-                        onChange={(selectedOption) =>
-                          handleRequiredFieldChange("nationality", selectedOption?.value || "")
-                        }
+                        onChange={(selectedOption) => {
+                          setFormData({
+                            ...formData,
+                            nationality: selectedOption.value, // store ID
+                          });
+                          clearRequiredError("nationality");
+                        }}
                       />
-                      {displayRequiredFieldErrors.nationality && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.nationality}
-                        </div>
+                      {requiredErrors.nationality && (
+                        <small className="text-danger">
+                          {requiredErrors.nationality}
+                        </small>
                       )}
                     </div>
 
@@ -685,14 +730,18 @@ const StaffInfo = ({
                             label: item.religion_name,
                           }))
                           .find((option) => option.value === formData.religion)}
-                        onChange={(selectedOption) =>
-                          handleRequiredFieldChange("religion", selectedOption?.value || "")
-                        }
+                        onChange={(selectedOption) => {
+                          setFormData({
+                            ...formData,
+                            religion: selectedOption.value,
+                          });
+                          clearRequiredError("religion");
+                        }}
                       />
-                      {displayRequiredFieldErrors.religion && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.religion}
-                        </div>
+                      {requiredErrors.religion && (
+                        <small className="text-danger">
+                          {requiredErrors.religion}
+                        </small>
                       )}
                     </div>
 
@@ -715,14 +764,18 @@ const StaffInfo = ({
                             label: item.gender_name,
                           }))
                           .find((option) => option.value === formData.gender)}
-                        onChange={(selectedOption) =>
-                          handleRequiredFieldChange("gender", selectedOption?.value || "")
-                        }
+                        onChange={(selectedOption) => {
+                          setFormData({
+                            ...formData,
+                            gender: selectedOption.value,
+                          });
+                          clearRequiredError("gender");
+                        }}
                       />
-                      {displayRequiredFieldErrors.gender && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.gender}
-                        </div>
+                      {requiredErrors.gender && (
+                        <small className="text-danger">
+                          {requiredErrors.gender}
+                        </small>
                       )}
                     </div>
 
@@ -745,16 +798,20 @@ const StaffInfo = ({
                             label: item.mother_tongue_name,
                           }))
                           .find(
-                            (option) => option.value === formData.motherTongue
+                            (option) => option.value === formData.motherTongue,
                           )}
-                        onChange={(selectedOption) =>
-                          handleRequiredFieldChange("motherTongue", selectedOption?.value || "")
-                        }
+                        onChange={(selectedOption) => {
+                          setFormData({
+                            ...formData,
+                            motherTongue: selectedOption.value,
+                          });
+                          clearRequiredError("motherTongue");
+                        }}
                       />
-                      {displayRequiredFieldErrors.motherTongue && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.motherTongue}
-                        </div>
+                      {requiredErrors.motherTongue && (
+                        <small className="text-danger">
+                          {requiredErrors.motherTongue}
+                        </small>
                       )}
                     </div>
 
@@ -769,16 +826,20 @@ const StaffInfo = ({
                         className="detail"
                         options={employeeTypeOptions}
                         value={employeeTypeOptions.find(
-                          (option) => option.value === formData.employeeType
+                          (option) => option.value === formData.employeeType,
                         )}
-                        onChange={(selectedOption) =>
-                          handleRequiredFieldChange("employeeType", selectedOption?.value || "")
-                        }
+                        onChange={(selectedOption) => {
+                          setFormData({
+                            ...formData,
+                            employeeType: selectedOption.value, // store ID (value)
+                          });
+                          clearRequiredError("employeeType");
+                        }}
                       />
-                      {displayRequiredFieldErrors.employeeType && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.employeeType}
-                        </div>
+                      {requiredErrors.employeeType && (
+                        <small className="text-danger">
+                          {requiredErrors.employeeType}
+                        </small>
                       )}
                     </div>
 
@@ -799,33 +860,39 @@ const StaffInfo = ({
                           label: formData.status || "ACTIVE",
                         }}
                         onChange={(selectedOption) =>
-                          handleRequiredFieldChange("status", selectedOption?.value || "")
+                          setFormData({
+                            ...formData,
+                            status: selectedOption.value,
+                          })
                         }
                         isDisabled={!formData.employeeId}
                       />
-                      {displayRequiredFieldErrors.status && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.status}
-                        </div>
-                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
                       <label htmlFor="email-id" className="form-label">
-                        Email ID
+                        Email ID <span style={{ color: "red" }}>*</span>
                       </label>
+
                       <div className="d-flex align-items-center">
                         <input
                           type="email"
                           id="email-id"
-                          className="form-control detail"
+                          className={`form-control detail${requiredErrors.email ? " is-invalid" : ""}`}
                           placeholder="Enter email id"
                           value={formData.email}
-                          onChange={(e) =>
-                            setFormData({ ...formData, email: e.target.value })
-                          }
+                          onChange={(e) => {
+                            setFormData({ ...formData, email: e.target.value });
+                            clearRequiredError("email");
+                          }}
                         />
                       </div>
+
+                      {requiredErrors.email && (
+                        <small className="text-danger">
+                          {requiredErrors.email}
+                        </small>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
@@ -858,28 +925,33 @@ const StaffInfo = ({
                         <input
                           type="text"
                           id="mobile-number"
-                          className={`form-control detail${phoneNumberError ? " is-invalid" : ""}`}
+                          className={`form-control detail${phoneNumberError || requiredErrors.phoneNumber ? " is-invalid" : ""}`}
                           placeholder="Enter Mobile Number"
                           value={formData.phoneNumber}
                           maxLength={10}
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, "");
-                            handleRequiredFieldChange("phoneNumber", val);
+                            setFormData({ ...formData, phoneNumber: val });
+                            clearRequiredError("phoneNumber");
                             if (val && val.length !== 10) {
-                              setPhoneNumberError("Mobile number must be exactly 10 digits.");
+                              setPhoneNumberError(
+                                "Mobile number must be exactly 10 digits.",
+                              );
                             } else {
                               setPhoneNumberError("");
                             }
                           }}
                         />
                       </div>
-                      {displayRequiredFieldErrors.phoneNumber ? (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {displayRequiredFieldErrors.phoneNumber}
-                        </div>
-                      ) : phoneNumberError && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
-                          {phoneNumberError}
+                      {(requiredErrors.phoneNumber || phoneNumberError) && (
+                        <div
+                          style={{
+                            color: "red",
+                            fontSize: "12px",
+                            marginTop: "4px",
+                          }}
+                        >
+                          {requiredErrors.phoneNumber || phoneNumberError}
                         </div>
                       )}
                     </div>
@@ -901,9 +973,14 @@ const StaffInfo = ({
                           maxLength={10}
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, "");
-                            setFormData({ ...formData, emergencyContactNumber: val });
+                            setFormData({
+                              ...formData,
+                              emergencyContactNumber: val,
+                            });
                             if (val && val.length !== 10) {
-                              setEmergencyContactError("Emergency contact must be exactly 10 digits.");
+                              setEmergencyContactError(
+                                "Emergency contact must be exactly 10 digits.",
+                              );
                             } else {
                               setEmergencyContactError("");
                             }
@@ -911,7 +988,13 @@ const StaffInfo = ({
                         />
                       </div>
                       {emergencyContactError && (
-                        <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>
+                        <div
+                          style={{
+                            color: "red",
+                            fontSize: "12px",
+                            marginTop: "4px",
+                          }}
+                        >
                           {emergencyContactError}
                         </div>
                       )}
@@ -927,19 +1010,21 @@ const StaffInfo = ({
                         className="form-control detail"
                       />
 
-                      {frontCover && (typeof frontCover === 'string') && (frontCover.startsWith('data:') || frontCover.startsWith('http')) && (
-                        <Image
-                          src={frontCover}
-                          alt="Front Cover Preview"
-                          thumbnail
-                          style={{
-                            marginTop: "10px",
-                            width: "120px",
-                            height: "150px",
-                            objectFit: "cover",
-                          }}
-                        />
-                      )}
+                      {frontCover &&
+                        typeof frontCover === "string" &&
+                        frontCover.length > 0 && (
+                          <Image
+                            src={frontCover}
+                            alt="Front Cover Preview"
+                            thumbnail
+                            style={{
+                              marginTop: "10px",
+                              width: "120px",
+                              height: "150px",
+                              objectFit: "cover",
+                            }}
+                          />
+                        )}
                     </div>
                   </div>
                 </div>

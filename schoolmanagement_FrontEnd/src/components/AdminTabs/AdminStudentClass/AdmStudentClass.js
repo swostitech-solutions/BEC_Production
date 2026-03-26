@@ -86,30 +86,6 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection("");
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(selectedSection)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev) === Number(nextSectionId) ? prev : String(nextSectionId)
-    );
-  }, [selectedSemester, SectionList]);
-
   const [previousYearBalance, setPreviousYearBalance] = useState(0);
 
   // ✅ Clear stored filters on initial page load
@@ -1046,7 +1022,7 @@ const AdmAttendanceEntry = () => {
                             onInput={(e) => {
                               if (!e.target.value.trim()) {
                                 localStorage.removeItem(
-                                  "selectedClassStudentId"
+                                  "selectedClassStudentId",
                                 );
                               }
                             }}
@@ -1070,22 +1046,22 @@ const AdmAttendanceEntry = () => {
                           studentNameRef.current.value =
                             selected.studentBasicDetails.first_name || "";
                           setSelectedStudentName(
-                            selected.studentBasicDetails.first_name || ""
+                            selected.studentBasicDetails.first_name || "",
                           );
                           // 3️⃣ Set Dropdown values from Modal
                           setSelectedBatch(selected.academicDetails.batch_id);
                           setSelectedCourse(selected.academicDetails.course_id);
                           setSelectedDepartment(
-                            selected.academicDetails.department_id
+                            selected.academicDetails.department_id,
                           );
                           setSelectedAcademicYear(
-                            selected.academicDetails.academic_year_id
+                            selected.academicDetails.academic_year_id,
                           );
                           setSelectedSemester(
-                            selected.academicDetails.semester_id
+                            selected.academicDetails.semester_id,
                           );
                           setSelectedSection(
-                            selected.academicDetails.section_id
+                            selected.academicDetails.section_id,
                           );
                           // 4️⃣ Save student ID also (optional)
                           setFormData((prev) => ({
@@ -1116,7 +1092,7 @@ const AdmAttendanceEntry = () => {
                               ? {
                                   value: selectedBatch,
                                   label: BatchList.find(
-                                    (b) => b.id === selectedBatch
+                                    (b) => b.id === selectedBatch,
                                   )?.batch_description,
                                 }
                               : null
@@ -1152,7 +1128,7 @@ const AdmAttendanceEntry = () => {
                               ? {
                                   value: selectedCourse,
                                   label: CourseList.find(
-                                    (c) => c.id === selectedCourse
+                                    (c) => c.id === selectedCourse,
                                   )?.course_name,
                                 }
                               : null
@@ -1187,7 +1163,7 @@ const AdmAttendanceEntry = () => {
                               ? {
                                   value: selectedDepartment,
                                   label: BranchList.find(
-                                    (d) => d.id === selectedDepartment
+                                    (d) => d.id === selectedDepartment,
                                   )?.department_description,
                                 }
                               : null
@@ -1218,12 +1194,12 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             AcademicYearList?.find(
-                              (a) => a.id === selectedAcademicYear
+                              (a) => a.id === selectedAcademicYear,
                             )
                               ? {
                                   value: selectedAcademicYear,
                                   label: AcademicYearList.find(
-                                    (a) => a.id === selectedAcademicYear
+                                    (a) => a.id === selectedAcademicYear,
                                   )?.academic_year_description,
                                 }
                               : null
@@ -1256,7 +1232,7 @@ const AdmAttendanceEntry = () => {
                               ? {
                                   value: selectedSemester,
                                   label: SemesterList.find(
-                                    (s) => s.id === selectedSemester
+                                    (s) => s.id === selectedSemester,
                                   )?.semester_description,
                                 }
                               : null
@@ -1276,7 +1252,6 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className="detail"
-                          isDisabled={true}
                           isLoading={loadingSec}
                           options={
                             SectionList?.map((s) => ({
@@ -1285,27 +1260,19 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={
-                            SectionList?.find(
-                              (s) => Number(s.id) === Number(selectedSection)
-                            )
+                            SectionList?.find((s) => s.id === selectedSection)
                               ? {
                                   value: selectedSection,
                                   label: SectionList.find(
-                                    (s) =>
-                                      Number(s.id) === Number(selectedSection)
+                                    (s) => s.id === selectedSection,
                                   )?.section_name,
                                 }
                               : null
                           }
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester
-                              ? "Select Semester first"
-                              : SectionList?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
+                          onChange={(opt) =>
+                            setSelectedSection(opt?.value || "")
                           }
-                          isClearable={false}
+                          placeholder="Select Section"
                         />
                       </div>
                     </div>
@@ -1315,14 +1282,14 @@ const AdmAttendanceEntry = () => {
 
               <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table table-bordered   " id="studentclassid">
+                  <table className="table table-bordered " id="studentclassid">
                     <thead>
                       <tr>
                         <th>Sr.No</th>
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
                         <th>Admission No</th>
-                        {/* <th>BarCode</th> */}
+                        <th>Roll no</th>
                         <th>Session</th>
                         <th>Course</th>
                         <th>Department</th>
@@ -1347,7 +1314,7 @@ const AdmAttendanceEntry = () => {
                             <td>{student.student_name}</td>
                             <td>{student.registration_no}</td>
                             <td>{student.college_admission_no}</td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
 
                             <td>{student.batch_code}</td>
                             <td>{student.course_name}</td>
@@ -1459,15 +1426,15 @@ const AdmAttendanceEntry = () => {
                       disabled
                     />
                   </div>
-                  {/* <div className="col-12 col-md-3 mb-2">
-                    <label className="form-label">Student Barcode</label>
+                  <div className="col-12 col-md-3 mb-2">
+                    <label className="form-label">Roll No</label>
                     <input
                       type="text"
                       className="form-control detail"
                       value={selectedStudent.barcode}
                       disabled
                     />
-                  </div> */}
+                  </div>
                   <div className="col-12 col-md-3 mb-2">
                     <label className="form-label">Father Name</label>
                     <input
@@ -1624,11 +1591,13 @@ const AdmAttendanceEntry = () => {
                       >
                         {semesterDataList.map((semesterData) => {
                           const semesterId = Number(semesterData.id);
-                          const semesterName = semesterData.semester || `Semester ${semesterId}`;
-                          
+                          const semesterName =
+                            semesterData.semester || `Semester ${semesterId}`;
+
                           // 🔥 Use FLAG field to determine if paid (like EditTransportModal)
-                          const isPaid = String(semesterData.flag).toLowerCase() === "no"; // "no" = paid
-                          
+                          const isPaid =
+                            String(semesterData.flag).toLowerCase() === "no"; // "no" = paid
+
                           return (
                             <div
                               key={semesterId}
@@ -1658,12 +1627,15 @@ const AdmAttendanceEntry = () => {
                                 checked={selectedMonths[semesterId] || false}
                                 onChange={() => handleMonthChange(semesterId)}
                                 disabled={
-                                  !isTransportEditable ||
-                                  isPaid // 🔒 Only paid semesters are disabled
+                                  !isTransportEditable || isPaid // 🔒 Only paid semesters are disabled
                                 }
                                 style={{
-                                  opacity: (!isTransportEditable || isPaid) ? 0.6 : 1,
-                                  cursor: (!isTransportEditable || isPaid) ? "not-allowed" : "pointer",
+                                  opacity:
+                                    !isTransportEditable || isPaid ? 0.6 : 1,
+                                  cursor:
+                                    !isTransportEditable || isPaid
+                                      ? "not-allowed"
+                                      : "pointer",
                                 }}
                               />
                             </div>
@@ -1756,7 +1728,7 @@ const AdmAttendanceEntry = () => {
                           onInput={(e) => {
                             const numericValue = e.target.value.replace(
                               /[^0-9.]/g,
-                              ""
+                              "",
                             );
                             setAmount(numericValue);
                           }}

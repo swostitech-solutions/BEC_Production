@@ -243,7 +243,6 @@ const AdmMOUList = () => {
                               <td>
                                 <a
                                   href={item.doc_url}
-                                  download={item.doc_name}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                 >

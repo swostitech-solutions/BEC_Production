@@ -178,54 +178,6 @@ const StudentPromotion = () => {
     toSemester
   );
 
-  useEffect(() => {
-    if (!fromSemester) {
-      setFromSection(null);
-      return;
-    }
-
-    if (!Array.isArray(fromSectionList) || fromSectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = fromSectionList.find(
-      (s) => Number(s.id) === Number(fromSection)
-    );
-    const nextSectionId = matchedSection?.id || fromSectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setFromSection((prev) =>
-      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
-    );
-  }, [fromSemester, fromSectionList]);
-
-  useEffect(() => {
-    if (!toSemester) {
-      setToSection(null);
-      return;
-    }
-
-    if (!Array.isArray(toSectionList) || toSectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = toSectionList.find(
-      (s) => Number(s.id) === Number(toSection)
-    );
-    const nextSectionId = matchedSection?.id || toSectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setToSection((prev) =>
-      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
-    );
-  }, [toSemester, toSectionList]);
-
   // ---------------------
 
   const [formData, setFormData] = useState({});
@@ -234,8 +186,24 @@ const StudentPromotion = () => {
   const [errorStudents, setErrorStudents] = useState(null);
   const [studentLoading, setStudentLoading] = useState(false);
   const [studentError, setStudentError] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [actionSuccess, setActionSuccess] = useState("");
+  const [leftSearchTerm, setLeftSearchTerm] = useState("");
+  const [rightSearchTerm, setRightSearchTerm] = useState("");
+
+  const filteredStudents = students.filter((student) => {
+    const term = leftSearchTerm.toLowerCase();
+    const regNo = student.registration_no ? String(student.registration_no).toLowerCase() : "";
+    const name = student.student_name ? String(student.student_name).toLowerCase() : "";
+    const adminNo = student.college_admission_no ? String(student.college_admission_no).toLowerCase() : "";
+    return regNo.includes(term) || name.includes(term) || adminNo.includes(term);
+  });
+
+  const filteredPromotedStudents = promotedStudents.filter((student) => {
+    const term = rightSearchTerm.toLowerCase();
+    const regNo = student.registration_no ? String(student.registration_no).toLowerCase() : "";
+    const name = student.student_name ? String(student.student_name).toLowerCase() : "";
+    const adminNo = student.college_admission_no ? String(student.college_admission_no).toLowerCase() : "";
+    return regNo.includes(term) || name.includes(term) || adminNo.includes(term);
+  });
 
   useEffect(() => {
     const handleSessionChange = () => {
@@ -352,10 +320,11 @@ const StudentPromotion = () => {
   const handleSelectAll = (e) => {
     const isChecked = e.target.checked;
     if (isChecked) {
-      const allStudentIds = students.map((student) => student.student_id);
-      setSelectedStudents(allStudentIds);
+      const allStudentIds = filteredStudents.map((student) => student.student_id);
+      setSelectedStudents(Array.from(new Set([...selectedStudents, ...allStudentIds])));
     } else {
-      setSelectedStudents([]);
+      const filteredStudentIds = filteredStudents.map((student) => student.student_id);
+      setSelectedStudents(selectedStudents.filter(id => !filteredStudentIds.includes(id)));
     }
   };
 
@@ -383,20 +352,21 @@ const StudentPromotion = () => {
 
   const handleSelectAllPromoted = (event) => {
     if (event.target.checked) {
-      const allPromotedIds = promotedStudents.map(
+      const allPromotedIds = filteredPromotedStudents.map(
         (student) => student.student_id
       );
-      setSelectedStudents(allPromotedIds);
+      setSelectedStudents(Array.from(new Set([...selectedStudents, ...allPromotedIds])));
     } else {
-      setSelectedStudents([]);
+      const filteredPromotedIds = filteredPromotedStudents.map(
+        (student) => student.student_id
+      );
+      setSelectedStudents(selectedStudents.filter(id => !filteredPromotedIds.includes(id)));
     }
   };
 
   const updateStudentStatus = async (status) => {
     const userId = sessionStorage.getItem("userId");
     const token = localStorage.getItem("accessToken");
-    setActionError("");
-    setActionSuccess("");
 
     // ✅ Validate all required fields
     if (
@@ -410,14 +380,14 @@ const StudentPromotion = () => {
       !toSemester ||
       !toSection
     ) {
-      setActionError("Please select all 'From' and 'To' fields before promotion.");
+      alert("Please select all 'From' and 'To' fields before promotion.");
       return;
     }
 
     // ✅ Collect selected promoted student IDs
     const studentIds = promotedStudents.map((s) => s.student_id);
     if (studentIds.length === 0) {
-      setActionError("No students selected for promotion.");
+      alert("No students selected for promotion.");
       return;
     }
 
@@ -468,18 +438,15 @@ const StudentPromotion = () => {
       console.log("📥 API Response:", result);
 
       if (response.ok && result.message) {
-        setActionSuccess(result.message);
-        setActionError("");
+        // ✅ Show the exact message from backend
+        alert(`✅ ${result.message}`);
         setPromotedStudents([]);
-        setSelectedStudents([]);
       } else {
-        setActionError(`Error: ${result.message || "Promotion failed"}`);
-        setActionSuccess("");
+        alert(`⚠️ Error: ${result.message || "Promotion failed"}`);
       }
     } catch (error) {
       console.error("❌ Error during promotion:", error);
-      setActionError("Error updating student promotion status.");
-      setActionSuccess("");
+      alert("❌ Error updating student promotion status");
     }
   };
 
@@ -488,34 +455,46 @@ const StudentPromotion = () => {
   const toClassRef = useRef();
   const toSectionRef = useRef();
 
-  const handleClear = () => {
-    // 🔹 Reset "From" dropdowns
-    setFromBatch(null);
-    setFromCourse(null);
-    setFromDepartment(null);
-    setFromAcademicYear(null);
-    setFromSemester(null);
-    setFromSection(null);
+ const handleClear = () => {
+   // 🔹 Reset "From" dropdowns
+   setFromBatch(null);
+   setFromCourse(null);
+   setFromDepartment(null);
+   setFromAcademicYear(null);
+   setFromSemester(null);
+   setFromSection(null);
 
-    // 🔹 Reset "To" dropdowns
-    setToBatch(null);
-    setToCourse(null);
-    setToDepartment(null);
-    setToAcademicYear(null);
-    setToSemester(null);
-    setToSection(null);
+   // 🔹 Reset "To" dropdowns
+   setToBatch(null);
+   setToCourse(null);
+   setToDepartment(null);
+   setToAcademicYear(null);
+   setToSemester(null);
+   setToSection(null);
 
-    // 🔹 Reset other form data if present
-    setFormData({});
-    setActionError("");
-    setActionSuccess("");
+   // 🔹 Clear table data
+   setStudents([]);
+   setPromotedStudents([]);
 
-    // 🔹 Optional: also clear localStorage/sessionStorage if you store selection
-    localStorage.removeItem("selectedFromBatch");
-    localStorage.removeItem("selectedToBatch");
+   // 🔹 Clear selected checkboxes
+   setSelectedStudents([]);
 
-    console.log("✅ All dropdowns cleared successfully.");
-  };
+   // 🔹 Hide table
+   setShowTableData(false);
+
+   // 🔹 Clear search inputs
+   setLeftSearchTerm("");
+   setRightSearchTerm("");
+
+   // 🔹 Clear loading & errors
+   setStudentError("");
+   setStudentLoading(false);
+
+   // 🔹 Reset formData
+   setFormData({});
+
+   console.log("✅ All fields and tables cleared.");
+ };
 
   const handleNewClick = () => {
     navigate("/admin/dashboard");
@@ -552,7 +531,7 @@ const StudentPromotion = () => {
                     <Row>
                       <Col xs={12} sm={6} className="mb-3">
                         <Label htmlFor="from-class" className="form-label">
-                          From Batch
+                          From Session
                           <span style={{ color: "red" }}>*</span>
                         </Label>
                         <Select
@@ -569,7 +548,7 @@ const StudentPromotion = () => {
                               ? {
                                   value: fromBatch,
                                   label: BatchList.find(
-                                    (b) => b.id === fromBatch
+                                    (b) => b.id === fromBatch,
                                   )?.batch_description,
                                 }
                               : null
@@ -593,12 +572,20 @@ const StudentPromotion = () => {
                         </Label>
                         <Select
                           className="detail"
+                          value={
+                            fromCourseList
+                              .map((c) => ({
+                                value: c.id,
+                                label: c.course_name,
+                              }))
+                              .find((c) => c.value === fromCourse) || null
+                          }
                           options={fromCourseList.map((c) => ({
                             value: c.id,
                             label: c.course_name,
                           }))}
                           onChange={(opt) => {
-                            setFromCourse(opt?.value);
+                            setFromCourse(opt?.value || null);
                             setFromDepartment(null);
                             setFromAcademicYear(null);
                             setFromSemester(null);
@@ -627,7 +614,7 @@ const StudentPromotion = () => {
                               ? {
                                   value: fromDepartment,
                                   label: BranchList.find(
-                                    (d) => d.id === fromDepartment
+                                    (d) => d.id === fromDepartment,
                                   )?.department_description,
                                 }
                               : null
@@ -658,12 +645,12 @@ const StudentPromotion = () => {
                           }
                           value={
                             AcademicYearList?.find(
-                              (a) => a.id === fromAcademicYear
+                              (a) => a.id === fromAcademicYear,
                             )
                               ? {
                                   value: fromAcademicYear,
                                   label: AcademicYearList.find(
-                                    (a) => a.id === fromAcademicYear
+                                    (a) => a.id === fromAcademicYear,
                                   )?.academic_year_description,
                                 }
                               : null
@@ -696,7 +683,7 @@ const StudentPromotion = () => {
                               ? {
                                   value: fromSemester,
                                   label: SemesterList.find(
-                                    (s) => s.id === fromSemester
+                                    (s) => s.id === fromSemester,
                                   )?.semester_description,
                                 }
                               : null
@@ -717,7 +704,6 @@ const StudentPromotion = () => {
                         <Select
                           className="detail"
                           isLoading={loadingSec}
-                          isDisabled={true}
                           options={
                             SectionList?.map((s) => ({
                               value: s.id,
@@ -729,20 +715,13 @@ const StudentPromotion = () => {
                               ? {
                                   value: fromSection,
                                   label: SectionList.find(
-                                    (s) => s.id === fromSection
+                                    (s) => s.id === fromSection,
                                   )?.section_name,
                                 }
                               : null
                           }
-                          onChange={() => {}}
-                          placeholder={
-                            !fromSemester
-                              ? "Select Semester first"
-                              : fromSectionList?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
-                          isClearable={false}
+                          onChange={(opt) => setFromSection(opt?.value || "")}
+                          placeholder="Select Section"
                         />
                       </Col>
                     </Row>
@@ -764,7 +743,7 @@ const StudentPromotion = () => {
                     <Row>
                       <Col xs={12} sm={6} className="mb-3">
                         <Label htmlFor="from-class" className="form-label">
-                          To Batch
+                          To Session
                           <span style={{ color: "red" }}>*</span>
                         </Label>
                         <Select
@@ -805,12 +784,20 @@ const StudentPromotion = () => {
                         </Label>
                         <Select
                           className="detail"
+                          value={
+                            toCourseList
+                              .map((c) => ({
+                                value: c.id,
+                                label: c.course_name,
+                              }))
+                              .find((c) => c.value === toCourse) || null
+                          }
                           options={toCourseList.map((c) => ({
                             value: c.id,
                             label: c.course_name,
                           }))}
                           onChange={(opt) => {
-                            setToCourse(opt?.value);
+                            setToCourse(opt?.value || null);
                             setToDepartment(null);
                             setToAcademicYear(null);
                             setToSemester(null);
@@ -839,7 +826,7 @@ const StudentPromotion = () => {
                               ? {
                                   value: toDepartment,
                                   label: BranchList.find(
-                                    (d) => d.id === toDepartment
+                                    (d) => d.id === toDepartment,
                                   )?.department_description,
                                 }
                               : null
@@ -871,12 +858,12 @@ const StudentPromotion = () => {
                           }
                           value={
                             AcademicYearList?.find(
-                              (a) => a.id === toAcademicYear
+                              (a) => a.id === toAcademicYear,
                             )
                               ? {
                                   value: toAcademicYear,
                                   label: AcademicYearList.find(
-                                    (a) => a.id === toAcademicYear
+                                    (a) => a.id === toAcademicYear,
                                   )?.academic_year_description,
                                 }
                               : null
@@ -939,7 +926,7 @@ const StudentPromotion = () => {
                               ? {
                                   value: Number(toSemester),
                                   label: toSemesterList?.find(
-                                    (s) => Number(s.id) === Number(toSemester)
+                                    (s) => Number(s.id) === Number(toSemester),
                                   )?.semester_description,
                                 }
                               : null
@@ -968,7 +955,6 @@ const StudentPromotion = () => {
                         <Select
                           className="detail"
                           isLoading={loadingSec}
-                          isDisabled={true}
                           options={
                             toSectionList?.map((s) => ({
                               value: Number(s.id),
@@ -980,20 +966,15 @@ const StudentPromotion = () => {
                               ? {
                                   value: Number(toSection),
                                   label: toSectionList.find(
-                                    (s) => Number(s.id) === Number(toSection)
+                                    (s) => Number(s.id) === Number(toSection),
                                   )?.section_name,
                                 }
                               : null
                           }
-                          onChange={() => {}}
-                          placeholder={
-                            !toSemester
-                              ? "Select Semester first"
-                              : toSectionList?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
-                          isClearable={false}
+                          onChange={(opt) => {
+                            setToSection(opt ? Number(opt.value) : null);
+                          }}
+                          placeholder="Select Section"
                         />
                       </Col>
                     </Row>
@@ -1003,6 +984,13 @@ const StudentPromotion = () => {
 
               <Row className="mx-2" style={{ border: "1px solid #ccc" }}>
                 <Col xs={12} md={5} className="mb-3 mt-3  ">
+                  <Input
+                    type="text"
+                    placeholder="Search students..."
+                    value={leftSearchTerm}
+                    onChange={(e) => setLeftSearchTerm(e.target.value)}
+                    className="mb-3"
+                  />
                   <div
                     style={{
                       maxHeight: "340px",
@@ -1021,9 +1009,12 @@ const StudentPromotion = () => {
                                     type="checkbox"
                                     onChange={handleSelectAll}
                                     checked={
-                                      students.length > 0 &&
-                                      selectedStudents.length ===
-                                        students.length
+                                      filteredStudents.length > 0 &&
+                                      filteredStudents.every((student) =>
+                                        selectedStudents.includes(
+                                          student.student_id,
+                                        ),
+                                      )
                                     }
                                   />
                                 </th>
@@ -1052,18 +1043,18 @@ const StudentPromotion = () => {
                                       {studentError}
                                     </td>
                                   </tr>
-                                ) : students.length > 0 ? (
-                                  students.map((student) => (
+                                ) : filteredStudents.length > 0 ? (
+                                  filteredStudents.map((student) => (
                                     <tr key={student.student_id}>
                                       <td>
                                         <Input
                                           type="checkbox"
                                           checked={selectedStudents.includes(
-                                            student.student_id
+                                            student.student_id,
                                           )}
                                           onChange={() =>
                                             handleCheckboxChange(
-                                              student.student_id
+                                              student.student_id,
                                             )
                                           }
                                         />
@@ -1115,12 +1106,6 @@ const StudentPromotion = () => {
                     className="d-flex flex-column align-items-center"
                     style={{ minWidth: "140px", width: "100%" }}
                   >
-                    {actionError && (
-                      <div className="text-danger text-center mb-2">{actionError}</div>
-                    )}
-                    {actionSuccess && (
-                      <div className="text-success text-center mb-2">{actionSuccess}</div>
-                    )}
                     <Button
                       color="primary"
                       className="mb-2 w-100"
@@ -1184,6 +1169,13 @@ const StudentPromotion = () => {
                 </Col>
 
                 <Col xs={12} md={5} className="mt-3">
+                  <Input
+                    type="text"
+                    placeholder="Search promoted students..."
+                    value={rightSearchTerm}
+                    onChange={(e) => setRightSearchTerm(e.target.value)}
+                    className="mb-3"
+                  />
                   <div
                     style={{
                       maxHeight: "340px",
@@ -1202,9 +1194,13 @@ const StudentPromotion = () => {
                                     type="checkbox"
                                     onChange={handleSelectAllPromoted}
                                     checked={
-                                      selectedStudents.length ===
-                                        promotedStudents.length &&
-                                      promotedStudents.length > 0
+                                      filteredPromotedStudents.length > 0 &&
+                                      filteredPromotedStudents.every(
+                                        (student) =>
+                                          selectedStudents.includes(
+                                            student.student_id,
+                                          ),
+                                      )
                                     }
                                   />
                                 </th>
@@ -1214,18 +1210,18 @@ const StudentPromotion = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {promotedStudents.length > 0 ? (
-                                promotedStudents.map((student) => (
+                              {filteredPromotedStudents.length > 0 ? (
+                                filteredPromotedStudents.map((student) => (
                                   <tr key={student.student_id}>
                                     <td>
                                       <Input
                                         type="checkbox"
                                         checked={selectedStudents.includes(
-                                          student.student_id
+                                          student.student_id,
                                         )}
                                         onChange={() =>
                                           handleCheckboxChange(
-                                            student.student_id
+                                            student.student_id,
                                           )
                                         } // Ensure this function is working properly
                                       />

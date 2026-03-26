@@ -225,7 +225,7 @@
 //                           <th>Sr No</th>
 //                           <th>Book Code</th>
 //                           <th>Book Name</th>
-//                           <th>BarCode</th>
+//                           <th>Roll no</th>
 //                           <th>Category</th>
 //                           <th>Sub-category</th>
 //                           <th>Select</th>
@@ -493,7 +493,7 @@
 //                           <th>Sr No</th>
 //                           <th>Book Code</th>
 //                           <th>Book Name</th>
-//                           <th>BarCode</th>
+//                           <th>Roll no</th>
 //                           <th>Category</th>
 //                           <th>Sub-category</th>
 //                           <th>Select</th>
@@ -762,7 +762,7 @@
 //                                   <th>Sr No</th>
 //                                   <th>Book Code</th>
 //                                   <th>Book Name</th>
-//                                   <th>BarCode</th>
+//                                   <th>Roll no</th>
 //                                   <th>Category</th>
 //                                   <th>Sub-category</th>
 //                                   <th>Select</th>
@@ -836,8 +836,7 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
   const [selectedBook, setSelectedBook] = useState(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
 
-  const bookNameRef = useRef();
-  const bookCodeRef = useRef();
+  // const bookNameRef = useRef();
   const bookAccessionNoRef = useRef();
 
   // Pagination state
@@ -867,7 +866,9 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
     value: subCategory.id,
     label: subCategory.name,
   }));
-
+  const bookNameRef = useRef();
+  // const bookAccessionNoRef = useRef();
+  const authorRef = useRef(); // ✅ ADD THIS
   const handleSelectBook = (book) => {
     const bookId = book.id;
     localStorage.setItem("selectedBookId", bookId);
@@ -877,7 +878,6 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
       // Pass the complete book object with all availability fields
       onSelectBook({
         id: book.id,
-        bookCode: book.bookCode,
         bookName: book.bookName,
         barcode: book.barcode,
         categoryId: book.categoryId,
@@ -921,7 +921,9 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
     if (show) {
       // Modal opened - fetch fresh data and reset filters
       // Use onlyAvailable prop to determine whether to show only available books or all books
-      fetch(`${ApiUrl.apiurl}LIBRARYBOOK/GetAllBooksDetails?onlyAvailable=${onlyAvailable}`)
+      fetch(
+        `${ApiUrl.apiurl}LIBRARYBOOK/GetAllBooksDetails?onlyAvailable=${onlyAvailable}`,
+      )
         .then((response) => response.json())
         .then((data) => {
           console.log("=== API Response in AdmBook ===", data);
@@ -941,7 +943,6 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
       // Clear refs (need to do this after render, so use timeout)
       setTimeout(() => {
         if (bookNameRef.current) bookNameRef.current.value = "";
-        if (bookCodeRef.current) bookCodeRef.current.value = "";
         if (bookAccessionNoRef.current) bookAccessionNoRef.current.value = "";
       }, 0);
     }
@@ -950,56 +951,52 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
   // Search/Filter function
   const handleSearch = () => {
     const bookName = bookNameRef.current?.value?.toLowerCase() || "";
-    const bookCode = bookCodeRef.current?.value?.toLowerCase() || "";
     const bookAccessionNo = bookAccessionNoRef.current?.value || "";
+    const author = authorRef.current?.value?.toLowerCase() || ""; // ✅ NEW
     const categoryId = selectedCategory?.value;
     const subCategoryId = selectedSubCategory?.value;
 
     const filteredData = fullBookData.filter((book) => {
-      // Filter by book name
-      const nameMatch = !bookName ||
-        book.bookName?.toLowerCase().includes(bookName);
+      const nameMatch =
+        !bookName || book.bookName?.toLowerCase().includes(bookName);
 
-      // Filter by book code
-      const codeMatch = !bookCode ||
-        book.bookCode?.toString().toLowerCase().includes(bookCode);
+      const barcodeMatch =
+        !bookAccessionNo || book.barcode?.toString().includes(bookAccessionNo);
 
-      // Filter by barcode/accession no
-      const barcodeMatch = !bookAccessionNo ||
-        book.barcode?.toString().includes(bookAccessionNo);
+      const authorMatch =
+        !author || book.author?.toLowerCase().includes(author); // ✅ NEW
 
-      // Filter by category
-      const categoryMatch = !categoryId ||
+      const categoryMatch =
+        !categoryId ||
         book.categoryId === categoryId ||
-        book.category_id === categoryId ||
-        book.categoryName?.toLowerCase() === selectedCategory?.label?.toLowerCase();
+        book.category_id === categoryId;
 
-      // Filter by sub-category
-      const subCategoryMatch = !subCategoryId ||
+      const subCategoryMatch =
+        !subCategoryId ||
         book.subcategoryId === subCategoryId ||
-        book.subcategory_id === subCategoryId ||
-        book.subcategoryName?.toLowerCase() === selectedSubCategory?.label?.toLowerCase();
+        book.subcategory_id === subCategoryId;
 
-      return nameMatch && codeMatch && barcodeMatch && categoryMatch && subCategoryMatch;
+      return (
+        nameMatch &&
+        barcodeMatch &&
+        authorMatch && // ✅ NEW
+        categoryMatch &&
+        subCategoryMatch
+      );
     });
 
     setBookData(filteredData);
   };
-
   const handleClear = () => {
-    // Clear input fields
     if (bookNameRef.current) bookNameRef.current.value = "";
-    if (bookCodeRef.current) bookCodeRef.current.value = "";
     if (bookAccessionNoRef.current) bookAccessionNoRef.current.value = "";
+    if (authorRef.current) authorRef.current.value = ""; // ✅ NEW
 
-    // Clear dropdown selections
     setSelectedCategory(null);
     setSelectedSubCategory(null);
 
-    // Reset to full data
     setBookData(fullBookData);
   };
-
 
   //  Prevent modal from rendering twice
   //  Prevent modal from rendering twice check removed - let Modal handle it
@@ -1008,7 +1005,7 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
   // Singleton Pattern enforcement
   // if (!isPrimaryInstance) return null; // Using this might cause initial flash issues or strict mode issues
 
-  // Alternative: Just render. The lock is experimental. 
+  // Alternative: Just render. The lock is experimental.
   // Let's rely on standard conditional rendering for now if this lock makes it disappear completely.
   // But user complained about TWO.
 
@@ -1022,7 +1019,7 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
       aria-labelledby="contained-modal-title-vcenter"
       centered
       backdrop={false}
-      style={{ background: 'transparent' }}
+      style={{ background: "transparent" }}
     >
       <Modal.Header closeButton onClick={handleClose}>
         <Modal.Title>BOOK SEARCH</Modal.Title>
@@ -1064,77 +1061,70 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
 
                   {/* Filter Fields */}
                   <div className="row mt-3 mx-2">
-                    <div className="col-12" style={{ border: "1px solid #ccc", padding: "10px", backgroundColor: "white" }}>
+                    <div
+                      className="col-12"
+                      style={{
+                        border: "1px solid #ccc",
+                        padding: "10px",
+                        backgroundColor: "white",
+                      }}
+                    >
                       <div className="row mt-3 mb-3">
+                        {/* Book Name */}
                         <div className="col-12 col-md-3 mb-2">
-                          <label htmlFor="book-name" className="form-label">
-                            Book Name
-                          </label>
+                          <label className="form-label">Book Name</label>
                           <input
                             type="text"
-                            id="book-name"
                             className="form-control detail"
                             placeholder="Enter book name"
                             ref={bookNameRef}
                           />
                         </div>
+
+                        {/* Accession No */}
                         <div className="col-12 col-md-3 mb-2">
-                          <label htmlFor="book-code" className="form-label">
-                            Book Code
-                          </label>
-                          <input
-                            type="text"
-                            id="book-code"
-                            className="form-control detail"
-                            placeholder="Enter Book Code"
-                            ref={bookCodeRef}
-                          />
-                        </div>
-                        <div className="col-12 col-md-3 mb-2">
-                          <label htmlFor="category" className="form-label">
-                            Category
-                          </label>
-                          <Select
-                            id="category"
-                            options={categoryOptions}
-                            className="detail"
-                            placeholder="Select Category"
-                            isClearable
-                            classNamePrefix="react-select"
-                            value={selectedCategory}
-                            onChange={(selectedOption) =>
-                              setSelectedCategory(selectedOption)
-                            }
-                          />
-                        </div>
-                        <div className="col-12 col-md-3 mb-2">
-                          <label htmlFor="sub-category" className="form-label">
-                            Sub Category
-                          </label>
-                          <Select
-                            id="sub-category"
-                            className="detail"
-                            options={subCategoryOptions}
-                            placeholder="Select Sub Category"
-                            isClearable
-                            classNamePrefix="react-select"
-                            isDisabled={!selectedCategory}
-                            value={selectedSubCategory}
-                            onChange={(selectedOption) =>
-                              setSelectedSubCategory(selectedOption)
-                            }
-                          />
-                        </div>
-                        <div className="col-12 col-md-3 mb-2">
-                          <label htmlFor="book-accession-no" className="form-label">
+                          <label className="form-label">
                             Book Accession No
                           </label>
                           <input
                             type="text"
-                            id="book-accession-no"
                             className="form-control detail"
-                            placeholder="Enter Book Accession No"
+                            placeholder="Enter accession no"
                             ref={bookAccessionNoRef}
+                          />
+                        </div>
+
+                        {/* Author */}
+                        <div className="col-12 col-md-3 mb-2">
+                          <label className="form-label">Author</label>
+                          <input
+                            type="text"
+                            className="form-control detail"
+                            placeholder="Enter author name"
+                            ref={authorRef}
+                          />
+                        </div>
+
+                        {/* Category */}
+                        <div className="col-12 col-md-3 mb-2">
+                          <label className="form-label">Category</label>
+                          <Select
+                            options={categoryOptions}
+                            value={selectedCategory}
+                            onChange={setSelectedCategory}
+                            isClearable
+                          />
+                        </div>
+
+                        {/* Sub Category */}
+                        <div className="col-12 col-md-3 mb-2">
+                          <label className="form-label">Sub Category</label>
+                          <Select
+                            options={subCategoryOptions}
+                            value={selectedSubCategory}
+                            onChange={setSelectedSubCategory}
+                            isDisabled={!selectedCategory}
+                            isClearable
                           />
                         </div>
                       </div>
@@ -1147,9 +1137,8 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
                       <thead>
                         <tr>
                           <th>Sr No</th>
-                          <th>Book Code</th>
                           <th>Book Name</th>
-                          <th>BarCode</th>
+                          <th>Book Accession No</th>
                           <th>Category</th>
                           <th>Sub-category</th>
                           <th>Select</th>
@@ -1158,7 +1147,7 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
                       <tbody>
                         {bookData.length === 0 ? (
                           <tr>
-                            <td colSpan="7" className="text-center">
+                            <td colSpan="6" className="text-center">
                               No books found
                             </td>
                           </tr>
@@ -1166,7 +1155,6 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
                           currentItems.map((book, index) => (
                             <tr key={book.id}>
                               <td>{offset + index + 1}</td>
-                              <td>{book.bookCode}</td>
                               <td>{book.bookName}</td>
                               <td>{book.barcode}</td>
                               <td>{book.categoryName}</td>

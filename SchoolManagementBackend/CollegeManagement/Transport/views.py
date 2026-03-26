@@ -1452,8 +1452,7 @@ class StudentTransportFeesListAPIView(ListAPIView):
                         )
                         student_name = " ".join(name_parts)
                         data={
-                            "fee_applied_from": Semester.objects.filter(is_active=True).values_list('id', flat=True).first(),
-                            # "fee_applied_from": Period.objects.filter(is_active=True).order_by('-sorting_order').values_list('id', flat=True).first(),
+                            "fee_applied_from": fee_applied_from if fee_applied_from else None,
                             "course_id": studentCourseInstance.course.id,
                             "course_name": studentCourseInstance.course.course_name,
                             "department_id": studentCourseInstance.department.id,
@@ -1525,9 +1524,7 @@ class StudentAllFeesCalculationBasedOnElement(ListAPIView):
 
             if not student_id :
                 return Response({'message':"please provide student_Id"},status=status.HTTP_400_BAD_REQUEST)
-            if not fee_applied_from_id :
-                return Response({'message':"please provide fee_applied_from_id"},status=status.HTTP_400_BAD_REQUEST)
-            #dmessage':"please provide academic_year_id"},status=status.HTTP_400_BAD_REQUEST)
+            # fee_applied_from_id is now optional
             if not organization_id :
                 return Response({'message':"please provide  organization_id"},status=status.HTTP_400_BAD_REQUEST)
             if not branch_id:
@@ -1535,10 +1532,16 @@ class StudentAllFeesCalculationBasedOnElement(ListAPIView):
 
             try:
                 student_fee_record= StudentFeeDetail.objects.filter(student=student_id,organization=organization_id,
-                                                                       branch=branch_id,semester=fee_applied_from_id,element_name='Transport Fees',is_active=True)
-            except:
-                student_fee_record= None
-            if not student_fee_record.exists():
+                                                                       branch=branch_id,element_name='Transport Fees',is_active=True)
+                
+                # Filter by fee_applied_from_id only if it's provided and valid
+                if fee_applied_from_id and str(fee_applied_from_id).lower() not in ['null', 'undefined', '']:
+                    student_fee_record = student_fee_record.filter(semester=fee_applied_from_id)
+                    
+            except Exception as e:
+                student_fee_record = None
+                
+            if student_fee_record is None or not student_fee_record.exists():
                 return Response({'message':"No Record Found"},status=status.HTTP_200_OK)
 
             fee_summary = student_fee_record.values('semester', "element_name").annotate(

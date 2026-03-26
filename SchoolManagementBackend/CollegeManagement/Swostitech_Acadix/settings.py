@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     'STAFF',
     'REPORT_CARD',
     'INVENTORY',
+    'NON_TEACHING_STAFF',
 ]
 
 MIDDLEWARE = [
@@ -149,7 +150,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, conn_health_checks=True)
     }
 else:
     DATABASES = {
@@ -213,7 +214,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 #image store in media file
-MEDIA_URL = '/media/'
+# MEDIA_URL= '/media/'
+
+MEDIA_URL='/SWOSTITECH_CMS/'
 
 # Configure Media Root for Render Persistent Disk
 # If RENDER_MEDIA_ROOT is set (e.g., /var/data), use it. Otherwise default to local project folder.
@@ -221,7 +224,7 @@ RENDER_MEDIA_ROOT = os.getenv('RENDER_MEDIA_ROOT')
 if RENDER_MEDIA_ROOT:
     MEDIA_ROOT = Path(RENDER_MEDIA_ROOT)
 else:
-    MEDIA_ROOT = BASE_DIR / 'media'
+    MEDIA_ROOT = BASE_DIR / 'SWOSTITECH_CMS'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -274,14 +277,15 @@ SIMPLE_JWT = {
 
 # Security settings for production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+    SESSION_COOKIE_SECURE = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
+    CSRF_COOKIE_SECURE = os.getenv("SECURE_SSL_REDIRECT", "False") == "True"
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    if os.getenv("SECURE_SSL_REDIRECT", "False") == "True":
+        SECURE_HSTS_SECONDS = 31536000
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
 
 ""

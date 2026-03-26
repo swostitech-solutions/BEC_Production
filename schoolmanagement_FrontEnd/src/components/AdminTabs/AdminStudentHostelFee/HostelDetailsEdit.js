@@ -516,8 +516,8 @@ const HostelEdit = ({
                     disabled
                   />
                 </div>
-                {/* <div className="col-md-4">
-                  <label className="form-label">Student Barcode</label>
+                <div className="col-md-4">
+                  <label className="form-label">Roll No</label>
                   <input
                     type="text"
                     className="form-control detail"
@@ -525,7 +525,7 @@ const HostelEdit = ({
                     readOnly
                     disabled
                   />
-                </div> */}
+                </div>
               </div>
               <div className="row g-2 mt-2">
                 <div className="col-md-4">

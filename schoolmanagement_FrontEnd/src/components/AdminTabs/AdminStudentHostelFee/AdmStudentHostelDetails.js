@@ -587,31 +587,6 @@ const AdmStudentHostelDetails = () => {
     selectedSemester,
   ]);
 
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections]);
-
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -1255,16 +1230,8 @@ const AdmStudentHostelDetails = () => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester?.value
-                              ? "Select Semester first"
-                              : sections?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
+                          onChange={setSelectedSection}
+                          placeholder="Select Section"
                         />
                       </div>
                       <div className="col-12 col-md-3 mb-2">
@@ -1397,7 +1364,7 @@ const AdmStudentHostelDetails = () => {
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
                         <th>Admission No</th>
-                        {/* <th>Barcode</th> */}
+                        <th>Roll no</th>
                         <th>Session</th>
                         <th>Course</th>
                         <th>Department</th>
@@ -1421,7 +1388,7 @@ const AdmStudentHostelDetails = () => {
                             <td>{student.student_name}</td>
                             <td>{student.registration_no}</td>
                             <td>{student.college_admission_no || "N/A"}</td>
-                            {/* <td>{student.barcode || "N/A"}</td> */}
+                            <td>{student.barcode || "N/A"}</td>
                             <td>{student.batch}</td>
                             <td>{student.course_name}</td>
                             <td>{student.department_name}</td>

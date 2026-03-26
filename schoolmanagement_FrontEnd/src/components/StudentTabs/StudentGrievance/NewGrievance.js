@@ -21,6 +21,7 @@ const AdmAttendanceEntry = () => {
    const [grievanceDetails, setGrievanceDetails] = useState("");
    const [isAnonymous, setIsAnonymous] = useState(false);
    const [uploadFile, setUploadFile] = useState(null);
+   const [errors, setErrors] = useState({});
    
    // Student data from API
    const [studentData, setStudentData] = useState({
@@ -253,24 +254,18 @@ const AdmAttendanceEntry = () => {
     fetchStudentData();
   }, []);
 
+  const validateFields = () => {
+    const newErrors = {};
+    if (!selectedType) newErrors.selectedType = "Type is required";
+    if (!selectedSeverity) newErrors.selectedSeverity = "Severity is required";
+    if (!selectedPriority) newErrors.selectedPriority = "Priority is required";
+    if (!grievanceDetails.trim()) newErrors.grievanceDetails = "Grievance details are required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
-    // Validation
-    if (!selectedType) {
-      alert("Please select a grievance type");
-      return;
-    }
-    if (!selectedSeverity) {
-      alert("Please select severity");
-      return;
-    }
-    if (!selectedPriority) {
-      alert("Please select priority");
-      return;
-    }
-    if (!grievanceDetails.trim()) {
-      alert("Please enter grievance details");
-      return;
-    }
+    if (!validateFields()) return;
 
     const token = localStorage.getItem("accessToken");
     const studentId = sessionStorage.getItem("userId") || localStorage.getItem("userId") || "";
@@ -433,6 +428,7 @@ const AdmAttendanceEntry = () => {
     setGrievanceDetails("");
     setIsAnonymous(false);
     setUploadFile(null);
+    setErrors({});
 
     // Reset file input field
     if (fileInputRef.current) {
@@ -492,43 +488,54 @@ const AdmAttendanceEntry = () => {
                   <div className="form-grid mt-4 mx-2  mb-4">
                     {/* Left Column - Labels */}
                     <div className="form-labels">
-                      <label>Type </label>
-                      <label>Severity </label>
-                      <label>Priority </label>
-                      <label>Grievance Details</label>
+                      <label>Type <span style={{ color: "red" }}>*</span></label>
+                      <label>Severity <span style={{ color: "red" }}>*</span></label>
+                      <label>Priority <span style={{ color: "red" }}>*</span></label>
+                      <label>Grievance Details <span style={{ color: "red" }}>*</span></label>
                       <label>Upload </label>
                       <label></label> {/* Empty label for alignment */}
                     </div>
 
                     {/* Right Column - Input Fields */}
                     <div className="form-inputs">
-                      <Select
-                        options={typeOptions}
-                        classNamePrefix="custom-select"
-                        value={selectedType}
-                        onChange={setSelectedType}
-                      />
-                      <Select
-                        options={severityOptions}
-                        classNamePrefix="custom-select"
-                        value={selectedSeverity}
-                        onChange={setSelectedSeverity}
-                      />
-                      <Select
-                        options={priorityOptions}
-                        classNamePrefix="custom-select"
-                        value={selectedPriority}
-                        onChange={setSelectedPriority}
-                      />
-
-                      <input
-                        type="text"
-                        name="grievanceDetails"
-                        className="input-field"
-                        style={{ textAlign: "left" }} // Ensuring text starts from the left
-                        value={grievanceDetails}
-                        onChange={(e) => setGrievanceDetails(e.target.value)}
-                      />
+                      <div>
+                        <Select
+                          options={typeOptions}
+                          classNamePrefix="custom-select"
+                          value={selectedType}
+                          onChange={(option) => { setSelectedType(option); if (errors.selectedType) setErrors((prev) => ({ ...prev, selectedType: "" })); }}
+                        />
+                        {errors.selectedType && <small className="text-danger">{errors.selectedType}</small>}
+                      </div>
+                      <div>
+                        <Select
+                          options={severityOptions}
+                          classNamePrefix="custom-select"
+                          value={selectedSeverity}
+                          onChange={(option) => { setSelectedSeverity(option); if (errors.selectedSeverity) setErrors((prev) => ({ ...prev, selectedSeverity: "" })); }}
+                        />
+                        {errors.selectedSeverity && <small className="text-danger">{errors.selectedSeverity}</small>}
+                      </div>
+                      <div>
+                        <Select
+                          options={priorityOptions}
+                          classNamePrefix="custom-select"
+                          value={selectedPriority}
+                          onChange={(option) => { setSelectedPriority(option); if (errors.selectedPriority) setErrors((prev) => ({ ...prev, selectedPriority: "" })); }}
+                        />
+                        {errors.selectedPriority && <small className="text-danger">{errors.selectedPriority}</small>}
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          name="grievanceDetails"
+                          className="input-field"
+                          style={{ textAlign: "left" }}
+                          value={grievanceDetails}
+                          onChange={(e) => { setGrievanceDetails(e.target.value); if (errors.grievanceDetails) setErrors((prev) => ({ ...prev, grievanceDetails: "" })); }}
+                        />
+                        {errors.grievanceDetails && <small className="text-danger">{errors.grievanceDetails}</small>}
+                      </div>
 
                       <input
                         type="file"

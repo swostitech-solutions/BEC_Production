@@ -54,6 +54,7 @@ const useStudentCirculars = (filters = {}) => {
     // Encode as JSON arrays: [1] becomes %5B1%5D when URL encoded
     params.course_ids = JSON.stringify([filters.course_id]);
     params.section_ids = JSON.stringify([filters.section_id]);
+    params.approved_only = "Y";
 
     // Add semester_id if provided (optional - omit for all semesters)
     if (filters.semester_id) {
@@ -81,13 +82,25 @@ const useStudentCirculars = (filters = {}) => {
         result.status === "success";
 
       if (isSuccessMessage && Array.isArray(result.data)) {
-        setCirculars(result.data);
+        setCirculars(
+          result.data.filter(
+            (circular) => !circular.is_cancelled && circular.circular_status === "A"
+          )
+        );
         setError("");
       } else if (Array.isArray(result)) {
-        setCirculars(result);
+        setCirculars(
+          result.filter(
+            (circular) => !circular.is_cancelled && circular.circular_status === "A"
+          )
+        );
         setError("");
       } else if (result.data && Array.isArray(result.data)) {
-        setCirculars(result.data);
+        setCirculars(
+          result.data.filter(
+            (circular) => !circular.is_cancelled && circular.circular_status === "A"
+          )
+        );
         setError("");
       } else {
         setCirculars([]);

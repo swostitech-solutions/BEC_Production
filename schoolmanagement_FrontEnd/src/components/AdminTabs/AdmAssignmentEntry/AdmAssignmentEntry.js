@@ -212,9 +212,6 @@ const AdmAttendanceEntry = () => {
     assignmentDetails: "",
   });
   const [isEditMode, setIsEditMode] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // change as needed
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -228,51 +225,6 @@ const AdmAttendanceEntry = () => {
   const handlePageChange = ({ selected }) => {
     setCurrentPage(selected + 1); // react-paginate uses 0-based indexing
   };
-
-  const requiredFieldLabels = {
-    assignmentDate: "Assignment Date is required",
-    batch: "Session is required",
-    course: "Course is required",
-    branch: "Department is required",
-    academic_year: "Academic Year is required",
-    semester: "Semester is required",
-    addmitted_section: "Section is required",
-    lectureId: "Period is required",
-    subjectId: "Subject is required",
-    professorId: "Lecture is required",
-    assignmentDetails: "Assignment Details is required",
-  };
-
-  const validateRequiredFields = () => {
-    const nextErrors = {};
-
-    Object.keys(requiredFieldLabels).forEach((fieldKey) => {
-      if (!String(formData[fieldKey] || "").trim()) {
-        nextErrors[fieldKey] = requiredFieldLabels[fieldKey];
-      }
-    });
-
-    setFieldErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  useEffect(() => {
-    if (!Object.keys(fieldErrors).length) {
-      return;
-    }
-
-    setFieldErrors((prev) => {
-      const updated = { ...prev };
-
-      Object.keys(requiredFieldLabels).forEach((fieldKey) => {
-        if (String(formData[fieldKey] || "").trim()) {
-          delete updated[fieldKey];
-        }
-      });
-
-      return updated;
-    });
-  }, [formData]);
 
   const todayDate = new Date().toISOString().split("T")[0];
 
@@ -497,9 +449,6 @@ const AdmAttendanceEntry = () => {
 
     // ✅ Exit edit mode
     setIsEditMode(false);
-    setFormError("");
-    setFormSuccess("");
-    setFieldErrors({});
   };
 
   const [message, setMessage] = useState("");
@@ -855,13 +804,11 @@ const AdmAttendanceEntry = () => {
         // ✅ Scroll to form top
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setFormError("Failed to fetch assignment details.");
-        setFormSuccess("");
+        alert("Failed to fetch assignment details.");
       }
     } catch (error) {
       console.error("Error fetching assignment details:", error);
-      setFormError("Something went wrong while loading assignment data.");
-      setFormSuccess("");
+      alert("Something went wrong while loading assignment data.");
     }
   };
 
@@ -880,9 +827,20 @@ const AdmAttendanceEntry = () => {
       assignmentDetails,
     } = formData;
 
-    setFormError("");
-    setFormSuccess("");
-    if (!validateRequiredFields()) {
+    if (
+      !batch ||
+      !course ||
+      !branch ||
+      !academic_year ||
+      !semester ||
+      !addmitted_section ||
+      !lectureId ||
+      !subjectId ||
+      !professorId ||
+      !assignmentDate ||
+      !assignmentDetails
+    ) {
+      alert("⚠️ Please fill all mandatory fields before saving.");
       return;
     }
 
@@ -931,31 +889,26 @@ const AdmAttendanceEntry = () => {
       console.log("Assignment Create Response:", result);
 
       if (response.ok && result.message === "Assignment Added sucessfully!!") {
+        alert("✅ Assignment Created Successfully!");
         fetchAssignments();
         handleClear();
-        setFormSuccess("Assignment created successfully.");
-        setFormError("");
       } else {
-        setFormError(
-          `Failed to create assignment: ${result.message || "Unknown error"}`
+        alert(
+          `❌ Failed to create assignment: ${result.message || "Unknown error"}`
         );
-        setFormSuccess("");
       }
     } catch (error) {
       console.error("Error while creating assignment:", error);
-      setFormError("Something went wrong while creating assignment.");
-      setFormSuccess("");
+      alert("❌ Something went wrong while creating assignment.");
     }
   };
 
   // ✅ Proper Update Function (PUT method, matches backend structure)
   const handleUpdateClick = async () => {
     const assignmentId = formData.assignmentId;
-    setFormError("");
-    setFormSuccess("");
 
     if (!assignmentId) {
-      setFormError("Assignment ID missing. Please select a record to edit.");
+      alert("Assignment ID missing!");
       return;
     }
 
@@ -979,7 +932,20 @@ const AdmAttendanceEntry = () => {
       assignmentDetails,
     } = formData;
 
-    if (!validateRequiredFields()) {
+    if (
+      !batch ||
+      !course ||
+      !branch ||
+      !academic_year ||
+      !semester ||
+      !addmitted_section ||
+      !lectureId ||
+      !subjectId ||
+      !professorId ||
+      !assignmentDate ||
+      !assignmentDetails
+    ) {
+      alert("⚠️ Please fill all required fields before updating.");
       return;
     }
 
@@ -1030,19 +996,16 @@ const AdmAttendanceEntry = () => {
       console.log("Assignment Update Response:", result);
 
       if (response.ok && result.message?.toLowerCase().includes("success")) {
+        alert("✅ Assignment Updated Successfully!");
         await fetchAssignments(); // refresh table
         handleClear(); // reset form
         setIsEditMode(false);
-        setFormSuccess("Assignment updated successfully.");
-        setFormError("");
       } else {
-        setFormError(`Update failed: ${result.message || "Unknown error"}`);
-        setFormSuccess("");
+        alert(`❌ Update failed: ${result.message || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error updating assignment:", error);
-      setFormError("Failed to update assignment. Please try again.");
-      setFormSuccess("");
+      alert("❌ Failed to update assignment. Please try again.");
     }
   };
 
@@ -1057,8 +1020,7 @@ const AdmAttendanceEntry = () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        setFormError("Unauthorized: Missing access token.");
-        setFormSuccess("");
+        alert("Unauthorized: Missing access token.");
         return;
       }
 
@@ -1077,23 +1039,23 @@ const AdmAttendanceEntry = () => {
       console.log("Delete Response:", result);
 
       if (result.message?.toLowerCase().includes("success")) {
-        setFormSuccess("Assignment deleted successfully.");
-        setFormError("");
+        alert("✅ Assignment deleted successfully.");
 
         // ✅ IMMEDIATELY remove from table
         setAssignments((prev) =>
           prev.filter((item) => item.id !== assignmentId)
         );
       } else {
-        setFormError(
-          `Failed to delete assignment: ${result.message || "Unknown error."}`
+        alert(
+          `❌ Failed to delete assignment: ${result.message || "Unknown error."
+          }`
         );
-        setFormSuccess("");
       }
     } catch (error) {
       console.error("Error deleting assignment:", error);
-      setFormError("An error occurred while deleting the assignment: " + error.message);
-      setFormSuccess("");
+      alert(
+        "An error occurred while deleting the assignment: " + error.message
+      );
     }
   };
 
@@ -1143,42 +1105,6 @@ const AdmAttendanceEntry = () => {
           ?.professor_id || prev.professorId,
     }));
   };
-
-  useEffect(() => {
-    if (!formData.semester) {
-      setFormData((prev) => ({
-        ...prev,
-        addmitted_section: "",
-      }));
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(formData.addmitted_section)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setFormData((prev) => {
-      if (Number(prev.addmitted_section) === Number(nextSectionId)) {
-        return prev;
-      }
-      return {
-        ...prev,
-        addmitted_section: nextSectionId,
-        lectureId: "",
-        subjectId: "",
-        professorId: "",
-      };
-    });
-  }, [formData.semester, SectionList]);
 
   return (
     <div className="container-fluid ">
@@ -1247,12 +1173,6 @@ const AdmAttendanceEntry = () => {
 
               <div className="row mt-3 mx-2">
                 <div className="col-12 custom-section-box">
-                  {formSuccess && (
-                    <div className="text-success mb-2">{formSuccess}</div>
-                  )}
-                  {formError && (
-                    <div className="text-danger mb-2">{formError}</div>
-                  )}
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                     <div className="row flex-grow-1 mt-3">
                       <div className="col-12 col-md-3 mb-3">
@@ -1268,11 +1188,6 @@ const AdmAttendanceEntry = () => {
                           value={formData.assignmentDate}
                           onChange={handleDateChange}
                         />
-                        {fieldErrors.assignmentDate && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.assignmentDate}
-                          </small>
-                        )}
                       </div>
 
                       {/* Batch / Session */}
@@ -1291,14 +1206,14 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             BatchList?.find(
-                              (b) => b.id === Number(formData.batch)
+                              (b) => b.id === Number(formData.batch),
                             )
                               ? {
-                                value: formData.batch,
-                                label: BatchList.find(
-                                  (b) => b.id === Number(formData.batch)
-                                )?.batch_description,
-                              }
+                                  value: formData.batch,
+                                  label: BatchList.find(
+                                    (b) => b.id === Number(formData.batch),
+                                  )?.batch_description,
+                                }
                               : null
                           }
                           onChange={(opt) => {
@@ -1315,11 +1230,6 @@ const AdmAttendanceEntry = () => {
                                 : "Select Session"
                           }
                         />
-                        {fieldErrors.batch && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.batch}
-                          </small>
-                        )}
                       </div>
                       {/* Course */}
                       <div className="col-12 col-md-3 mb-1">
@@ -1341,19 +1251,19 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             CourseList.find(
-                              (c) => c.id === Number(formData.course)
+                              (c) => c.id === Number(formData.course),
                             )
                               ? {
-                                value: formData.course,
-                                label:
-                                  CourseList.find(
-                                    (c) => c.id === Number(formData.course)
-                                  )?.course_name ||
-                                  CourseList.find(
-                                    (c) => c.id === Number(formData.course)
-                                  )?.description ||
-                                  "Unnamed Course",
-                              }
+                                  value: formData.course,
+                                  label:
+                                    CourseList.find(
+                                      (c) => c.id === Number(formData.course),
+                                    )?.course_name ||
+                                    CourseList.find(
+                                      (c) => c.id === Number(formData.course),
+                                    )?.description ||
+                                    "Unnamed Course",
+                                }
                               : null
                           }
                           onChange={(opt) =>
@@ -1371,11 +1281,6 @@ const AdmAttendanceEntry = () => {
                                 : "Select Course"
                           }
                         />
-                        {fieldErrors.course && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.course}
-                          </small>
-                        )}
                       </div>
 
                       {/* Department */}
@@ -1399,19 +1304,19 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             BranchList.find(
-                              (b) => b.id === Number(formData.branch)
+                              (b) => b.id === Number(formData.branch),
                             )
                               ? {
-                                value: formData.branch,
-                                label:
-                                  BranchList.find(
-                                    (b) => b.id === Number(formData.branch)
-                                  )?.department_description ||
-                                  BranchList.find(
-                                    (b) => b.id === Number(formData.branch)
-                                  )?.department_code ||
-                                  "Unnamed Department",
-                              }
+                                  value: formData.branch,
+                                  label:
+                                    BranchList.find(
+                                      (b) => b.id === Number(formData.branch),
+                                    )?.department_description ||
+                                    BranchList.find(
+                                      (b) => b.id === Number(formData.branch),
+                                    )?.department_code ||
+                                    "Unnamed Department",
+                                }
                               : null
                           }
                           onChange={(opt) =>
@@ -1428,11 +1333,6 @@ const AdmAttendanceEntry = () => {
                                 : "Select Department"
                           }
                         />
-                        {fieldErrors.branch && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.branch}
-                          </small>
-                        )}
                       </div>
 
                       {/* Academic Year */}
@@ -1456,17 +1356,17 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             AcademicYearList.find(
-                              (y) => y.id === Number(formData.academic_year)
+                              (y) => y.id === Number(formData.academic_year),
                             )
                               ? {
-                                value: formData.academic_year,
-                                label:
-                                  AcademicYearList.find(
-                                    (y) =>
-                                      y.id === Number(formData.academic_year)
-                                  )?.academic_year_description ||
-                                  "Unnamed Academic Year",
-                              }
+                                  value: formData.academic_year,
+                                  label:
+                                    AcademicYearList.find(
+                                      (y) =>
+                                        y.id === Number(formData.academic_year),
+                                    )?.academic_year_description ||
+                                    "Unnamed Academic Year",
+                                }
                               : null
                           }
                           onChange={(opt) =>
@@ -1483,11 +1383,6 @@ const AdmAttendanceEntry = () => {
                                 : "Select Academic Year"
                           }
                         />
-                        {fieldErrors.academic_year && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.academic_year}
-                          </small>
-                        )}
                       </div>
 
                       {/* Semester */}
@@ -1511,26 +1406,22 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             SemesterList.find(
-                              (s) => s.id === Number(formData.semester)
+                              (s) => s.id === Number(formData.semester),
                             )
                               ? {
-                                value: formData.semester,
-                                label:
-                                  SemesterList.find(
-                                    (s) => s.id === Number(formData.semester)
-                                  )?.semester_description ||
-                                  "Unnamed Semester",
-                              }
+                                  value: formData.semester,
+                                  label:
+                                    SemesterList.find(
+                                      (s) => s.id === Number(formData.semester),
+                                    )?.semester_description ||
+                                    "Unnamed Semester",
+                                }
                               : null
                           }
                           onChange={(opt) =>
                             setFormData((prev) => ({
                               ...prev,
                               semester: opt?.value || "",
-                              addmitted_section: "",
-                              lectureId: "",
-                              subjectId: "",
-                              professorId: "",
                             }))
                           }
                           placeholder={
@@ -1541,11 +1432,6 @@ const AdmAttendanceEntry = () => {
                                 : "Select Semester"
                           }
                         />
-                        {fieldErrors.semester && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.semester}
-                          </small>
-                        )}
                       </div>
 
                       {/* Section */}
@@ -1555,7 +1441,7 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className="detail"
-                          isDisabled={true}
+                          // isDisabled={!formData.semester}
                           isLoading={loadingSections}
                           options={
                             SectionList?.map((s) => ({
@@ -1568,36 +1454,34 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             SectionList.find(
-                              (s) => s.id === Number(formData.addmitted_section)
+                              (s) =>
+                                s.id === Number(formData.addmitted_section),
                             )
                               ? {
-                                value: formData.addmitted_section,
-                                label:
-                                  SectionList.find(
-                                    (s) =>
-                                      s.id ===
-                                      Number(formData.addmitted_section)
-                                  )?.section_name || "Unnamed Section",
-                              }
+                                  value: formData.addmitted_section,
+                                  label:
+                                    SectionList.find(
+                                      (s) =>
+                                        s.id ===
+                                        Number(formData.addmitted_section),
+                                    )?.section_name || "Unnamed Section",
+                                }
                               : null
                           }
-                            onChange={() => {}}
+                          onChange={(opt) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              addmitted_section: opt?.value || "",
+                            }))
+                          }
                           placeholder={
                             loadingSections
                               ? "Loading Sections..."
                               : errorSections
                                 ? "Error loading sections"
-                                  : formData.semester
-                                    ? "Section auto selected"
-                                    : "Select Semester first"
+                                : "Select Section"
                           }
-                            isClearable={false}
                         />
-                        {fieldErrors.addmitted_section && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.addmitted_section}
-                          </small>
-                        )}
                       </div>
                       {/* Period Dropdown */}
                       <div className="col-12 col-md-3 mb-1">
@@ -1615,21 +1499,27 @@ const AdmAttendanceEntry = () => {
                           }
                           value={
                             LectureList.find(
-                              (lec) => lec.id === Number(formData.lectureId)
+                              (lec) => lec.id === Number(formData.lectureId),
                             )
                               ? {
-                                value: formData.lectureId,
-                                label: `${LectureList.find(
-                                  (lec) =>
-                                    lec.id === Number(formData.lectureId)
-                                )?.lecture_period_name} (${LectureList.find(
-                                  (lec) =>
-                                    lec.id === Number(formData.lectureId)
-                                )?.time_from} - ${LectureList.find(
-                                  (lec) =>
-                                    lec.id === Number(formData.lectureId)
-                                )?.time_to})`,
-                              }
+                                  value: formData.lectureId,
+                                  label: `${
+                                    LectureList.find(
+                                      (lec) =>
+                                        lec.id === Number(formData.lectureId),
+                                    )?.lecture_period_name
+                                  } (${
+                                    LectureList.find(
+                                      (lec) =>
+                                        lec.id === Number(formData.lectureId),
+                                    )?.time_from
+                                  } - ${
+                                    LectureList.find(
+                                      (lec) =>
+                                        lec.id === Number(formData.lectureId),
+                                    )?.time_to
+                                  })`,
+                                }
                               : null
                           }
                           onChange={(opt) => {
@@ -1648,11 +1538,6 @@ const AdmAttendanceEntry = () => {
                                 : "Select Period"
                           }
                         />
-                        {fieldErrors.lectureId && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.lectureId}
-                          </small>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1682,14 +1567,14 @@ const AdmAttendanceEntry = () => {
                         // }
                         value={
                           SubjectList.find(
-                            (s) => s.id === Number(formData.subjectId)
+                            (s) => s.id === Number(formData.subjectId),
                           )
                             ? {
-                              value: formData.subjectId,
-                              label: SubjectList.find(
-                                (s) => s.id === Number(formData.subjectId)
-                              )?.subjectdescription, // ✅ Only subject name
-                            }
+                                value: formData.subjectId,
+                                label: SubjectList.find(
+                                  (s) => s.id === Number(formData.subjectId),
+                                )?.subjectdescription, // ✅ Only subject name
+                              }
                             : null
                         }
                         onChange={(opt) =>
@@ -1707,11 +1592,6 @@ const AdmAttendanceEntry = () => {
                               : "Select Subject"
                         }
                       />
-                      {fieldErrors.subjectId && (
-                        <small className="text-danger d-block mt-1">
-                          {fieldErrors.subjectId}
-                        </small>
-                      )}
                     </div>
                     {/* Professor Dropdown */}
                     <div className="col-12 col-md-3 mb-1">
@@ -1730,16 +1610,16 @@ const AdmAttendanceEntry = () => {
                         value={
                           ProfessorList.find(
                             (p) =>
-                              p.professor_id === Number(formData.professorId)
+                              p.professor_id === Number(formData.professorId),
                           )
                             ? {
-                              value: formData.professorId,
-                              label: ProfessorList.find(
-                                (p) =>
-                                  p.professor_id ===
-                                  Number(formData.professorId)
-                              )?.professor_name,
-                            }
+                                value: formData.professorId,
+                                label: ProfessorList.find(
+                                  (p) =>
+                                    p.professor_id ===
+                                    Number(formData.professorId),
+                                )?.professor_name,
+                              }
                             : null
                         }
                         onChange={(opt) =>
@@ -1756,11 +1636,6 @@ const AdmAttendanceEntry = () => {
                               : "Select Lecture"
                         }
                       />
-                      {fieldErrors.professorId && (
-                        <small className="text-danger d-block mt-1">
-                          {fieldErrors.professorId}
-                        </small>
-                      )}
                     </div>
                     <div className="col-12 col-md-3 mb-0">
                       <label htmlFor="upload" className="form-label">
@@ -1915,11 +1790,6 @@ const AdmAttendanceEntry = () => {
                             boxSizing: "border-box",
                           }}
                         ></textarea>
-                        {fieldErrors.assignmentDetails && (
-                          <small className="text-danger d-block mt-1">
-                            {fieldErrors.assignmentDetails}
-                          </small>
-                        )}
                         <div className="d-flex justify-content-middle mt-1">
                           <small className="text-muted">
                             Remaining characters:{" "}
@@ -1944,7 +1814,7 @@ const AdmAttendanceEntry = () => {
 
               <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table">
+                  <table className="table table-bordered ">
                     <thead>
                       <tr>
                         <th>Sr.No</th>
@@ -1968,7 +1838,7 @@ const AdmAttendanceEntry = () => {
                     </thead>
                     <tbody>
                       {assignments.length > 0 ? (
-                        assignments.map((item, index) => (
+                        currentAssignments.map((item, index) => (
                           <tr key={item.id}>
                             <td>{index + 1}</td>
                             <td>{item.assignment_date}</td>
@@ -1985,9 +1855,9 @@ const AdmAttendanceEntry = () => {
                               <div className="hoverable-text">
                                 {item.assignment_details.length > 50
                                   ? `${item.assignment_details.substring(
-                                    0,
-                                    50
-                                  )}...`
+                                      0,
+                                      50,
+                                    )}...`
                                   : item.assignment_details}
                                 <div className="hover-popup">
                                   {item.assignment_details}

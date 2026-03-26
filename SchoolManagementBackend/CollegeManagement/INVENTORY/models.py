@@ -43,6 +43,12 @@ class InventoryItem(models.Model):
         ('Asset', 'Asset'),
     ]
     
+    INVENTORY_LOCATION_CHOICES = [
+        ('Medical', 'Medical'),
+        ('Hostel', 'Hostel'),
+        ('Nursing College', 'Nursing College'),
+    ]
+    
     STATUS_CHOICES = [
         ('Available', 'Available'),
         ('In Use', 'In Use'),
@@ -60,6 +66,7 @@ class InventoryItem(models.Model):
     item_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     quantity = models.IntegerField(default=0)
     inventory_type = models.CharField(max_length=50, choices=INVENTORY_TYPE_CHOICES, default='Consumable')
+    inventory_location = models.CharField(max_length=50, choices=INVENTORY_LOCATION_CHOICES, null=True, blank=True)
     status = models.CharField(max_length=50, null=True, blank=True)  # Note: Used to store Asset Code No (free text field)
     purchase_date = models.DateField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)

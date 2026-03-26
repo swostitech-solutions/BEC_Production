@@ -37,6 +37,9 @@ const AdmAttendanceEntry = () => {
   const [cashAmount, setCashAmount] = useState(0);
   const [bankAmount, setBankAmount] = useState();
   const [pendingAccountId, setPendingAccountId] = useState(null); // For setting account after accounts load
+  const [errors, setErrors] = useState({});
+  const [saveMsg, setSaveMsg] = useState({ type: "", text: "" });
+  const [rowErrors, setRowErrors] = useState({});
 
   // Custom hooks for fetching data
   const { categories: expenseCategory, loading: loadingCategories } = useExpenseIncomeCategories("E");
@@ -73,6 +76,7 @@ const AdmAttendanceEntry = () => {
     console.log("Selected Party:", selectedParty);
     setPartyId(selectedParty.party_id || "");
     setPartyName(selectedParty.party_name || "");
+    setErrors((prev) => ({ ...prev, partyId: "" }));
     handleCloseModal();
   };
 
@@ -89,6 +93,9 @@ const AdmAttendanceEntry = () => {
     setSelectedBank("");
     setSelectedAccount("");
     setRows([{ id: 1, category: "", amount: "", remarks: "" }]);
+    setErrors({});
+    setSaveMsg({ type: "", text: "" });
+    setRowErrors({});
   };
   const handleOpenModal = () => {
     setShowModal(true);
@@ -153,16 +160,14 @@ const AdmAttendanceEntry = () => {
 
   const handleInputChange = (index, field, value) => {
     const updatedRows = [...rows];
-    
-    // Validate remarks field
-    if (field === "remarks") {
-      if (!validateRemarks(value)) {
-        alert("Remarks can only contain valid characters and cannot start with a number.");
-        return; // Don't update if validation fails
-      }
-    }
-    
+    // Only allow numbers (with optional decimal) in amount field
+    if (field === "amount" && value !== "" && !/^\d*\.?\d*$/.test(value)) return;
     updatedRows[index][field] = value;
+    // Clear row error for this cell
+    const rowId = updatedRows[index].id;
+    if (field === "category" || field === "amount") {
+      setRowErrors((prev) => ({ ...prev, [rowId]: { ...prev[rowId], [field]: "" } }));
+    }
 
     if (field === "amount") {
       const newTotalAmount = updatedRows.reduce(
@@ -179,43 +184,37 @@ const AdmAttendanceEntry = () => {
 
   const handleCashChange = (e) => {
     const cashVal = e.target.value;
-
-    // Allow clearing
+    if (cashVal !== "" && !/^\d*\.?\d*$/.test(cashVal)) return;
+    setErrors((prev) => ({ ...prev, payment: "", cashAmount: "" }));
     if (cashVal === "" || parseFloat(cashVal) === 0) {
       setCashAmount("");
       return;
     }
-
     const newCash = parseFloat(cashVal) || 0;
     const bank = parseFloat(bankAmount) || 0;
     const newPaid = newCash + bank;
-
     if (newPaid > totalAmount) {
-      alert("The payment amount cannot be greater than total amount.");
+      setErrors((prev) => ({ ...prev, cashAmount: "Payment amount cannot exceed total amount." }));
       return;
     }
-
     setCashAmount(cashVal);
   };
 
   const handleBankAmountChange = (e) => {
     const bankVal = e.target.value;
-
-    // Allow clearing
+    if (bankVal !== "" && !/^\d*\.?\d*$/.test(bankVal)) return;
+    setErrors((prev) => ({ ...prev, payment: "", bankAmount: "" }));
     if (bankVal === "" || parseFloat(bankVal) === 0) {
       setBankAmount("");
       return;
     }
-
     const cash = parseFloat(cashAmount) || 0;
     const newBank = parseFloat(bankVal) || 0;
     const newPaid = cash + newBank;
-
     if (newPaid > totalAmount) {
-      alert("The payment amount cannot be greater than total amount.");
+      setErrors((prev) => ({ ...prev, bankAmount: "Payment amount cannot exceed total amount." }));
       return;
     }
-
     setBankAmount(bankVal);
   };
 
@@ -281,22 +280,48 @@ const AdmAttendanceEntry = () => {
 
 
   const handleSave = async () => {
-    if (!partyId) {
-      alert("Enter Party name");
+    const fieldErrors = {};
+    if (!partyId) fieldErrors.partyId = "Please select a party.";
+    if (!partyReference || partyReference.trim() === "") fieldErrors.partyReference = "Party Reference is required.";
+
+    // Validate cash/bank: at least one must have a valid positive value
+    const cashVal = parseFloat(cashAmount);
+    const bankVal = parseFloat(bankAmount);
+    const hasCash = !isNaN(cashVal) && cashVal > 0;
+    const hasBank = !isNaN(bankVal) && bankVal > 0;
+    const hasCashInput = cashAmount && String(cashAmount).trim() !== "";
+    const hasBankInput = bankAmount && String(bankAmount).trim() !== "";
+
+    if (!hasCash && !hasBank) {
+      fieldErrors.payment = "Please enter Cash or Bank payment amount.";
+    }
+    if (hasCashInput && !hasCash) {
+      fieldErrors.cashAmount = "Please enter a valid cash amount.";
+    }
+    if (hasBankInput && !hasBank) {
+      fieldErrors.bankAmount = "Please enter a valid bank amount.";
+    }
+
+    // Per-row validation
+    const newRowErrors = {};
+    rows.forEach((row) => {
+      const rowErr = {};
+      if (!row.category) rowErr.category = "Required";
+      if (!row.amount || isNaN(parseFloat(row.amount)) || parseFloat(row.amount) <= 0) rowErr.amount = "Required";
+      if (Object.keys(rowErr).length) newRowErrors[row.id] = rowErr;
+    });
+
+    if (Object.keys(fieldErrors).length || Object.keys(newRowErrors).length) {
+      setErrors(fieldErrors);
+      setRowErrors(newRowErrors);
       return;
     }
-    if (!partyReference || partyReference.trim() === "") {
-      alert("Enter Party Reference");
-      return;
-    }
+    setErrors({});
+    setRowErrors({});
 
     const filteredExpenseDetails = rows.filter(
       (row) => row.category && row.amount
     );
-    if (filteredExpenseDetails.length === 0) {
-      alert("Enter ExpenseDetails data");
-      return;
-    }
 
     const requestBody = {
       ExpenseHeaderadd: {
@@ -353,13 +378,17 @@ const AdmAttendanceEntry = () => {
       } else {
         await api.post(url, requestBody);
       }
+alert(
+  isEdit
+    ? "Expense updated successfully!"
+    : "Expense entry saved successfully!",
+);
 
-      alert(isEdit ? "Expense updated successfully!" : "Expense entry saved successfully!");
-      navigate("/admin/search-expense");
+navigate("/admin/search-expense");
     } catch (error) {
       console.error("Error saving expense entry:", error);
       const errorMessage = error.response?.data?.message || "An error occurred while saving expense entry.";
-      alert(errorMessage);
+      setSaveMsg({ type: "danger", text: errorMessage });
     }
   };
 
@@ -414,6 +443,12 @@ const AdmAttendanceEntry = () => {
                 </div>
               </div>
 
+              {saveMsg.text && (
+                <div className={`alert alert-${saveMsg.type} mx-2 mt-2`} role="alert">
+                  {saveMsg.text}
+                </div>
+              )}
+
               <div className="row p-2 mt-3 position-relative">
                 {/* Line with Hidden Section for Text */}
                 <div className="position-relative w-100">
@@ -453,6 +488,7 @@ const AdmAttendanceEntry = () => {
                             ...
                           </button>
                         </div>
+                        {errors.partyId && <small className="text-danger">{errors.partyId}</small>}
                       </div>
                       <SelectSearchParty
                         show={showModal}
@@ -496,12 +532,16 @@ const AdmAttendanceEntry = () => {
                           <input
                             type="text"
                             id="party-reference"
-                            className="form-control detail"
+                            className={`form-control detail ${errors.partyReference ? "is-invalid" : ""}`}
                             value={partyReference}
-                            onChange={(e) => setPartyReference(e.target.value)}
+                            onChange={(e) => {
+                              setPartyReference(e.target.value);
+                              setErrors((prev) => ({ ...prev, partyReference: "" }));
+                            }}
                             placeholder="Enter party reference"
                           />
                         </div>
+                        {errors.partyReference && <small className="text-danger">{errors.partyReference}</small>}
                       </div>
                       <div className="col-12 col-md-3 mb-0">
                         <label htmlFor="total-amount" className="form-label">
@@ -670,7 +710,7 @@ const AdmAttendanceEntry = () => {
                               <td>
                                 <Form.Control
                                   as="select"
-                                  className="form-select"
+                                  className={`form-select ${rowErrors[row.id]?.category ? "is-invalid" : ""}`}
                                   value={row.category}
                                   onChange={(e) =>
                                     handleInputChange(
@@ -690,10 +730,12 @@ const AdmAttendanceEntry = () => {
                                     </option>
                                   ))}
                                 </Form.Control>
+                                {rowErrors[row.id]?.category && <small className="text-danger">{rowErrors[row.id].category}</small>}
                               </td>
                               <td>
                                 <Form.Control
                                   type="text"
+                                  className={rowErrors[row.id]?.amount ? "is-invalid" : ""}
                                   value={row.amount}
                                   onChange={(e) =>
                                     handleInputChange(
@@ -703,6 +745,7 @@ const AdmAttendanceEntry = () => {
                                     )
                                   }
                                 />
+                                {rowErrors[row.id]?.amount && <small className="text-danger">{rowErrors[row.id].amount}</small>}
                               </td>
                               <td>
                                 <Form.Control
@@ -762,11 +805,16 @@ const AdmAttendanceEntry = () => {
                     <Col xs={4}>
                       <Form.Control
                         type="text"
+                        className={errors.cashAmount ? "is-invalid" : ""}
                         value={cashAmount}
                         onChange={handleCashChange}
                       />
+                      {errors.cashAmount && <small className="text-danger">{errors.cashAmount}</small>}
                     </Col>
                   </Row>
+                  {errors.payment && (
+                    <small className="text-danger d-block mb-2">{errors.payment}</small>
+                  )}
                   {/* Bank Selection */}
                   <Row className="align-items-center mt-3">
                     <Col xs={2}>
@@ -821,13 +869,17 @@ const AdmAttendanceEntry = () => {
                       )}
                     </Col>
                     <Col xs={4} className="d-flex">
-                      <Form.Control
-                        disabled={!selectedBank && !bankAmount}
-                        type="text"
-                        value={bankAmount}
-                        onChange={handleBankAmountChange}
-                        placeholder="Enter bank amount"
-                      />
+                      <div className="w-100">
+                        <Form.Control
+                          disabled={!selectedBank && !bankAmount}
+                          type="text"
+                          className={errors.bankAmount ? "is-invalid" : ""}
+                          value={bankAmount}
+                          onChange={handleBankAmountChange}
+                          placeholder="Enter bank amount"
+                        />
+                        {errors.bankAmount && <small className="text-danger">{errors.bankAmount}</small>}
+                      </div>
                     </Col>
                   </Row>
                 </div>

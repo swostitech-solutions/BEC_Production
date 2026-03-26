@@ -29,7 +29,6 @@ const AdmAttendanceEntry = () => {
   const branchId = localStorage.getItem("branchId");
   const academicyearId = localStorage.getItem("academicSessionId");
   const [showUnpaidFee, setShowUnpaidFee] = useState(false);
-  const [pageMessage, setPageMessage] = useState("");
     // State for Academic Year dropdown
     const [academicYears, setAcademicYears] = useState([]);
     const [selectedAcademicYear, setSelectedAcademicYear] = useState(null);
@@ -53,54 +52,48 @@ const AdmAttendanceEntry = () => {
            motherName: "",
            schoolAdmissionNo: "",
          });
- const handleClear = () => {
-   // Basic Student Filters
-   setStudentId("");
-   setStudentName("");
-   setSelectedStudent({
-     name: "",
-     barcode: "",
-     admissionNo: "",
-     fatherName: "",
-     motherName: "",
-     schoolAdmissionNo: "",
-   });
+const handleClear = () => {
+  // Remove stored student
+  localStorage.removeItem("selectedClubStudentId");
 
-   // Class / Section
-   setClassId(null);
-   setSectionId(null);
+  setStudentId("");
+  setStudentName("");
+  setSelectedStudent({
+    name: "",
+    barcode: "",
+    admissionNo: "",
+    fatherName: "",
+    motherName: "",
+    schoolAdmissionNo: "",
+  });
 
-   // Fee / Transport
-   setSelectedFeePeriod("");
-   setFeePeriod(null);
-   setPickupPoint(null);
-   setPickupPoints([]);
-   setTransportData([]);
-   setShowUnpaid(false);
-   setShowUnpaidFee(false);
+  setClassId(null);
+  setSectionId(null);
 
-   // Academic Year & Other Dropdown Levels
-   setSelectedAcademicYear(null);
-   setAcademicYears([]);
-   setSelectedSemester(null);
-   setSemesters([]);
-   setSelectedSection(null);
-   setSections([]);
-   setSelectedSession(null);
-   setSessions([]);
-   setSelectedCourse(null);
-   setCourses([]);
-   setSelectedDepartment(null);
-   setDepartments([]);
-   setSelectedSessionId(null);
+  setSelectedFeePeriod("");
+  setFeePeriod(null);
+  setPickupPoint(null);
+  setPickupPoints([]);
+  setTransportData([]);
+  setShowUnpaid(false);
+  setShowUnpaidFee(false);
 
-   // Student Details
-   setStudentDetails(null);
-  setPageMessage("");
+  setSelectedAcademicYear(null);
+  setAcademicYears([]);
+  setSelectedSemester(null);
+  setSemesters([]);
+  setSelectedSection(null);
+  setSections([]);
+  setSelectedSession(null);
+  setSessions([]);
+  setSelectedCourse(null);
+  setCourses([]);
+  setSelectedDepartment(null);
+  setDepartments([]);
+  setSelectedSessionId(null);
 
-   // Modal reset (if needed)
-   // setShowModal(false);
- };
+  setStudentDetails(null);
+};
 
   const handleClose = () => {
     navigate("/admin/dashboard");
@@ -593,31 +586,6 @@ const pageCount = Math.ceil(transportData.length / itemsPerPage);
     selectedSemester,
   ]);
 
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections]);
-
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -848,47 +816,45 @@ const handleSearch = async () => {
     const organization_id = sessionStorage.getItem("organization_id") || 1;
     const branch_id = sessionStorage.getItem("branch_id") || 1;
 
-    // Mandatory params — ALWAYS sent
     const queryParams = new URLSearchParams({
       organization_id,
       branch_id,
-      paid: showUnpaidFee ? "false" : "true",
+      paid: showUnpaidFee ? "true" : "false",
     });
 
-    // Optional filters — ONLY when selected
-    if (selectedSession?.value)
-      queryParams.append("batch_id", selectedSession.value);
+    // ✅ PRIORITY: if student selected → ignore other filters
+    if (studentId) {
+      queryParams.append("student_id", studentId);
+    } else {
+      // apply filters ONLY when student not selected
+      if (selectedSession?.value)
+        queryParams.append("batch_id", selectedSession.value);
 
-    if (selectedCourse?.value)
-      queryParams.append("course_id", selectedCourse.value);
+      if (selectedCourse?.value)
+        queryParams.append("course_id", selectedCourse.value);
 
-    if (selectedDepartment?.value)
-      queryParams.append("department_id", selectedDepartment.value);
+      if (selectedDepartment?.value)
+        queryParams.append("department_id", selectedDepartment.value);
 
-    if (selectedAcademicYear?.value)
-      queryParams.append("academic_year_id", selectedAcademicYear.value);
+      if (selectedAcademicYear?.value)
+        queryParams.append("academic_year_id", selectedAcademicYear.value);
 
-    if (selectedSemester?.value)
-      queryParams.append("semester_id", selectedSemester.value);
+      if (selectedSemester?.value)
+        queryParams.append("semester_id", selectedSemester.value);
 
-    if (selectedSection?.value)
-      queryParams.append("section_id", selectedSection.value);
+      if (selectedSection?.value)
+        queryParams.append("section_id", selectedSection.value);
+    }
 
     if (pickupPoint) queryParams.append("pickup_point_id", pickupPoint);
 
     if (selectedFeePeriod)
       queryParams.append("fee_applied_from", selectedFeePeriod);
 
-    if (studentId) queryParams.append("student_id", studentId);
-
-    // Final URL
-    const finalUrl = `${
-      ApiUrl.apiurl
-    }Transport/TransportChargesCalculateBasedOnStudent/?${queryParams.toString()}`;
+    const finalUrl = `${ApiUrl.apiurl}Transport/TransportChargesCalculateBasedOnStudent/?${queryParams.toString()}`;
 
     console.log("FINAL URL:", finalUrl);
 
-    // API CALL
     const response = await fetch(finalUrl, {
       method: "GET",
       headers: {
@@ -898,7 +864,6 @@ const handleSearch = async () => {
     });
 
     const result = await response.json();
-    console.log("Transport API Response:", result);
 
     if (result.message === "success" && Array.isArray(result.data)) {
       setTransportData(result.data);
@@ -907,17 +872,16 @@ const handleSearch = async () => {
       setTransportData([]);
     }
   } catch (error) {
-    console.error("Error fetching transport fee data:", error);
+    console.error("Error:", error);
     setTransportData([]);
   } finally {
     setLoading(false);
   }
 };
 
-
   const exportToExcel = () => {
   if (!transportData || transportData.length === 0) {
-    setPageMessage("Error: No data available to export.");
+    alert("No data available to export.");
     return;
   }
 
@@ -939,7 +903,6 @@ const handleSearch = async () => {
   XLSX.utils.book_append_sheet(workbook, worksheet, "Transport Data");
 
   XLSX.writeFile(workbook, "TransportData.xlsx");
-  setPageMessage("Transport data exported successfully.");
 };
 
 
@@ -951,21 +914,20 @@ const fetchViewPDF = async (student_id, fee_applied_from) => {
     const token = localStorage.getItem("accessToken");
 
     if (!student_id) {
-      setPageMessage("Error: Student ID missing!");
-      return;
-    }
-
-    if (!fee_applied_from) {
-      setPageMessage("Error: Fee Applied From is missing!");
+      alert("Student ID missing!");
       return;
     }
 
     if (!organization_id || !branch_id ) {
-      setPageMessage("Error: Organization / Branch is missing!");
+      alert("Organization / Branch  is missing!");
       return;
     }
 
-    const url = `${ApiUrl.apiurl}Transport/MonthlyElemetWiseStudentFees/?student_id=${student_id}&fee_applied_from_id=${fee_applied_from}&organization_id=${organization_id}&branch_id=${branch_id}`;
+    // Pass fee_applied_from_id only if it exists
+    let url = `${ApiUrl.apiurl}Transport/MonthlyElemetWiseStudentFees/?student_id=${student_id}&organization_id=${organization_id}&branch_id=${branch_id}`;
+    if (fee_applied_from) {
+      url += `&fee_applied_from_id=${fee_applied_from}`;
+    }
 
     console.log("PDF API URL:", url);
 
@@ -982,11 +944,10 @@ const fetchViewPDF = async (student_id, fee_applied_from) => {
     if (result.message === "success") {
       generatePDF(result.data);
     } else {
-      setPageMessage(`Error: ${result.message || "Failed to fetch PDF data"}`);
+      alert(result.message || "Failed to fetch PDF data");
     }
   } catch (error) {
     console.error("Error fetching PDF:", error);
-    setPageMessage("Error: Failed to fetch PDF data.");
   }
 };
 
@@ -1165,13 +1126,6 @@ const generatePDF = (data) => {
                     Close
                   </button>
                 </div>
-                {pageMessage && (
-                  <div
-                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
-                  >
-                    {pageMessage}
-                  </div>
-                )}
               </div>
 
               {/* SearchFeild */}
@@ -1299,16 +1253,8 @@ const generatePDF = (data) => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester?.value
-                              ? "Select Semester first"
-                              : sections?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
+                          onChange={setSelectedSection}
+                          placeholder="Select Section"
                         />
                       </div>
 
@@ -1400,44 +1346,40 @@ const generatePDF = (data) => {
                       <th>View</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {currentItems.length > 0 ? (
-                      currentItems.map((item, index) => (
-                        <tr key={index}>
-                          <td>{offset + index + 1}</td>
-                          <td>{item.student_name}</td>
-                          <td>{item.course_name}</td>
-                          <td>{item.section_name}</td>
-                          <td>{item.father_name}</td>
-                          <td>{item.pick_up_point}</td>
-                          <td>{item.total_fees}</td>
-                          <td>{item.paid_fees}</td>
-                          <td>
-                            {(item.total_fees || 0) - (item.paid_fees || 0)}
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-info btn-sm"
-                              onClick={() =>
-                                fetchViewPDF(
-                                  item.student_id,
-                                  item.fee_applied_from
-                                )
-                              }
-                            >
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="10" className="text-center">
-                          No Data Found
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
+                <tbody>
+  {currentItems.length > 0 ? (
+    currentItems.map((item, index) => (
+      <tr key={index}>
+        <td>{offset + index + 1}</td>
+        <td>{item.student_name}</td>
+        <td>{item.course_name}</td>
+        <td>{item.section_name}</td>
+        <td>{item.father_name}</td>
+        <td>{item.pick_up_point}</td>
+        <td>{item.total_fees}</td>
+        <td>{item.paid_fees}</td>
+        <td>{(item.total_fees || 0) - (item.paid_fees || 0)}</td>
+        <td>
+          <button
+            className="btn btn-info btn-sm"
+            onClick={() =>
+              fetchViewPDF(item.student_id, item.fee_applied_from)
+            }
+            disabled={(item.paid_fees || 0) === 0} // ✅ Disable if Fees Paid is 0
+          >
+            View
+          </button>
+        </td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="10" className="text-center">
+        No Data Found
+      </td>
+    </tr>
+  )}
+</tbody>
                 </table>
               </div>
 

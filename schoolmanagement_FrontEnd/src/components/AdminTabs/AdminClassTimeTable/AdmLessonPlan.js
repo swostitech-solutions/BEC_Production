@@ -45,8 +45,6 @@ const AdmLessonPlan = () => {
 
   const [topicOptions, setTopicOptions] = useState([]);
   const [errors, setErrors] = useState({});
-  const [rowErrors, setRowErrors] = useState({});
-  const [statusMessage, setStatusMessage] = useState("");
 
   // Custom Hooks with dependencies
   const { BatchList, loading: loadingBatch } = useFetchSessionList(organizationId, branchId);
@@ -88,6 +86,7 @@ const AdmLessonPlan = () => {
   const [rows, setRows] = useState([
     { lectureNo: "", moduleNo: "", topic: "", proposedDate: "" },
   ]);
+  const [rowErrors, setRowErrors] = useState({});
 
   // State for filters
 
@@ -120,28 +119,86 @@ const AdmLessonPlan = () => {
     setRows([{ lectureNo: "", moduleNo: "", topic: "", proposedDate: "" }]);
     setErrors({});
     setRowErrors({});
-    setStatusMessage("");
   };
 
-  const handleAddRow = () => {
-    setRows([
-      ...rows,
-      { lectureNo: "", moduleNo: "", topic: "", proposedDate: "" },
-    ]);
-  };
+const handleAddRow = () => {
+  const lastIndex = rows.length - 1;
+  const lastRow = rows[lastIndex];
+  const newRowErrors = {};
 
-  const handleChange = (index, field, value) => {
-    const updatedRows = [...rows];
-    updatedRows[index][field] = value;
-    setRows(updatedRows);
+  // Lecture No (number validation)
+  if (
+    !lastRow.lectureNo ||
+    isNaN(Number(lastRow.lectureNo)) ||
+    Number(lastRow.lectureNo) < 1
+  ) {
+    newRowErrors.lectureNo = "Required";
+  }
+
+  // ✅ FIXED: Module No should NOT be numeric
+  if (!lastRow.moduleNo || !lastRow.moduleNo.trim()) {
+    newRowErrors.moduleNo = "Required";
+  }
+
+  if (!lastRow.topic || !lastRow.topic.trim()) {
+    newRowErrors.topic = "Required";
+  }
+
+  if (!lastRow.proposedDate) {
+    newRowErrors.proposedDate = "Required";
+  }
+
+  if (Object.keys(newRowErrors).length > 0) {
     setRowErrors((prev) => ({
       ...prev,
-      [index]: {
-        ...(prev[index] || {}),
-        [field]: "",
-      },
+      [lastIndex]: newRowErrors,
     }));
+    return;
+  }
+
+  // Clear error
+  setRowErrors((prev) => {
+    const updated = { ...prev };
+    delete updated[lastIndex];
+    return updated;
+  });
+
+  // Add new row
+  setRows([
+    ...rows,
+    { lectureNo: "", moduleNo: "", topic: "", proposedDate: "" },
+  ]);
+};
+
+  const handleRemoveRow = (index) => {
+    const updatedRows = rows.filter((_, i) => i !== index);
+    setRows(updatedRows.length > 0 ? updatedRows : [{ lectureNo: "", moduleNo: "", topic: "", proposedDate: "" }]);
+    setRowErrors((prev) => { const updated = { ...prev }; delete updated[index]; return updated; });
   };
+const handleChange = (index, field, value) => {
+  const updatedRows = [...rows];
+  updatedRows[index][field] = value;
+  setRows(updatedRows);
+
+  // ✅ FIX: rowErrors is an object, not array
+  setRowErrors((prev) => {
+    const updated = { ...prev };
+
+    if (updated[index]) {
+      updated[index] = {
+        ...updated[index],
+        [field]: "", // clear error for this field
+      };
+
+      // remove empty error object
+      if (Object.values(updated[index]).every((v) => !v)) {
+        delete updated[index];
+      }
+    }
+
+    return updated;
+  });
+};
 
   // Populate Session dropdown
   useEffect(() => {
@@ -232,29 +289,6 @@ const AdmLessonPlan = () => {
       setSectionOptions([]);
     }
   }, [SectionList]);
-
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) {
-      return;
-    }
-
-    const hasSelected = selectedSection?.value
-      ? sectionOptions.some(
-          (section) => Number(section.value) === Number(selectedSection.value)
-        )
-      : false;
-
-    if (hasSelected) {
-      return;
-    }
-
-    setSelectedSection(sectionOptions[0]);
-  }, [selectedSemester, sectionOptions]);
 
   useEffect(() => {
     const fetchMentors = async () => {
@@ -400,59 +434,50 @@ const AdmLessonPlan = () => {
   }, [selectedSession, selectedCourse, selectedBranch, selectedAcademicYear, selectedSemester, selectedSection, selectedSubject]);
 
 
+  const validateFields = () => {
+    const newErrors = {};
+    if (!selectedMentor) newErrors.selectedMentor = "Teacher is required";
+    if (!selectedSession) newErrors.selectedSession = "Session is required";
+    if (!selectedCourse) newErrors.selectedCourse = "Course is required";
+    if (!selectedBranch) newErrors.selectedBranch = "Department is required";
+    if (!selectedAcademicYear) newErrors.selectedAcademicYear = "Academic Year is required";
+    if (!selectedSemester) newErrors.selectedSemester = "Semester is required";
+    if (!selectedSection) newErrors.selectedSection = "Section is required";
+    if (!selectedSubject) newErrors.selectedSubject = "Subject is required";
+    const validRows = rows.filter(
+      (row) =>
+        row.lectureNo &&
+        !isNaN(Number(row.lectureNo)) &&
+        Number(row.lectureNo) >= 1 &&
+        row.moduleNo &&
+        row.moduleNo.trim() &&
+        row.topic &&
+        row.topic.trim() &&
+        row.proposedDate,
+    );
+    if (validRows.length === 0) newErrors.rows = "Please enter at least one complete row with Lecture No, Module No, Topic and Proposed Date.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validateFields()) return;
+
+    const validRows = rows.filter(
+      (row) =>
+        row.lectureNo &&
+        !isNaN(Number(row.lectureNo)) &&
+        Number(row.lectureNo) >= 1 &&
+        row.moduleNo &&
+        row.moduleNo.trim() &&
+        row.topic &&
+        row.topic.trim() &&
+        row.proposedDate,
+    );
+
     const orgId = sessionStorage.getItem("organization_id");
     const branchId = sessionStorage.getItem("branch_id");
     const userId = sessionStorage.getItem("userId");
-
-    const newErrors = {};
-    if (!selectedMentor) newErrors.teacher = "Teacher is required.";
-    if (!selectedSession) newErrors.session = "Session is required.";
-    if (!selectedCourse) newErrors.course = "Course is required.";
-    if (!selectedBranch) newErrors.branch = "Department is required.";
-    if (!selectedAcademicYear) newErrors.academicYear = "Academic Year is required.";
-    if (!selectedSemester) newErrors.semester = "Semester is required.";
-    if (!selectedSection) newErrors.section = "Section is required.";
-    if (!selectedSubject) newErrors.subject = "Subject is required.";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setErrors({});
-    setStatusMessage("");
-
-    const newRowErrors = {};
-    rows.forEach((row, index) => {
-      const hasAnyValue = row.lectureNo || row.moduleNo || row.topic || row.proposedDate;
-      if (hasAnyValue || rows.length === 1) {
-        const rowError = {};
-        if (!row.lectureNo) rowError.lectureNo = "Lecture No is required.";
-        if (!row.moduleNo) rowError.moduleNo = "Module No is required.";
-        if (!row.topic) rowError.topic = "Topic is required.";
-        if (!row.proposedDate) rowError.proposedDate = "Proposed Date is required.";
-        if (Object.keys(rowError).length > 0) {
-          newRowErrors[index] = rowError;
-        }
-      }
-    });
-
-    if (Object.keys(newRowErrors).length > 0) {
-      setRowErrors(newRowErrors);
-      return;
-    }
-
-    setRowErrors({});
-
-    const validRows = rows.filter(
-      (row) => row.lectureNo && row.moduleNo && row.topic && row.proposedDate
-    );
-
-    if (validRows.length === 0) {
-      setStatusMessage("Error: Please enter at least one complete row.");
-      return;
-    }
 
     const payload = {
       organization_id: parseInt(orgId),
@@ -466,9 +491,9 @@ const AdmLessonPlan = () => {
       subject_id: selectedSubject.value,
       professor_id: selectedMentor.value,
       lecture_details: validRows.map((row) => ({
-        lecture_no: parseInt(row.lectureNo),
-        module_no: parseInt(row.moduleNo),
-        topic_id: parseInt(row.topic),
+        lecture_no: Number(row.lectureNo),
+        module_no: row.moduleNo,
+        topic_name: row.topic.trim(),
         propose_date: row.proposedDate,
       })),
       created_by: parseInt(userId),
@@ -493,7 +518,7 @@ const AdmLessonPlan = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
-        setStatusMessage(`Error: Failed to create lesson plan. Server error: ${response.status}`);
+        alert(`Failed to create lesson plan. Server error: ${response.status}`);
         return;
       }
 
@@ -501,7 +526,7 @@ const AdmLessonPlan = () => {
       console.log("Save Response:", result);
 
       if (result.message === "success" || result.message?.toLowerCase().includes("successfully")) {
-        setStatusMessage("Lesson Plan Created Successfully!");
+        alert("Lesson Plan Created Successfully!");
 
         // Reset the form
         setSelectedSession(null);
@@ -514,11 +539,11 @@ const AdmLessonPlan = () => {
         setSelectedMentor(null);
         setRows([{ lectureNo: "", moduleNo: "", topic: "", proposedDate: "" }]);
       } else {
-        setStatusMessage("Error: Failed to create lesson plan: " + (result.error || result.message || "Unknown error"));
+        alert("Failed to create lesson plan: " + (result.error || result.message || "Unknown error"));
       }
     } catch (error) {
       console.error("Error saving lesson plan:", error);
-      setStatusMessage("Error: Error saving lesson plan: " + error.message);
+      alert("Error saving lesson plan: " + error.message);
     }
   };
 
@@ -566,11 +591,6 @@ const AdmLessonPlan = () => {
                     Close
                   </button>
                 </div>
-                {statusMessage && (
-                  <div className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}>
-                    {statusMessage}
-                  </div>
-                )}
               </div>
               <div className="row mt-3 mx-2">
                 <div className="col-12 custom-section-box">
@@ -578,159 +598,218 @@ const AdmLessonPlan = () => {
                     <div className="row flex-grow-1">
                       <div className="col-12 col-md-3 mb-3">
                         <label htmlFor="teacher" className="form-label">
-                          Teacher
+                          Teacher <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="teacher"
                           options={mentors}
                           className="detail"
                           value={selectedMentor}
-                          onChange={(option) => {
-                            setSelectedMentor(option);
-                            setErrors((prev) => ({ ...prev, teacher: "" }));
+                          onChange={(opt) => {
+                            setSelectedMentor(opt);
+                            if (errors.selectedMentor)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedMentor: "",
+                              }));
                           }}
                           placeholder="Select Teacher"
                           classNamePrefix="teacher-dropdown"
                         />
-                        {errors.teacher && <div className="text-danger small mt-1">{errors.teacher}</div>}
+                        {errors.selectedMentor && (
+                          <small className="text-danger">
+                            {errors.selectedMentor}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-md-3 mb-3">
                         <label htmlFor="session" className="form-label">
-                          Session
+                          Session <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="session"
                           options={sessionOptions}
                           className="detail"
                           value={selectedSession}
-                          onChange={(option) => {
-                            setSelectedSession(option);
-                            setErrors((prev) => ({ ...prev, session: "" }));
+                          onChange={(opt) => {
+                            setSelectedSession(opt);
+                            if (errors.selectedSession)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedSession: "",
+                              }));
                           }}
                           placeholder="Select Session"
                           classNamePrefix="session-dropdown"
                         />
-                        {errors.session && <div className="text-danger small mt-1">{errors.session}</div>}
+                        {errors.selectedSession && (
+                          <small className="text-danger">
+                            {errors.selectedSession}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-md-3 mb-3">
                         <label htmlFor="course" className="form-label">
-                          Course
+                          Course <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="course"
                           options={courseOptions}
                           className="detail"
                           value={selectedCourse}
-                          onChange={(option) => {
-                            setSelectedCourse(option);
-                            setErrors((prev) => ({ ...prev, course: "" }));
+                          onChange={(opt) => {
+                            setSelectedCourse(opt);
+                            if (errors.selectedCourse)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedCourse: "",
+                              }));
                           }}
                           placeholder="Select Course"
                           classNamePrefix="course-dropdown"
                         />
-                        {errors.course && <div className="text-danger small mt-1">{errors.course}</div>}
+                        {errors.selectedCourse && (
+                          <small className="text-danger">
+                            {errors.selectedCourse}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-md-3 mb-3">
                         <label htmlFor="branch" className="form-label">
-                          Department
+                          Department <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="branch"
                           options={branchOptions}
                           className="detail"
                           value={selectedBranch}
-                          onChange={(option) => {
-                            setSelectedBranch(option);
-                            setErrors((prev) => ({ ...prev, branch: "" }));
+                          onChange={(opt) => {
+                            setSelectedBranch(opt);
+                            if (errors.selectedBranch)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedBranch: "",
+                              }));
                           }}
                           placeholder="Select Branch"
                           classNamePrefix="branch-dropdown"
                         />
-                        {errors.branch && <div className="text-danger small mt-1">{errors.branch}</div>}
+                        {errors.selectedBranch && (
+                          <small className="text-danger">
+                            {errors.selectedBranch}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-md-3 mb-3">
                         <label htmlFor="academicYear" className="form-label">
-                          Academic Year
+                          Academic Year <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="academicYear"
                           options={academicYearOptions}
                           className="detail"
                           value={selectedAcademicYear}
-                          onChange={(option) => {
-                            setSelectedAcademicYear(option);
-                            setErrors((prev) => ({ ...prev, academicYear: "" }));
+                          onChange={(opt) => {
+                            setSelectedAcademicYear(opt);
+                            if (errors.selectedAcademicYear)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedAcademicYear: "",
+                              }));
                           }}
                           placeholder="Select Academic Year"
                           classNamePrefix="academic-year-dropdown"
                         />
-                        {errors.academicYear && <div className="text-danger small mt-1">{errors.academicYear}</div>}
+                        {errors.selectedAcademicYear && (
+                          <small className="text-danger">
+                            {errors.selectedAcademicYear}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-md-3 mb-3">
                         <label htmlFor="semester" className="form-label">
-                          Semester
+                          Semester <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="semester"
                           options={semesterOptions}
                           className="detail"
                           value={selectedSemester}
-                          onChange={(option) => {
-                            setSelectedSemester(option);
-                            setErrors((prev) => ({ ...prev, semester: "" }));
+                          onChange={(opt) => {
+                            setSelectedSemester(opt);
+                            if (errors.selectedSemester)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedSemester: "",
+                              }));
                           }}
                           placeholder="Select Semester"
                           classNamePrefix="semester-dropdown"
                         />
-                        {errors.semester && <div className="text-danger small mt-1">{errors.semester}</div>}
+                        {errors.selectedSemester && (
+                          <small className="text-danger">
+                            {errors.selectedSemester}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-md-3 mb-3">
                         <label htmlFor="section" className="form-label">
-                          Section
+                          Section <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="section"
                           options={sectionOptions}
                           className="detail"
                           value={selectedSection}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester
-                              ? "Select Semester first"
-                              : sectionOptions.length > 0
-                                ? "Section auto selected"
-                                : "Loading Section..."
-                          }
+                          onChange={(opt) => {
+                            setSelectedSection(opt);
+                            if (errors.selectedSection)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedSection: "",
+                              }));
+                          }}
+                          placeholder="Select Section"
                           classNamePrefix="section-dropdown"
-                          isDisabled={true}
-                          isClearable={false}
                         />
-                        {errors.section && <div className="text-danger small mt-1">{errors.section}</div>}
+                        {errors.selectedSection && (
+                          <small className="text-danger">
+                            {errors.selectedSection}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
                         <label htmlFor="subject" className="form-label">
-                          Subject
+                          Subject <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
                           id="subject"
                           options={subjectOptions}
                           className="detail"
                           value={selectedSubject}
-                          onChange={(option) => {
-                            setSelectedSubject(option);
-                            setErrors((prev) => ({ ...prev, subject: "" }));
+                          onChange={(opt) => {
+                            setSelectedSubject(opt);
+                            if (errors.selectedSubject)
+                              setErrors((prev) => ({
+                                ...prev,
+                                selectedSubject: "",
+                              }));
                           }}
                           placeholder="Select Subject"
                           classNamePrefix="subject-dropdown"
                         />
-                        {errors.subject && <div className="text-danger small mt-1">{errors.subject}</div>}
+                        {errors.selectedSubject && (
+                          <small className="text-danger">
+                            {errors.selectedSubject}
+                          </small>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -754,91 +833,90 @@ const AdmLessonPlan = () => {
                         <tr key={index}>
                           <td>
                             <input
-                              type="text"
-                              className="form-control detail"
+                              type="number"
+                              min="1"
+                              className={`form-control detail${rowErrors[index]?.lectureNo ? " is-invalid" : ""}`}
                               value={row.lectureNo}
+                              placeholder="Enter lecture No"
+                              onKeyDown={(e) =>
+                                ["e", "E", "+", "-", "."].includes(e.key) &&
+                                e.preventDefault()
+                              }
                               onChange={(e) =>
                                 handleChange(index, "lectureNo", e.target.value)
                               }
                             />
                             {rowErrors[index]?.lectureNo && (
-                              <div className="text-danger small mt-1">{rowErrors[index].lectureNo}</div>
+                              <small className="text-danger">
+                                {rowErrors[index].lectureNo}
+                              </small>
                             )}
                           </td>
                           <td>
                             <input
-                              type="text"
-                              className="form-control detail"
+                              type="text" // ✅ changed
+                              className={`form-control detail${rowErrors[index]?.moduleNo ? " is-invalid" : ""}`}
                               value={row.moduleNo}
+                              placeholder="Enter module (e.g. M1, A2)"
                               onChange={(e) =>
                                 handleChange(index, "moduleNo", e.target.value)
                               }
                             />
                             {rowErrors[index]?.moduleNo && (
-                              <div className="text-danger small mt-1">{rowErrors[index].moduleNo}</div>
+                              <small className="text-danger">
+                                {rowErrors[index].moduleNo}
+                              </small>
                             )}
                           </td>
-                          {/* <td>
-                            <select
-                              className="detail"
-                              value={row.topic}
-                              onChange={(e) =>
-                                handleChange(index, "topic", e.target.value)
-                              }
-                              disabled={!selectedSubject}
-                            >
-                              {topicOptions.map((topic, i) => (
-                                <option key={i} value={topic.value}>
-                                  {topic.label}
-                                </option>
-                              ))}
-                            </select>
-                          </td> */}
-
                           <td>
-                            <select
-                              className="detail topic-select"
+                            <input
+                              type="text"
+                              className={`form-control detail${rowErrors[index]?.topic ? " is-invalid" : ""}`}
                               value={row.topic}
+                              placeholder="Enter topic"
                               onChange={(e) =>
                                 handleChange(index, "topic", e.target.value)
                               }
-                              disabled={!selectedSubject}
-                            >
-                              {topicOptions.map((topic, i) => (
-                                <option key={i} value={topic.value}>
-                                  {topic.label}
-                                </option>
-                              ))}
-                            </select>
+                            />
                             {rowErrors[index]?.topic && (
-                              <div className="text-danger small mt-1">{rowErrors[index].topic}</div>
+                              <small className="text-danger">
+                                {rowErrors[index].topic}
+                              </small>
                             )}
                           </td>
-
                           <td>
                             <input
                               type="date"
-                              className="form-control detail"
+                              className={`form-control detail${rowErrors[index]?.proposedDate ? " is-invalid" : ""}`}
                               value={row.proposedDate}
                               onChange={(e) =>
                                 handleChange(
                                   index,
                                   "proposedDate",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                             />
                             {rowErrors[index]?.proposedDate && (
-                              <div className="text-danger small mt-1">{rowErrors[index].proposedDate}</div>
+                              <small className="text-danger">
+                                {rowErrors[index].proposedDate}
+                              </small>
                             )}
                           </td>
-                          <td>
-                            {index === rows.length - 1 && (
+                          <td style={{ whiteSpace: "nowrap" }}>
+                            {index === rows.length - 1 ? (
                               <button
                                 className="btn btn-primary"
                                 onClick={handleAddRow}
                               >
                                 Add
+                              </button>
+                            ) : (
+                              <button
+                                className="btn btn-danger"
+                                onClick={() => handleRemoveRow(index)}
+                              >
+                                Remove
                               </button>
                             )}
                           </td>
@@ -846,6 +924,11 @@ const AdmLessonPlan = () => {
                       ))}
                     </tbody>
                   </table>
+                  {errors.rows && (
+                    <small className="text-danger d-block mt-1">
+                      {errors.rows}
+                    </small>
+                  )}
                 </div>
               </div>
             </div>

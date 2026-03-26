@@ -386,7 +386,10 @@ class GrievanceCreateAPIView(CreateAPIView):
 
             )
 
-            GrievanceCreateInstance.doc_path = request.build_absolute_uri(GrievanceCreateInstance.doc_file.url)
+            if upload_file and GrievanceCreateInstance.doc_file:
+                GrievanceCreateInstance.doc_path = request.build_absolute_uri(GrievanceCreateInstance.doc_file.url)
+            else:
+                GrievanceCreateInstance.doc_path = ''
             GrievanceCreateInstance.save()
 
             return Response({'message':'success'},status=status.HTTP_200_OK)
@@ -575,7 +578,7 @@ class GrievanceDetailsListAPIView(ListAPIView):
                             Q(student_course__student__first_name__icontains=first) | Q(student_course__student__middle_name__icontains=first) | Q(
                                 student_course__student__last_name__icontains=first)
                             , is_active=True
-                            ).order_by('-updated_at')
+                            )
 
                     elif len(name_parts) == 2:  # First + Last
                         first, last = name_parts
@@ -583,7 +586,7 @@ class GrievanceDetailsListAPIView(ListAPIView):
                             Q(student_course__student__first_name__iexact=first, student_course__student__last_name__iexact=last) |
                             Q(student_course__student__first_name__iexact=first, student_course__student__middle_name__isnull=False, student_course__student__last_name__iexact=last)
                             , is_active=True
-                        ).order_by('-updated_at')
+                        )
 
                     elif len(name_parts) == 3:  # First + Middle + Last
                         first, middle, last = name_parts
@@ -592,7 +595,7 @@ class GrievanceDetailsListAPIView(ListAPIView):
                             student_course__student__middle_name__iexact=middle,
                             student_course__student__last_name__iexact=last,
                             is_active=True
-                        ).order_by('-updated_at')
+                        )
 
                 if status_data:
                     if status_data.strip().upper() == "Y":
@@ -644,8 +647,7 @@ class GrievanceDetailsListAPIView(ListAPIView):
                     filterdata = filterdata.filter(section=section_id)
                     # filterdata = filterdata.filter(created_by__in=students)
 
-
-
+                filterdata = filterdata.order_by('-created_at', '-id')
 
                 if filterdata:
                     responseData=[]

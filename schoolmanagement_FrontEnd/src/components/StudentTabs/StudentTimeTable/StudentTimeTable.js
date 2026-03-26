@@ -199,19 +199,46 @@ const StudentTimeTable = () => {
     });
   };
 
+  // Normalize period from API fields like "Period 7", 7, "7th", etc.
+  const getEntryPeriodNumber = (entry) => {
+    const rawPeriod =
+      entry.class_period ||
+      entry.period ||
+      entry.period_no ||
+      entry.period_number ||
+      entry.lecture ||
+      "";
+
+    if (typeof rawPeriod === "number") {
+      return rawPeriod;
+    }
+
+    const match = String(rawPeriod).match(/\d+/);
+    return match ? parseInt(match[0], 10) : null;
+  };
+
   // Get timetable entry for a specific day and period
   const getEntryForCell = (dayFull, periodIndex) => {
     const dayEntries = getEntriesForDay(dayFull);
-    // If API doesn't return period info, distribute entries across periods
-    if (dayEntries.length > 0 && !dayEntries[0].class_period && !dayEntries[0].period) {
-      // Return entry at this index if available
+    const targetPeriodNumber = periodIndex + 1;
+
+    // Primary mapping: place entry in the exact period column (e.g. "Period 7" -> column 7)
+    const matchedEntry = dayEntries.find(
+      (entry) => getEntryPeriodNumber(entry) === targetPeriodNumber,
+    );
+    if (matchedEntry) {
+      return matchedEntry;
+    }
+
+    // Fallback: if period info truly doesn't exist for the day, distribute by index.
+    const hasAnyPeriodInfo = dayEntries.some(
+      (entry) => getEntryPeriodNumber(entry) !== null,
+    );
+    if (!hasAnyPeriodInfo) {
       return dayEntries[periodIndex] || null;
     }
-    // If API returns period info, find matching period
-    return dayEntries.find((entry) => {
-      const entryPeriod = entry.class_period || entry.period || entry.period_no || entry.period_number;
-      return entryPeriod === periodIndex + 1;
-    });
+
+    return null;
   };
 
   const handleClose = () => {

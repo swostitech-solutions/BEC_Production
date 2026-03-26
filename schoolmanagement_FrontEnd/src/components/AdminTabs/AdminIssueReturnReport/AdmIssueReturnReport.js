@@ -10,9 +10,8 @@ const AdmIssueReturnReport = () => {
   const [tableData, setTableData] = useState([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [registrationNo, setRegistrationNo] = useState("");
+  const [admissionNo, setAdmissionNo] = useState("");
   const [filterFlag, setFilterFlag] = useState("A"); // Default to "All"
-  const [pageMessage, setPageMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
@@ -30,7 +29,7 @@ const AdmIssueReturnReport = () => {
 
     if (fromDate) url += `&fromDate=${fromDate}`;
     if (toDate) url += `&toDate=${toDate}`;
-    if (registrationNo) url += `&registrationNo=${registrationNo}`;
+    if (admissionNo) url += `&admissionNo=${admissionNo}`;
 
     fetch(url)
       .then((response) => response.json())
@@ -49,7 +48,6 @@ const AdmIssueReturnReport = () => {
 
   // Handle the Search button click
   const handleSearch = () => {
-    setPageMessage("");
     setCurrentPage(0); // Reset to first page when searching
     fetchData();
   };
@@ -57,7 +55,7 @@ const AdmIssueReturnReport = () => {
   // Function to export table data to an Excel file
   const handleExportToExcel = () => {
     if (tableData.length === 0) {
-      setPageMessage("Error: No data available to export.");
+      alert("No data available to export.");
       return;
     }
 
@@ -67,23 +65,20 @@ const AdmIssueReturnReport = () => {
 
     // Export the workbook to an Excel file
     XLSX.writeFile(wb, "Issue_Return_Report.xlsx");
-    setPageMessage("Issue return report exported successfully.");
   };
 
 
   const handleClear = () => {
     setFromDate("");
     setToDate("");
-    setRegistrationNo("");
+    setAdmissionNo("");
     setFilterFlag("A"); // Reset to "All"
     setTableData([]); // Clear table data
     setCurrentPage(0); // Reset pagination
-    setPageMessage("");
   };
 
   // Handle filter change and auto-trigger search
   const handleFilterChange = (value) => {
-    setPageMessage("");
     setFilterFlag(value);
     setCurrentPage(0); // Reset to first page
     // Auto-trigger search after a short delay to ensure state is updated
@@ -91,7 +86,7 @@ const AdmIssueReturnReport = () => {
       let url = `${ApiUrl.apiurl}LIBRARYBOOK/GetIssueReturnSearchList?flag=${value}`;
       if (fromDate) url += `&fromDate=${fromDate}`;
       if (toDate) url += `&toDate=${toDate}`;
-      if (registrationNo) url += `&registrationNo=${registrationNo}`;
+      if (admissionNo) url += `&admissionNo=${admissionNo}`;
 
       fetch(url)
         .then((response) => response.json())
@@ -161,13 +156,6 @@ const AdmIssueReturnReport = () => {
                     Close
                   </button>
                 </div>
-                {pageMessage && (
-                  <div
-                    className={`mt-2 small ${pageMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
-                  >
-                    {pageMessage}
-                  </div>
-                )}
               </div>
 
               <div className="row mt-3 mx-2">
@@ -201,15 +189,15 @@ const AdmIssueReturnReport = () => {
 
                     <div className="col-12 col-md-3 mb-3">
                       <label htmlFor="regn-number" className="form-label">
-                        Regn Number
+                        Admission No
                       </label>
                       <input
                         type="text"
                         id="regn-number"
                         className="form-control detail"
-                        placeholder="Enter regn number"
-                        value={registrationNo}
-                        onChange={(e) => setRegistrationNo(e.target.value)}
+                        placeholder="Enter admission no"
+                        value={admissionNo}
+                        onChange={(e) => setAdmissionNo(e.target.value)}
                       />
                     </div>
 
@@ -280,7 +268,7 @@ const AdmIssueReturnReport = () => {
                         <th>Sr.No</th>
                         <th>Name</th>
                         <th>Admission No</th>
-                        {/* <th>Student BarCode</th> */}
+                        <th>Roll No</th>
                         <th>Title</th>
                         <th>Author</th>
                         <th>Book Accession No</th>
@@ -297,12 +285,12 @@ const AdmIssueReturnReport = () => {
                             <td>{offset + index + 1}</td>
                             <td>{book.studentName}</td>
                             <td>{book.admissionNo}</td>
-                            {/* <td>{book.schoolBarcode}</td> */}
+                            <td>{book.schoolBarcode}</td>
                             <td>{book.bookName}</td>
                             <td>{book.authorName}</td>
                             <td>{book.barcode}</td>
                             <td>{book.issueDate}</td>
-                            <td>{book.IssuesBy}</td>
+                            <td>Librarian</td>
                             <td>{book.returnDate}</td>
                             <td>{book.ReturnedBy}</td>
                           </tr>

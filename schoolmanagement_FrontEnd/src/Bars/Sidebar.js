@@ -181,6 +181,7 @@ function Sidebar({ state, setState }) {
             ].filter(Boolean))}
             {isModuleAccessible("fee") && createExpandableSection("Fee", <BsCashCoin />, [
               isChildAccessible("fee.search") && { path: "/admin/fee-search", text: "Search" },
+              isChildAccessible("fee.report") && { path: "/admin/fee-report", text: "Fee Report" },
               isChildAccessible("fee.adhoc") && { path: "/admin/adhoc-fees", text: "ADHOC Fees" },
               isChildAccessible("fee.ledger") && { path: "/admin/fee-ledger", text: "Fee Ledger" },
               isChildAccessible("fee.student_fee") && { path: "/admin/student-fee", text: "Student Fee" },
@@ -230,6 +231,7 @@ function Sidebar({ state, setState }) {
             {isModuleAccessible("lessonplan") && createExpandableSection("LessonPlan", <FaBookOpen />, [
               isChildAccessible("lessonplan.lesson_plan") && { path: "/admin/lesson-plan", text: "Lesson Plan" },
               isChildAccessible("lessonplan.teacher") && { path: "/admin/teacher-lesson-plan", text: "Teacher Lesson Plan" },
+              isChildAccessible("lessonplan.completion_report") && { path: "/admin/lesson-plan-completion-report", text: "Lesson Plan Completion Report" },
             ].filter(Boolean))}
             {isModuleAccessible("mentor") && createExpandableSection("Mentor", <PiChalkboardTeacher />, [
               isChildAccessible("mentor.assign") && { path: "/admin/assign-mentor", text: "Assign Mentor" },
@@ -326,6 +328,7 @@ function Sidebar({ state, setState }) {
 
               { path: "/staff/exam-result", text: "Exam Result" },
               { path: "/staff/lesson-plan", text: "Lesson Plan" },
+              { path: "/staff/course-completion", text: "Course Completion" },
               { path: "/staff/change-password", text: "Change Password" },
             ])}
           </>

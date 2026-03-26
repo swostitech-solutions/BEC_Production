@@ -74,31 +74,6 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(selectedSection)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
-    );
-  }, [selectedSemester, SectionList]);
-
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -200,19 +175,28 @@ const AdmAttendanceEntry = () => {
 
     const dateFrom = dateFromRef.current?.value || "";
     const dateTo = dateToRef.current?.value || "";
+    
+    // New parameters
+    const messageType = selectedMessageType?.value || "";
+    const initiatedBy = selectedInitiatedBy?.value || "";
+    const studentId = localStorage.getItem("selectedMessageStudentId") || "";
 
-    // 🔥 Build URL with all parameters
-    const apiUrl = `${ApiUrl.apiurl}MessageSend/StudentMessageHistoryFilter/
-    ?organization_id=${organizationId}
-    &branch_id=${branchId}
-    &batch_id=${batchId}
-    &course_id=${courseId}
-    &department_id=${deptId}
-    &academic_year_id=${ayId}
-    &semester_id=${semId}
-    &section_id=${sectionId}
-    &date_from=${dateFrom}
-    &date_to=${dateTo}`.replace(/\s+/g, ""); // remove spaces
+    const params = new URLSearchParams();
+    if (organizationId) params.append("organization_id", organizationId);
+    if (branchId) params.append("branch_id", branchId);
+    if (batchId) params.append("batch_id", batchId);
+    if (courseId) params.append("course_id", courseId);
+    if (deptId) params.append("department_id", deptId);
+    if (ayId) params.append("academic_year_id", ayId);
+    if (semId) params.append("semester_id", semId);
+    if (sectionId) params.append("section_id", sectionId);
+    if (messageType) params.append("message_type", messageType);
+    if (studentId) params.append("student_id", studentId);
+    if (initiatedBy) params.append("initiated_by", initiatedBy);
+    if (dateFrom) params.append("date_from", dateFrom);
+    if (dateTo) params.append("date_to", dateTo);
+
+    const apiUrl = `${ApiUrl.apiurl}MessageSend/StudentMessageHistoryFilter/?${params.toString()}`;
 
     console.log("SEARCH URL:", apiUrl);
 
@@ -572,7 +556,6 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className=" detail"
-                          isLoading={loadingSec}
                           options={
                             SectionList?.map((s) => ({
                               value: s.id,
@@ -580,27 +563,19 @@ const AdmAttendanceEntry = () => {
                             })) || []
                           }
                           value={
-                            SectionList?.some(
-                              (s) => Number(s.id) === Number(selectedSection)
-                            )
+                            SectionList?.some((s) => s.id == selectedSection)
                               ? {
                                   value: selectedSection,
                                   label: SectionList.find(
-                                    (s) => Number(s.id) === Number(selectedSection)
+                                    (s) => s.id == selectedSection
                                   )?.section_name,
                                 }
                               : null
                           }
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester
-                              ? "Select Semester first"
-                              : SectionList?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
+                          onChange={(opt) =>
+                            setSelectedSection(opt?.value || "")
                           }
+                          placeholder="Select Section"
                         />
                       </div>
 
@@ -643,13 +618,12 @@ const AdmAttendanceEntry = () => {
                     <thead>
                       <tr>
                         <th>Sr.No</th>
+                        <th>Session</th>
                         <th>Course</th>
-                        <th>Department</th>
-                        <th>Section</th>
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
                         <th>Admission No</th>
-                        {/* <th>BarCode</th> */}
+                        <th>Roll no</th>
                         <th>Father Name</th>
                         <th>Message Type</th>
                         <th>Message Date</th>
@@ -664,14 +638,11 @@ const AdmAttendanceEntry = () => {
                           <tr key={index}>
                             <td>{currentPage * rowsPerPage + index + 1}</td>
 
+                            {/* Session */}
+                            <td>{row.batch_code}</td>
+
                             {/* Class */}
                             <td>{row.course_name}</td>
-
-                            {/* Department */}
-                            <td>{row.department_description}</td>
-
-                            {/* Section */}
-                            <td>{row.section_name}</td>
 
                             {/* Student Name */}
                             <td>{row.studentName}</td>
@@ -683,7 +654,7 @@ const AdmAttendanceEntry = () => {
                             <td>{row.college_admission_no}</td>
 
                             {/* Barcode */}
-                            {/* <td>{row.barcode}</td> */}
+                            <td>{row.barcode}</td>
 
                             {/* Father Name */}
                             <td>{row.fatherName}</td>
@@ -711,7 +682,7 @@ const AdmAttendanceEntry = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="14" className="text-center">
+                          <td colSpan="13" className="text-center">
                             No data found
                           </td>
                         </tr>

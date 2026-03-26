@@ -777,7 +777,7 @@
 //                           <th>Section</th>
 //                           <th>Roll No</th>
 //                           <th>School Admission No</th>
-//                           <th>BarCode</th>
+//                           <th>Roll no</th>
 //                           <th>Student Name</th>
 //                           <th>Primary Guardian</th>
 //                           <th>Father Mobile No</th>
@@ -2286,7 +2286,7 @@ const AdmAttendanceEntry = () => {
                         <th>Section</th>
                         <th>Roll No</th>
                         <th>School Admission No</th>
-                        <th>BarCode</th>
+                        <th>Roll no</th>
                         <th>Student Name</th>
                         <th>Primary Guardian</th>
                         <th>Father Mobile No</th>

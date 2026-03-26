@@ -1041,6 +1041,11 @@ class LibraryBookSearchAPIView(ListAPIView):
                 if filterdata:
                     for item in filterdata:
                         barcodedata = LibraryBooksBarcode.objects.filter(book=item.id, is_active=True)
+                        if book_accession_no:
+                            barcodedata = barcodedata.filter(barcode=book_accession_no)
+                        if locationId:
+                            barcodedata = barcodedata.filter(location_id=locationId)
+                            
                         for barcodes in barcodedata:
                             # Safely get library branch info
                             library_branch_id = None
@@ -1316,12 +1321,12 @@ class LibraryBookCreateAPIView(CreateAPIView):
 
             # Save Library Book record
             library_book_instance = LibraryBook.objects.create(
-                book_code=libraryBookdetails['book_code'],
+                book_code=libraryBookdetails.get('book_code', ''),
                 book_name=libraryBookdetails['book_name'],
                 book_category=book_category_instance,
                 book_sub_category=book_sub_category_instance,
                 library_branch=Library_branch_instance,
-                book_status=libraryBookdetails.get('book_status'),
+                book_status=libraryBookdetails.get('book_status') or 'ACTIVE',
                 no_of_copies=libraryBookdetails.get('total_no_of_copies'),
                 organization=organization_instance,
                 batch=branch_instance,
@@ -2084,12 +2089,13 @@ class LibraryBookUpdateAPIView(APIView):
 
             # update the book details
 
-            bookInstance.book_code = libraryBookdetails.get('book_code')
+            book_code_val = libraryBookdetails.get('book_code')
+            bookInstance.book_code = book_code_val if book_code_val is not None else ''
             bookInstance.book_name = libraryBookdetails.get('book_name')
             bookInstance.book_category = bookcategoryInstance
             bookInstance.book_sub_category = booksubcategoryInstance
             bookInstance.library_branch = librarybranchInstance
-            bookInstance.book_status = libraryBookdetails.get('book_status')
+            bookInstance.book_status = libraryBookdetails.get('book_status') or bookInstance.book_status or 'ACTIVE'
             bookInstance.no_of_copies = libraryBookdetails.get('no_of_copies')
             bookInstance.organization = organizationInstance
             bookInstance.batch = branchInstance
@@ -2670,36 +2676,29 @@ class BookIssuesSearchListAPIView(ListAPIView):
                         if item.issued_by:
                             try:
                                 EmployeeInstance = EmployeeMaster.objects.get(id=item.issued_by, is_active=True)
+                                name_parts = [
+                                    EmployeeInstance.title.strip() if EmployeeInstance.title else "",
+                                    EmployeeInstance.first_name.strip() if EmployeeInstance.first_name else "",
+                                    EmployeeInstance.middle_name.strip() if EmployeeInstance.middle_name else "",
+                                    EmployeeInstance.last_name.strip() if EmployeeInstance.last_name else "",
+                                ]
+                                staff_name = " ".join(part for part in name_parts if part).strip()
                             except:
-                                return Response({"message": "you are not a authenticate user for book issue"},
-                                                status=status.HTTP_400_BAD_REQUEST)
-
-                            name_parts = [
-                                EmployeeInstance.title.strip() if EmployeeInstance.title else "",
-                                EmployeeInstance.first_name.strip() if EmployeeInstance.first_name else "",
-                                EmployeeInstance.middle_name.strip() if EmployeeInstance.middle_name else "",
-                                EmployeeInstance.last_name.strip() if EmployeeInstance.last_name else "",
-                            ]
-
-                            # Join the non-empty parts with a single space
-                            staff_name = " ".join(part for part in name_parts if part).strip()
+                                staff_name = ""
+                        
                         staff_returned = ""
                         if item.returned_by:
                             try:
-                                EmployeeInstance = EmployeeMaster.objects.get(id=item.issued_by, is_active=True)
+                                EmployeeInstance = EmployeeMaster.objects.get(id=item.returned_by, is_active=True)
+                                name_parts = [
+                                    EmployeeInstance.title,
+                                    EmployeeInstance.first_name,
+                                    EmployeeInstance.middle_name,
+                                    EmployeeInstance.last_name
+                                ]
+                                staff_returned = " ".join(filter(bool, name_parts)).strip()
                             except:
-                                return Response({"message": "you are not a authenticate user for book issue"},
-                                                status=status.HTTP_400_BAD_REQUEST)
-
-                            name_parts = [
-                                EmployeeInstance.title,
-                                EmployeeInstance.first_name,
-                                EmployeeInstance.middle_name,
-                                EmployeeInstance.last_name
-                            ]
-
-                            # Filter out None or empty strings and join them with a space
-                            staff_returned = " ".join(filter(bool, name_parts)).strip()
+                                staff_returned = ""
 
                         data = {
                             'book_issue_id': item.book_issue_id,
@@ -2745,34 +2744,29 @@ class BookIssuesSearchListAPIView(ListAPIView):
                         if item.issued_by:
                             try:
                                 EmployeeInstance = EmployeeMaster.objects.get(id=item.issued_by, is_active=True)
+                                name_part = filter(None, [
+                                    EmployeeInstance.title,
+                                    EmployeeInstance.first_name,
+                                    EmployeeInstance.middle_name,
+                                    EmployeeInstance.last_name
+                                ])
+                                Issued_staff_name = " ".join(name_part)
                             except:
-                                return Response({"message": "you are not a authenticate user for book issue"},
-                                                status=status.HTTP_400_BAD_REQUEST)
-
-                            name_part = filter(None, [
-                                EmployeeInstance.title,
-                                EmployeeInstance.first_name,
-                                EmployeeInstance.middle_name,
-                                EmployeeInstance.last_name
-
-                            ])
-                            Issued_staff_name = " ".join(name_part)
+                                Issued_staff_name = ""
+                        
                         staff_returned = ""
                         if item.returned_by:
                             try:
-                                EmployeeInstance = EmployeeMaster.objects.get(id=item.issued_by, is_active=True)
+                                EmployeeInstance = EmployeeMaster.objects.get(id=item.returned_by, is_active=True)
+                                name_part = filter(None, [
+                                    EmployeeInstance.title,
+                                    EmployeeInstance.first_name,
+                                    EmployeeInstance.middle_name,
+                                    EmployeeInstance.last_name
+                                ])
+                                staff_returned = " ".join(name_part)
                             except:
-                                return Response({"message": "you are not a authenticate user for book issue"},
-                                                status=status.HTTP_400_BAD_REQUEST)
-
-                            name_part = filter(None, [
-                                EmployeeInstance.title,
-                                EmployeeInstance.first_name,
-                                EmployeeInstance.middle_name,
-                                EmployeeInstance.last_name
-
-                            ])
-                            staff_returned = " ".join(name_part)
+                                staff_returned = ""
 
                         data = {
                             'book_issue_id': item.book_issue_id,
@@ -3443,7 +3437,7 @@ class LibraryIssueReturnReportListAPIView(ListAPIView):
             academicyearId = request.query_params.get('academic_year_id')
             fromDate = request.query_params.get('fromDate')
             toDate = request.query_params.get('toDate')
-            registrationNo = request.query_params.get('registrationNo')
+            admissionNo = request.query_params.get('admissionNo')
             flag = request.query_params.get('flag')
 
             # Start with base queryset
@@ -3469,44 +3463,56 @@ class LibraryIssueReturnReportListAPIView(ListAPIView):
                 toDate = datetime.strptime(toDate, "%Y-%m-%d").date()
                 filterdata = filterdata.filter(issue_date__lte=toDate)
 
-            if registrationNo:
-                try:
-                    RegistrationInstance = StudentRegistration.objects.get(registration_no=registrationNo,
-                                                                           is_active=True)
-                except ObjectDoesNotExist:
-                    RegistrationInstance = None
-
-                if RegistrationInstance:
-                    filterdata = filterdata.filter(student_id=RegistrationInstance.id)
-                else:
+            if admissionNo:
+                from django.db.models import Q
+                filterdata = filterdata.filter(
+                    Q(student__admission_no__icontains=admissionNo) | 
+                    Q(professor__employee_code__icontains=admissionNo)
+                )
+                
+                if not filterdata.exists():
                     return Response({'message': 'No record found'}, status=status.HTTP_200_OK)
 
             FinalResponseData = []
             if filterdata.exists():
                 for item in filterdata:
                     # Student Instance - handle both student and professor cases
-                    RegistrationInstance = None
+                    member_name = ""
+                    admission_no = None
+                    school_barcode = None
+                    valid_member = False
+
                     if item.student:
                         try:
                             RegistrationInstance = StudentRegistration.objects.get(id=item.student.id)
+                            name_part = filter(None, [
+                                RegistrationInstance.first_name,
+                                RegistrationInstance.middle_name,
+                                RegistrationInstance.last_name
+                            ])
+                            member_name = " ".join(name_part)
+                            admission_no = RegistrationInstance.admission_no
+                            school_barcode = RegistrationInstance.barcode
+                            valid_member = True
                         except (ObjectDoesNotExist, AttributeError):
-                            RegistrationInstance = None
+                            pass
+                    elif item.professor:
+                        try:
+                            EmployeeInstance = EmployeeMaster.objects.get(id=item.professor.id)
+                            name_part = filter(None, [
+                                EmployeeInstance.title,
+                                EmployeeInstance.first_name,
+                                EmployeeInstance.middle_name,
+                                EmployeeInstance.last_name
+                            ])
+                            member_name = " ".join(name_part)
+                            admission_no = "-"
+                            school_barcode = "-"
+                            valid_member = True
+                        except (ObjectDoesNotExist, AttributeError):
+                            pass
 
-                    # Student Name construct
-                    student_name = ""
-                    admission_no = None
-                    school_barcode = None
-
-                    if RegistrationInstance:
-                        name_part = filter(None, [
-                            RegistrationInstance.first_name,
-                            RegistrationInstance.middle_name,
-                            RegistrationInstance.last_name
-                        ])
-                        student_name = " ".join(name_part)
-                        admission_no = RegistrationInstance.admission_no
-                        school_barcode = RegistrationInstance.barcode
-
+                    if valid_member:
                         issueByName = ""
                         ReturnedByName = ""
                         # Issued By construct
@@ -3517,13 +3523,22 @@ class LibraryIssueReturnReportListAPIView(ListAPIView):
                                 EmployeeInstance = None
 
                             if EmployeeInstance:
-                                name_part = filter(None, [
-                                    EmployeeInstance.title,
-                                    EmployeeInstance.first_name,
-                                    EmployeeInstance.middle_name,
-                                    EmployeeInstance.last_name
-                                ])
-                                issueByName = " ".join(name_part)
+                                name_part = [
+                                    EmployeeInstance.title.strip() if EmployeeInstance.title else "",
+                                    EmployeeInstance.first_name.strip() if EmployeeInstance.first_name else "",
+                                    EmployeeInstance.middle_name.strip() if EmployeeInstance.middle_name else "",
+                                    EmployeeInstance.last_name.strip() if EmployeeInstance.last_name else "",
+                                ]
+                                issueByName = " ".join(filter(None, name_part))
+                            else:
+                                from Acadix.models import UserLogin
+                                try:
+                                    UserInstance = UserLogin.objects.get(id=item.issued_by)
+                                    issueByName = UserInstance.user_name
+                                except ObjectDoesNotExist:
+                                    pass
+                        if not issueByName:
+                            issueByName = "-"
 
                         if item.returned_by:
                             try:
@@ -3532,18 +3547,27 @@ class LibraryIssueReturnReportListAPIView(ListAPIView):
                                 EmployeeInstance = None
 
                             if EmployeeInstance:
-                                name_part = filter(None, [
-                                    EmployeeInstance.title,
-                                    EmployeeInstance.first_name,
-                                    EmployeeInstance.middle_name,
-                                    EmployeeInstance.last_name
-                                ])
-                                ReturnedByName = " ".join(name_part)
+                                name_part = [
+                                    EmployeeInstance.title.strip() if EmployeeInstance.title else "",
+                                    EmployeeInstance.first_name.strip() if EmployeeInstance.first_name else "",
+                                    EmployeeInstance.middle_name.strip() if EmployeeInstance.middle_name else "",
+                                    EmployeeInstance.last_name.strip() if EmployeeInstance.last_name else "",
+                                ]
+                                ReturnedByName = " ".join(filter(None, name_part))
+                            else:
+                                from Acadix.models import UserLogin
+                                try:
+                                    UserInstance = UserLogin.objects.get(id=item.returned_by)
+                                    ReturnedByName = UserInstance.user_name
+                                except ObjectDoesNotExist:
+                                    pass
+                        if not ReturnedByName:
+                            ReturnedByName = "-"
 
                         BookDetailsInstance = LibraryBook.objects.get(id=item.book_detail.book.id)
 
                         data = {
-                            'studentName': student_name,
+                            'studentName': member_name,
                             'admissionNo': admission_no,
                             'schoolBarcode': school_barcode,
                             'bookName': BookDetailsInstance.book_name,
@@ -3647,40 +3671,30 @@ class GetLostDamageBookListAPIView(ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             flag = request.query_params.get('flag')
+            normalized_flag = (flag or 'A').strip().upper()
 
-            filterdata = LibraryBooksBarcode.objects.none()
+            status_map = {
+                'A': ["ACTIVE", "Active", "active", "AVAILABLE", "Available", "available",
+                      "INACTIVE", "Inactive", "inactive", "LOST", "Lost", "lost",
+                      "DAMAGED", "Damaged", "damaged", "DAMAGE", "Damage", "damage"],
+                'ALL': ["ACTIVE", "Active", "active", "AVAILABLE", "Available", "available",
+                        "INACTIVE", "Inactive", "inactive", "LOST", "Lost", "lost",
+                        "DAMAGED", "Damaged", "damaged", "DAMAGE", "Damage", "damage"],
+                'B': ["LOST", "Lost", "lost", "DAMAGED", "Damaged", "damaged", "DAMAGE", "Damage", "damage"],
+                'BOTH': ["LOST", "Lost", "lost", "DAMAGED", "Damaged", "damaged", "DAMAGE", "Damage", "damage"],
+                'ACTIVE': ["ACTIVE", "Active", "active", "AVAILABLE", "Available", "available"],
+                'INACTIVE': ["INACTIVE", "Inactive", "inactive"],
+                'LOST': ["LOST", "Lost", "lost"],
+                'L': ["LOST", "Lost", "lost"],
+                'DAMAGED': ["DAMAGED", "Damaged", "damaged", "DAMAGE", "Damage", "damage"],
+                'D': ["DAMAGED", "Damaged", "damaged", "DAMAGE", "Damage", "damage"],
+            }
 
-            if flag == 'B' or flag == 'b':
-
-                try:
-                    filterdata = LibraryBooksBarcode.objects.filter(
-                        book_barcode_status__in=["damage", "Damage", "DAMAGE", "DAMAGED", "lost", "Lost", "LOST"],
-                        is_active=True
-                    )
-                except Exception as e:
-                    print(f"Error filtering both: {str(e)}")
-                    filterdata = None
-
-            elif flag == 'L' or flag == 'l':
-                try:
-                    filterdata = LibraryBooksBarcode.objects.filter(
-                        book_barcode_status__in=["lost", "LOST", "Lost"],
-                        is_active=True
-                    )
-                except Exception as e:
-                    print(f"Error filtering lost: {str(e)}")
-                    filterdata = None
-
-            elif flag == 'D' or flag == 'd':
-
-                try:
-                    filterdata = LibraryBooksBarcode.objects.filter(
-                        book_barcode_status__in=["damage", "DAMAGE", "Damage", "DAMAGED"],
-                        is_active=True
-                    )
-                except Exception as e:
-                    print(f"Error filtering damaged: {str(e)}")
-                    filterdata = None
+            statuses = status_map.get(normalized_flag, status_map['A'])
+            filterdata = LibraryBooksBarcode.objects.filter(
+                book_barcode_status__in=statuses,
+                is_active=True
+            )
 
             if filterdata:
                 finalresponseData = []
@@ -4232,7 +4246,9 @@ class LibraryStatisticsAPIView(ListAPIView):
                 books_qs = books_qs.filter(batch_id=branch_id)
             # Books are not filtered by academic year (they are permanent assets)
 
-            total_books = books_qs.count()
+            # Sum the total number of copies for all books based purely on existing generated barcodes
+            # This ensures complete sync with the book search rows over loosely typed `no_of_copies` fields
+            total_books = LibraryBooksBarcode.objects.filter(book__in=books_qs, is_active=True).count()
 
             # 3. Total no of Titles (distinct book names/titles)
             total_titles = books_qs.values('book_name').distinct().count()

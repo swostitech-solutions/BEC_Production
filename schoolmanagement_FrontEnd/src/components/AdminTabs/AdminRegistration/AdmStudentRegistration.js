@@ -49,7 +49,7 @@ function a11yProps(index) {
 export default function BasicTabs() {
   const { id } = useParams();
   const location = useLocation();
-  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [isDataLoading, setIsDataLoading] = useState(!!id);
 
   const [value, setValue] = React.useState(0);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
@@ -95,8 +95,8 @@ export default function BasicTabs() {
     father_aadharno: "",
     mother_aadharno: "",
     barcode: "",
-    fatherTitle: "",
-    motherTitle: "",
+    father_title: "",
+    mother_title: "",
     father_profession: "",
     mother_profession: "",
     father_contact_number: "",
@@ -205,8 +205,8 @@ export default function BasicTabs() {
       father_aadharno: "",
       mother_aadharno: "",
       barcode: "",
-      fatherTitle: "",
-      motherTitle: "",
+      father_title: "",
+      mother_title: "",
       father_profession: "",
       mother_profession: "",
       father_contact_number: "",
@@ -283,12 +283,133 @@ export default function BasicTabs() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     // Notify StudentDetails to reset dropdowns
     window.dispatchEvent(new Event("clearAllStudentFields"));
+    setErrors({});
+  };
+
+  const validateRequiredFields = () => {
+    const newErrors = {};
+
+    if (!formData.first_name?.trim()) newErrors.first_name = "First Name is required";
+    if (!formData.last_name?.trim()) newErrors.last_name = "Last Name is required";
+    if (!formData.batch) newErrors.batch = "Session is required";
+    if (!formData.course) newErrors.course = "Course is required";
+    if (!formData.department) newErrors.department = "Department is required";
+    if (!formData.academic_year) newErrors.academic_year = "Academic Year is required";
+    if (!formData.semester) newErrors.semester = "Semester is required";
+    if (!formData.addmitted_section) newErrors.addmitted_section = "Section is required";
+    if (!formData.gender) newErrors.gender = "Gender is required";
+    if (!formData.date_of_admission) newErrors.date_of_admission = "Date of Admission is required";
+    if (!formData.admission_type) newErrors.admission_type = "Admission Type is required";
+    if (!isEditMode && !formData.feeappfrom) {
+      newErrors.feeappfrom = "Fee App From is required";
+    }
+    if (!isEditMode && !formData.feegroup) {
+      newErrors.feegroup = "Fee Group is required";
+    }
+    if (!formData.father_name?.trim()) newErrors.father_name = "Father Name is required";
+    if (!formData.mother_name?.trim()) newErrors.mother_name = "Mother Name is required";
+    if (!formData.father_profession) newErrors.father_profession = "Father Profession is required";
+    if (!formData.mother_profession) newErrors.mother_profession = "Mother Profession is required";
+    if (!formData.father_contact_number?.trim()) {
+      newErrors.father_contact_number = "Father Contact Number is required";
+    }
+    if (!formData.mother_contact_number?.trim()) {
+      newErrors.mother_contact_number = "Mother Contact Number is required";
+        if (!formData.dob) {
+          newErrors.dob = "Date Of Birth is required";
+        }
+    }
+    if (!formData.present_address?.trim()) {
+      newErrors.present_address = "Present Address is required";
+    }
+    if (!formData.present_country) {
+      newErrors.present_country = "Present Country is required";
+    }
+    if (!formData.present_state) {
+      newErrors.present_state = "Present State is required";
+    }
+    if (!formData.present_city) {
+      newErrors.present_city = "Present District is required";
+    }
+    if (!formData.present_pincode?.trim()) {
+      newErrors.present_pincode = "Present Pincode is required";
+    }
+    if (!formData.permanent_address?.trim()) {
+      newErrors.permanent_address = "Permanent Address is required";
+    }
+    if (!formData.permanent_country) {
+      newErrors.permanent_country = "Permanent Country is required";
+    }
+    if (!formData.permanent_state) {
+      newErrors.permanent_state = "Permanent State is required";
+    }
+    if (!formData.permanent_city) {
+      newErrors.permanent_city = "Permanent District is required";
+    }
+    if (!formData.permanent_pincode?.trim()) {
+      newErrors.permanent_pincode = "Permanent Pincode is required";
+    }
+
+    const emergencyContacts = Array.isArray(formData.emegencyContact)
+      ? formData.emegencyContact
+      : [];
+    const emergencyRequiredErrors = emergencyContacts.map((contact) => {
+      const rowError = {};
+      if (!contact?.name?.trim()) rowError.name = "Name is required";
+      if (!contact?.relationship?.trim()) {
+        rowError.relationship = "Relationship is required";
+      }
+      if (!contact?.Mobile_Number?.trim()) {
+        rowError.Mobile_Number = "Phone No is required";
+      }
+      return rowError;
+    });
+    if (emergencyRequiredErrors.some((row) => Object.keys(row).length > 0)) {
+      newErrors.emegencyContact = emergencyRequiredErrors;
+    }
+
+    const localGuardians = Array.isArray(formData.authorizedpickup)
+      ? formData.authorizedpickup
+      : [];
+    const localGuardianRequiredErrors = localGuardians.map((guardian) => {
+      const rowError = {};
+      if (!guardian?.name?.trim()) rowError.name = "Name is required";
+      if (!guardian?.relationship?.trim()) {
+        rowError.relationship = "Relationship is required";
+      }
+      if (!guardian?.Mobile_Number?.trim()) {
+        rowError.Mobile_Number = "Mobile No is required";
+      }
+      if (!guardian?.address?.trim()) rowError.address = "Address is required";
+      if (!guardian?.email?.trim()) rowError.email = "EmailId is required";
+      return rowError;
+    });
+    if (localGuardianRequiredErrors.some((row) => Object.keys(row).length > 0)) {
+      newErrors.authorizedpickup = localGuardianRequiredErrors;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const formatToISODate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
     return date.toISOString();
+  };
+
+  const normalizeTitle = (value, role) => {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+
+    const key = raw.replace(/\./g, "").toUpperCase();
+    if (key === "MR") return "Mr.";
+    if (key === "MRS") return "Mrs.";
+    if (key === "DR") return "Dr.";
+    if (key === "PROF") return "Prof.";
+
+    if (role === "mother" && raw === "Mr.") return "Mrs.";
+    return raw;
   };
 
   useEffect(() => {
@@ -386,8 +507,21 @@ export default function BasicTabs() {
               father_email: student.father_email || "",
               mother_email: student.mother_email || "",
               primary_guardian: student.primary_guardian || "",
-              student_status: student.status || "",
+              student_status: student.status || (student.is_active ? "ACTIVE" : "INACTIVE") || "ACTIVE",
+              is_active: student.is_active !== undefined ? student.is_active : student.status === "ACTIVE",
               profile_pic: student.profile_pic || "",
+              father_title: (() => {
+                const raw = student.father_title || student.fatherTitle;
+                const normalized = normalizeTitle(raw, "father");
+                console.log("🔍 Father Title - Raw:", raw, "→ Normalized:", normalized);
+                return normalized;
+              })(),
+              mother_title: (() => {
+                const raw = student.mother_title || student.motherTitle;
+                const normalized = normalizeTitle(raw, "mother");
+                console.log("🔍 Mother Title - Raw:", raw, "→ Normalized:", normalized);
+                return normalized;
+              })(),
 
               // ✅ Address Details Fix
               present_address: address.present_address || "",
@@ -468,6 +602,7 @@ export default function BasicTabs() {
                 }
 
                 return {
+                  id: d.id || null,
                   document_no: d.document_no || "",
                   document_type: d.document_type || "",
                   document_pic: fullUrl || "",
@@ -521,6 +656,11 @@ export default function BasicTabs() {
               ),
             };
 
+            console.log("📋 Setting formData with titles:", {
+              father_title: formatted.father_title,
+              mother_title: formatted.mother_title,
+            });
+
             setFormData((prev) => ({ ...prev, ...formatted }));
           } else {
             console.error("❌ Failed to fetch student details.");
@@ -531,267 +671,10 @@ export default function BasicTabs() {
     }
   }, [id]);
 
-  const validateAllTabs = () => {
-    const validationErrors = {};
-
-    const requiredFieldRules = [
-      { key: "first_name", label: "This field is required" },
-      { key: "last_name", label: "This field is required" },
-      { key: "batch", label: "This field is required" },
-      { key: "course", label: "This field is required" },
-      { key: "department", label: "This field is required" },
-      { key: "academic_year", label: "This field is required" },
-      { key: "semester", label: "This field is required" },
-      { key: "addmitted_section", label: "This field is required" },
-      { key: "admission_type", label: "This field is required" },
-      { key: "date_of_admission", label: "This field is required" },
-      { key: "doj", label: "This field is required" },
-    ];
-
-    requiredFieldRules.forEach(({ key, label }) => {
-      const fieldValue = formData[key];
-      if (!fieldValue || String(fieldValue).trim() === "") {
-        validationErrors[key] = label;
-      }
-    });
-
-    const addressRequiredFields = [
-      "present_address",
-      "present_country",
-      "present_state",
-      "present_city",
-      "present_pincode",
-      "permanent_address",
-      "permanent_country",
-      "permanent_state",
-      "permanent_city",
-      "permanent_pincode",
-    ];
-
-    addressRequiredFields.forEach((key) => {
-      const fieldValue = formData[key];
-      if (!fieldValue || String(fieldValue).trim() === "") {
-        validationErrors[key] = "This field is required";
-      }
-    });
-
-    const guardianRequiredFields = [
-      "primary_guardian",
-      "father_name",
-      "father_profession",
-      "father_contact_number",
-      "mother_name",
-      "mother_profession",
-      "mother_contact_number",
-    ];
-
-    guardianRequiredFields.forEach((key) => {
-      const fieldValue = formData[key];
-      if (!fieldValue || String(fieldValue).trim() === "") {
-        validationErrors[key] = "This field is required";
-      }
-    });
-
-    if (!isEditMode) {
-      if (!formData.feeappfrom || String(formData.feeappfrom).trim() === "") {
-        validationErrors.feeappfrom = "This field is required";
-      }
-      if (!formData.feegroup || String(formData.feegroup).trim() === "") {
-        validationErrors.feegroup = "This field is required";
-      }
-    }
-
-    const emergencyRows = Array.isArray(formData.emegencyContact)
-      ? formData.emegencyContact
-      : [];
-    const emergencyErrors = [];
-    emergencyRows.forEach((row, index) => {
-      const rowError = {};
-      if (!row?.name || String(row.name).trim() === "") {
-        rowError.name = "This field is required";
-      }
-      if (!row?.relationship || String(row.relationship).trim() === "") {
-        rowError.relationship = "This field is required";
-      }
-      if (!row?.Mobile_Number || String(row.Mobile_Number).trim() === "") {
-        rowError.Mobile_Number = "This field is required";
-      }
-      if (Object.keys(rowError).length > 0) {
-        emergencyErrors[index] = rowError;
-      }
-    });
-    if (emergencyErrors.length > 0) {
-      validationErrors.emegencyContact = emergencyErrors;
-    }
-
-    const pickupRows = Array.isArray(formData.authorizedpickup)
-      ? formData.authorizedpickup
-      : [];
-    const pickupErrors = [];
-    pickupRows.forEach((row, index) => {
-      const rowError = {};
-      if (!row?.name || String(row.name).trim() === "") {
-        rowError.name = "This field is required";
-      }
-      if (!row?.relationship || String(row.relationship).trim() === "") {
-        rowError.relationship = "This field is required";
-      }
-      if (!row?.Mobile_Number || String(row.Mobile_Number).trim() === "") {
-        rowError.Mobile_Number = "This field is required";
-      }
-      if (!row?.address || String(row.address).trim() === "") {
-        rowError.address = "This field is required";
-      }
-      if (!row?.email || String(row.email).trim() === "") {
-        rowError.email = "This field is required";
-      }
-      if (Object.keys(rowError).length > 0) {
-        pickupErrors[index] = rowError;
-      }
-    });
-    if (pickupErrors.length > 0) {
-      validationErrors.authorizedpickup = pickupErrors;
-    }
-
-    const documentRows = Array.isArray(formData.documentsDetails)
-      ? formData.documentsDetails
-      : [];
-    const documentErrors = [];
-    documentRows.forEach((row, index) => {
-      const rowError = {};
-      if (!row?.document_type || String(row.document_type).trim() === "") {
-        rowError.document_type = "This field is required";
-      }
-      if (!row?.document_no || String(row.document_no).trim() === "") {
-        rowError.document_no = "This field is required";
-      }
-      const hasExistingPreview =
-        typeof row?.preview_url === "string" && row.preview_url.trim() !== "";
-      const hasDocument = row?.document_pic;
-      if (!hasExistingPreview && !hasDocument) {
-        rowError.document_pic = "This field is required";
-      }
-      if (Object.keys(rowError).length > 0) {
-        documentErrors[index] = rowError;
-      }
-    });
-    if (documentErrors.length > 0) {
-      validationErrors.documentsDetails = documentErrors;
-    }
-
-    const previousRows = Array.isArray(formData.previousEducationDetails)
-      ? formData.previousEducationDetails
-      : [];
-    const previousErrors = [];
-
-    if (previousRows.length === 0) {
-      previousErrors[0] = {
-        nameofschool: "This field is required",
-        year_from: "This field is required",
-        year_to: "This field is required",
-      };
-    }
-
-    previousRows.forEach((row, index) => {
-      const rowError = {};
-      if (!row?.nameofschool || String(row.nameofschool).trim() === "") {
-        rowError.nameofschool = "This field is required";
-      }
-      if (!row?.year_from || String(row.year_from).trim() === "") {
-        rowError.year_from = "This field is required";
-      }
-      if (!row?.year_to || String(row.year_to).trim() === "") {
-        rowError.year_to = "This field is required";
-      }
-      if (row?.year_from && row?.year_to) {
-        const fromDate = new Date(row.year_from);
-        const toDate = new Date(row.year_to);
-        if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(toDate.getTime()) && toDate < fromDate) {
-          rowError.year_to =
-            "Years Attended To must be greater than or equal to Years Attended From";
-        }
-      }
-      if (Object.keys(rowError).length > 0) {
-        previousErrors[index] = rowError;
-      }
-    });
-    if (previousErrors.length > 0) {
-      validationErrors.previousEducationDetails = previousErrors;
-    }
-
-    setErrors(validationErrors);
-    return validationErrors;
-  };
-
-  const getFirstInvalidTabIndex = (validationErrors) => {
-    const tabByErrorKey = [
-      {
-        tab: 0,
-        keys: [
-          "first_name",
-          "last_name",
-          "batch",
-          "course",
-          "department",
-          "academic_year",
-          "semester",
-          "addmitted_section",
-          "admission_type",
-          "date_of_admission",
-          "doj",
-        ],
-      },
-      { tab: isEditMode ? null : 1, keys: ["feeappfrom", "feegroup"] },
-      {
-        tab: isEditMode ? 1 : 2,
-        keys: [
-          "present_address",
-          "present_country",
-          "present_state",
-          "present_city",
-          "present_pincode",
-          "permanent_address",
-          "permanent_country",
-          "permanent_state",
-          "permanent_city",
-          "permanent_pincode",
-        ],
-      },
-      {
-        tab: isEditMode ? 2 : 3,
-        keys: [
-          "primary_guardian",
-          "father_name",
-          "father_profession",
-          "father_contact_number",
-          "mother_name",
-          "mother_profession",
-          "mother_contact_number",
-        ],
-      },
-      { tab: isEditMode ? 3 : 4, keys: ["sibilingsDetails"] },
-      { tab: isEditMode ? 4 : 5, keys: ["emegencyContact"] },
-      { tab: isEditMode ? 5 : 6, keys: ["authorizedpickup"] },
-      { tab: isEditMode ? 6 : 7, keys: ["documentsDetails"] },
-      { tab: isEditMode ? 7 : 8, keys: ["previousEducationDetails"] },
-    ];
-
-    for (const { tab, keys } of tabByErrorKey) {
-      if (tab === null) continue;
-      if (keys.some((key) => Object.prototype.hasOwnProperty.call(validationErrors, key))) {
-        return tab;
-      }
-    }
-    return 0;
-  };
-
   const handleSave = async () => {
-    const validationErrors = validateAllTabs();
-    if (Object.keys(validationErrors).length > 0) {
-      setValue(getFirstInvalidTabIndex(validationErrors));
+    if (!validateRequiredFields()) {
       return;
     }
-
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
     const academicYearId =
@@ -842,17 +725,20 @@ export default function BasicTabs() {
         remarks: formData.remarks,
         referred_by: formData.referred_by,
         father_name: formData.father_name,
+        father_title: formData.father_title || "",
         father_profession: formData.father_profession,
         father_contact_number: formData.father_contact_number,
         father_email: formData.father_email || "",
         father_aadhaar_no: formData.father_aadharno,
         mother_name: formData.mother_name,
+        mother_title: formData.mother_title || "",
         mother_profession: formData.mother_profession,
         mother_contact_number: formData.mother_contact_number,
         mother_email: formData.mother_email || "",
         mother_aadhaar_no: formData.mother_aadharno,
         created_by: userId,
         status: formData.student_status || "ACTIVE",
+        is_active: formData.student_status === "ACTIVE",
       };
 
       const fee_detail = {
@@ -972,19 +858,8 @@ export default function BasicTabs() {
       const fileType = sessionStorage.getItem("profile_pic_type");
 
       if (base64Data && fileName && fileType) {
-        // Remove data URL prefix if present
-        const base64String = base64Data.includes(',')
-          ? base64Data.split(',')[1]
-          : base64Data;
-
-        // Convert base64 to Uint8Array
-        const binary = atob(base64String);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        const blob = new Blob([bytes], { type: fileType });
+        const res = await fetch(base64Data);
+        const blob = await res.blob();
         const file = new File([blob], fileName, { type: fileType });
         formPayload.append("profile_pic", file);
       }
@@ -1031,12 +906,9 @@ export default function BasicTabs() {
   };
 
   const handleUpdate = async () => {
-    const validationErrors = validateAllTabs();
-    if (Object.keys(validationErrors).length > 0) {
-      setValue(getFirstInvalidTabIndex(validationErrors));
+    if (!validateRequiredFields()) {
       return;
     }
-
     const token = localStorage.getItem("accessToken");
     const userId = sessionStorage.getItem("userId");
     const studentId = id || formData.id; // from URL params
@@ -1063,11 +935,13 @@ export default function BasicTabs() {
         date_of_join: formData.doj || null,
         barcode: formData.barcode || "",
         registration_no: formData.registration_no || "",
+        // college_admission_no: null,
+        school_admission_no: null,
         // ✅ Send null instead of empty string for Foreign Keys
         house: formData.house || null,
         religion: formData.religion || null,
         category: formData.category || null,
-        mother_tongue: formData.language || formData.nativelanguage || null,
+        mother_tongue: formData.language || null,
         blood: formData.blood_group_id || null,
         nationality: formData.nationality || null,
         email: formData.email || "",
@@ -1079,16 +953,20 @@ export default function BasicTabs() {
         referred_by: formData.referred_by || "",
         profile_pic: null,
         father_name: formData.father_name || "",
+        father_title: formData.father_title || "",
         father_profession: formData.father_profession || "",
         father_contact_number: formData.father_contact_number || "",
         father_email: formData.father_email || "",
         father_aadhaar_no: formData.father_aadharno || "",
         mother_name: formData.mother_name || "",
+        mother_title: formData.mother_title || "",
         mother_profession: formData.mother_profession || "",
         mother_contact_number: formData.mother_contact_number || "",
         mother_email: formData.mother_email || "",
         mother_aadhaar_no: formData.mother_aadharno || "",
         created_by: userId || "1",
+        status: formData.student_status || "ACTIVE",
+        is_active: formData.student_status === "ACTIVE",
       };
 
       const address_detail = {
@@ -1135,14 +1013,13 @@ export default function BasicTabs() {
 
       // ✅ Proper document and education mapping
       const document_detail = JSON.stringify(
-        formData.documentsDetails?.length
-          ? formData.documentsDetails.map((d) => ({
-            document_no: d.document_no || "",
-            document_type: d.document_type || "",
-            start_from: d.start_from || null,
-            end_to: d.end_to || null,
-          }))
-          : []
+        (formData.documentsDetails || []).map((d) => ({
+          id: d.id || null,
+          document_no: d.document_no || "",
+          document_type: d.document_type || "",
+          start_from: d.start_from || null,
+          end_to: d.end_to || null,
+        }))
       );
 
       const previous_education_detail = JSON.stringify(
@@ -1189,19 +1066,8 @@ export default function BasicTabs() {
       const fileType = sessionStorage.getItem("profile_pic_type");
 
       if (base64Data && fileName && fileType) {
-        // Remove data URL prefix if present
-        const base64String = base64Data.includes(',')
-          ? base64Data.split(',')[1]
-          : base64Data;
-
-        // Convert base64 to Uint8Array
-        const binary = atob(base64String);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
-        }
-
-        const blob = new Blob([bytes], { type: fileType });
+        const res = await fetch(base64Data);
+        const blob = await res.blob();
         const file = new File([blob], fileName, { type: fileType });
         formPayload.append("profile_pic", file);
       }
@@ -1370,7 +1236,7 @@ export default function BasicTabs() {
           frontCover={frontCover}
           setFrontCover={setFrontCover}
           fileInputRef={fileInputRef}
-          submitErrors={errors}
+          requiredErrors={errors}
         />
       </CustomTabPanel>
 
@@ -1383,7 +1249,7 @@ export default function BasicTabs() {
             batch_id={formData.batch}
             course_id={formData.course}
             department_id={formData.department}
-            submitErrors={errors}
+            requiredErrors={errors}
           />
         </CustomTabPanel>
       )}
@@ -1392,7 +1258,7 @@ export default function BasicTabs() {
         <AdmPersonalDetails
           formData={formData}
           setFormData={setFormData}
-          submitErrors={errors}
+          requiredErrors={errors}
         />
       </CustomTabPanel>
 
@@ -1400,23 +1266,19 @@ export default function BasicTabs() {
         <GuardianDetails
           formData={formData}
           setFormData={setFormData}
-          submitErrors={errors}
+          requiredErrors={errors}
         />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 3 : 4}>
-        <AdmOtherDetails
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <AdmOtherDetails formData={formData} setFormData={setFormData} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 4 : 5}>
         <EmergencyContact
           formData={formData}
           setFormData={setFormData}
-          submitErrors={errors}
+          requiredErrors={errors}
         />
       </CustomTabPanel>
 
@@ -1424,23 +1286,18 @@ export default function BasicTabs() {
         <AuthorisedPickUp
           formData={formData}
           setFormData={setFormData}
-          submitErrors={errors}
+          requiredErrors={errors}
         />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 6 : 7}>
-        <DocumentsSubmitted
-          formData={formData}
-          setFormData={setFormData}
-          submitErrors={errors}
-        />
+        <DocumentsSubmitted formData={formData} setFormData={setFormData} isDataLoading={isDataLoading} />
       </CustomTabPanel>
 
       <CustomTabPanel value={value} index={isEditMode ? 7 : 8}>
         <PreviousEducationDetails
           formData={formData}
           setFormData={setFormData}
-          submitErrors={errors}
         />
       </CustomTabPanel>
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>

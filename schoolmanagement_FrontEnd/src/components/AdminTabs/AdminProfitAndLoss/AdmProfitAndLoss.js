@@ -94,7 +94,7 @@ const AdmAttendanceEntry = () => {
 
       // Add logo
       const logo = new Image();
-      logo.src = "/Assets/logobec.png";
+      logo.src = "/Assets/sparsh.jpeg";
       pdf.addImage(logo, "PNG", 10, 5, 40, 20);
 
       // Add title

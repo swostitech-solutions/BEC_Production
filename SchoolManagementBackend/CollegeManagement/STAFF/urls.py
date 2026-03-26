@@ -53,6 +53,9 @@ urlpatterns = [
     path('api/STAFF/RegistrationstaffList/',
          views.EmployeeDetailsListAPIView.as_view(), name='StaffList'),
 
+    path('api/STAFF/AllEmployeeDetailsForPDF/',
+         views.StaffAllDetailsForPDFAPIView.as_view(), name='Staff-All-Details-For-PDF'),
+
     # path('api/STAFF/EmployeeTypeList/',
     #      views.EmployeeTypeListAPIView.as_view(), name='EmployeeTypelist'),
 

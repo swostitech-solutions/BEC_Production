@@ -376,6 +376,7 @@ class InventoryItemListAPIView(generics.ListAPIView):
             sub_category_id = request.query_params.get('sub_category_id')
             item_name = request.query_params.get('item_name')
             inventory_type = request.query_params.get('inventory_type')
+            inventory_location = request.query_params.get('inventory_location')
             item_status = request.query_params.get('status')
             from_date = request.query_params.get('from_date')
             to_date = request.query_params.get('to_date')
@@ -391,6 +392,9 @@ class InventoryItemListAPIView(generics.ListAPIView):
             
             if inventory_type:
                 queryset = queryset.filter(inventory_type=inventory_type)
+                
+            if inventory_location:
+                queryset = queryset.filter(inventory_location=inventory_location)
             
             if item_status:
                 queryset = queryset.filter(status=item_status)

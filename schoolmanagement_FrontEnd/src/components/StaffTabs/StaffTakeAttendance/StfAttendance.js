@@ -145,50 +145,6 @@ const StfAttendance = () => {
       assignmentDate
     );
 
-  useEffect(() => {
-    if (!formData.semester) {
-      setFormData((prev) => {
-        if (!prev.addmitted_section) {
-          return prev;
-        }
-        return {
-          ...prev,
-          addmitted_section: "",
-          feeappfrom: "",
-          subject: "",
-          teacher: "",
-        };
-      });
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(formData.addmitted_section)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setFormData((prev) => {
-      if (Number(prev.addmitted_section) === Number(nextSectionId)) {
-        return prev;
-      }
-      return {
-        ...prev,
-        addmitted_section: nextSectionId,
-        feeappfrom: "",
-        subject: "",
-        teacher: "",
-      };
-    });
-  }, [formData.semester, SectionList]);
-
   // 🔹 Auto-select logged-in professor/teacher
   useEffect(() => {
     if (ProfessorList && ProfessorList.length > 0 && loggedInUserId) {
@@ -230,6 +186,8 @@ const StfAttendance = () => {
   const [teachersList, setTeachersList] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
   const rowsPerPage = 10;
 
   const handlePageClick = ({ selected }) => {
@@ -244,18 +202,45 @@ const StfAttendance = () => {
     setIsEditing(true);
   };
 
+  const clearFieldError = (fieldName) => {
+    setFieldErrors((prev) => ({ ...prev, [fieldName]: "" }));
+  };
+
+  const validateAttendanceFilters = () => {
+    const errors = {};
+
+    if (!assignmentDate) errors.date = "Date is required";
+    if (!formData.batch) errors.batch = "Session is required";
+    if (!formData.course) errors.course = "Course is required";
+    if (!formData.branch) errors.branch = "Department is required";
+    if (!formData.academic_year) errors.academic_year = "Academic year is required";
+    if (!formData.semester) errors.semester = "Semester is required";
+    if (!formData.addmitted_section) errors.addmitted_section = "Section is required";
+    if (!formData.feeappfrom) errors.feeappfrom = "Period is required";
+    if (!formData.subject) errors.subject = "Subject is required";
+    if (!formData.teacher) errors.teacher = "Lecture is required";
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
     try {
       setIsEditing(false);
+      setSubmitMessage({ type: "", text: "" });
 
       const token = localStorage.getItem("accessToken");
       const userId = sessionStorage.getItem("userId");
 
-      const date = dateRef.current?.value || new Date().toISOString().split("T")[0];
+      const date = assignmentDate || new Date().toISOString().split("T")[0];
       const currentDate = new Date().toISOString().split("T")[0];
 
       if (date !== currentDate) {
-        alert("Only today's attendance can be edited.");
+        setSubmitMessage({ type: "danger", text: "Only today's attendance can be edited." });
+        return;
+      }
+
+      if (!validateAttendanceFilters()) {
         return;
       }
 
@@ -271,45 +256,44 @@ const StfAttendance = () => {
       const subject_id = formData.subject || 1;
       const professor_id = formData.teacher || 1;
 
-      if (
-        !organization_id ||
-        !branch_id ||
-        !batch_id ||
-        !course_id ||
-        !department_id ||
-        !academic_year_id ||
-        !semester_id ||
-        !section_id
-      ) {
-        alert("Please ensure all dropdowns are selected before saving.");
+      if (!organization_id || !branch_id) {
+        setSubmitMessage({ type: "danger", text: "Organization/Branch is missing. Please login again." });
         return;
       }
 
-      const update_detail = attendanceData.map((student, index) => {
+      const invalidFatherNumberStudent = attendanceData.find(
+        (student) =>
+          student.father_contact_number &&
+          !/^\d{10}$/.test(String(student.father_contact_number))
+      );
+
+      if (invalidFatherNumberStudent) {
+        setSubmitMessage({
+          type: "danger",
+          text: `Father mobile number must be 10 digits for ${invalidFatherNumberStudent.student_name}.`,
+        });
+        return;
+      }
+
+      const invalidMotherNumberStudent = attendanceData.find(
+        (student) =>
+          student.mother_contact_number &&
+          !/^\d{10}$/.test(String(student.mother_contact_number))
+      );
+
+      if (invalidMotherNumberStudent) {
+        setSubmitMessage({
+          type: "danger",
+          text: `Mother mobile number must be 10 digits for ${invalidMotherNumberStudent.student_name}.`,
+        });
+        return;
+      }
+
+      const update_detail = attendanceData.map((student) => {
         const mark_Attendance =
           student.present === "P" || student.present === "present"
             ? "P"
             : "A";
-
-        if (
-          student.father_contact_number &&
-          student.father_contact_number.length !== 10
-        ) {
-          alert(
-            `Row ${index + 1}: Father's number for ${student.student_name} must be 10 digits.`
-          );
-          throw new Error("Validation failed");
-        }
-
-        if (
-          student.mother_contact_number &&
-          student.mother_contact_number.length !== 10
-        ) {
-          alert(
-            `Row ${index + 1}: Mother's number for ${student.student_name} must be 10 digits.`
-          );
-          throw new Error("Validation failed");
-        }
 
         return {
           student_id: student.student_id,
@@ -356,13 +340,16 @@ const StfAttendance = () => {
       console.log("📥 Save Response:", result);
 
       if (response.ok && result.message === "Success") {
-        alert("✅ Attendance saved successfully!");
+        setSubmitMessage({ type: "success", text: "Attendance saved successfully!" });
       } else {
-        alert(`❌ Failed to save attendance: ${result.message || "Unknown error."}`);
+        setSubmitMessage({
+          type: "danger",
+          text: `Failed to save attendance: ${result.message || "Unknown error."}`,
+        });
       }
     } catch (error) {
       console.error("❌ Error while saving attendance:", error);
-      alert("Error while saving attendance: " + error.message);
+      setSubmitMessage({ type: "danger", text: "Error while saving attendance: " + error.message });
     }
   };
 
@@ -447,6 +434,8 @@ const StfAttendance = () => {
     });
 
     setAttendanceData([]);
+    setFieldErrors({});
+    setSubmitMessage({ type: "", text: "" });
 
     if (dateRef.current) {
       dateRef.current.value = "";
@@ -483,6 +472,7 @@ const StfAttendance = () => {
   const handleDateChange = (e) => {
     const selectedDate = e.target.value;
     setAssignmentDate(selectedDate);
+    clearFieldError("date");
     localStorage.setItem("assignmentDate", selectedDate);
   };
 
@@ -495,7 +485,7 @@ const StfAttendance = () => {
   }, [attendanceData]);
 
   const fetchAttendanceData = async () => {
-    const date = dateRef.current?.value;
+    const date = assignmentDate;
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
     const batch_id = formData.batch;
@@ -508,21 +498,14 @@ const StfAttendance = () => {
     const subject_id = formData.subject;
     const professor_id = formData.teacher;
 
-    if (
-      !date ||
-      !organization_id ||
-      !branch_id ||
-      !batch_id ||
-      !course_id ||
-      !department_id ||
-      !academic_year_id ||
-      !semester_id ||
-      !section_id ||
-      !lecture_id ||
-      !subject_id ||
-      !professor_id
-    ) {
-      alert("Please fill all the required fields before displaying attendance.");
+    setSubmitMessage({ type: "", text: "" });
+
+    if (!validateAttendanceFilters()) {
+      return;
+    }
+
+    if (!organization_id || !branch_id) {
+      setSubmitMessage({ type: "danger", text: "Organization/Branch is missing. Please login again." });
       return;
     }
 
@@ -538,18 +521,25 @@ const StfAttendance = () => {
         },
       });
 
+      if (response.status === 204 || response.status === 404) {
+        setAttendanceData([]);
+        setSubmitMessage({ type: "danger", text: "No records found for the selected criteria." });
+        return;
+      }
+
       const result = await response.json();
       console.log("Attendance API Response:", result);
 
       if (result.message === "success" && Array.isArray(result.data)) {
         setAttendanceData(result.data);
+        setSubmitMessage({ type: "", text: "" });
       } else {
         setAttendanceData([]);
-        alert("No records found for the selected criteria.");
+        setSubmitMessage({ type: "danger", text: result.message || "No records found for the selected criteria." });
       }
     } catch (error) {
       console.error("Error fetching attendance data:", error);
-      alert("An error occurred while fetching attendance data.");
+      setSubmitMessage({ type: "danger", text: "An error occurred while fetching attendance data." });
     }
   };
 
@@ -634,6 +624,13 @@ const StfAttendance = () => {
                   </button>
                 </div>
               </div>
+
+              {submitMessage.text && (
+                <div className={`alert alert-${submitMessage.type}`} role="alert">
+                  {submitMessage.text}
+                </div>
+              )}
+
               <div className="row mt-3 mx-2">
                 <div
                   className="col-12 custom-section-box"
@@ -654,10 +651,13 @@ const StfAttendance = () => {
                         type="date"
                         id="date"
                         className="form-control detail"
-                        defaultValue={assignmentDate}
+                        value={assignmentDate}
                         ref={dateRef}
                         onChange={handleDateChange}
                       />
+                      {fieldErrors.date && (
+                        <small className="text-danger">{fieldErrors.date}</small>
+                      )}
                     </div>
 
                     {/* Batch / Session */}
@@ -684,6 +684,7 @@ const StfAttendance = () => {
                         }
                         onChange={(opt) => {
                           setFormData((prev) => ({ ...prev, batch: opt?.value || "" }));
+                          clearFieldError("batch");
                         }}
                         placeholder={
                           loadingBatch
@@ -693,6 +694,9 @@ const StfAttendance = () => {
                               : "Select Session"
                         }
                       />
+                      {fieldErrors.batch && (
+                        <small className="text-danger">{fieldErrors.batch}</small>
+                      )}
                     </div>
 
                     {/* Course */}
@@ -727,11 +731,14 @@ const StfAttendance = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            course: opt?.value || "",
-                            branch: "",
-                          }))
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              course: opt?.value || "",
+                              branch: "",
+                            }));
+                            clearFieldError("course");
+                          }
                         }
                         placeholder={
                           loadingCourses
@@ -741,6 +748,9 @@ const StfAttendance = () => {
                               : "Select Course"
                         }
                       />
+                      {fieldErrors.course && (
+                        <small className="text-danger">{fieldErrors.course}</small>
+                      )}
                     </div>
 
                     {/* Department */}
@@ -775,7 +785,10 @@ const StfAttendance = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({ ...prev, branch: opt?.value || "" }))
+                          {
+                            setFormData((prev) => ({ ...prev, branch: opt?.value || "" }));
+                            clearFieldError("branch");
+                          }
                         }
                         placeholder={
                           loadingBranches
@@ -785,6 +798,9 @@ const StfAttendance = () => {
                               : "Select Department"
                         }
                       />
+                      {fieldErrors.branch && (
+                        <small className="text-danger">{fieldErrors.branch}</small>
+                      )}
                     </div>
 
                     {/* Academic Year */}
@@ -818,10 +834,13 @@ const StfAttendance = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            academic_year: opt?.value || "",
-                          }))
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              academic_year: opt?.value || "",
+                            }));
+                            clearFieldError("academic_year");
+                          }
                         }
                         placeholder={
                           loadingAcademicYears
@@ -831,6 +850,9 @@ const StfAttendance = () => {
                               : "Select Academic Year"
                         }
                       />
+                      {fieldErrors.academic_year && (
+                        <small className="text-danger">{fieldErrors.academic_year}</small>
+                      )}
                     </div>
 
                     {/* Semester */}
@@ -862,14 +884,13 @@ const StfAttendance = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            semester: opt?.value || "",
-                            addmitted_section: "",
-                            feeappfrom: "",
-                            subject: "",
-                            teacher: "",
-                          }))
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              semester: opt?.value || "",
+                            }));
+                            clearFieldError("semester");
+                          }
                         }
                         placeholder={
                           loadingSemesters
@@ -879,6 +900,9 @@ const StfAttendance = () => {
                               : "Select Semester"
                         }
                       />
+                      {fieldErrors.semester && (
+                        <small className="text-danger">{fieldErrors.semester}</small>
+                      )}
                     </div>
 
                     {/* Section */}
@@ -888,7 +912,6 @@ const StfAttendance = () => {
                       </label>
                       <Select
                         className="detail"
-                        isDisabled={true}
                         isLoading={loadingSections}
                         options={
                           SectionList?.map((s) => ({
@@ -907,18 +930,26 @@ const StfAttendance = () => {
                             }
                             : null
                         }
-                        onChange={() => {}}
+                        onChange={(opt) =>
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              addmitted_section: opt?.value || "",
+                            }));
+                            clearFieldError("addmitted_section");
+                          }
+                        }
                         placeholder={
                           loadingSections
                             ? "Loading Sections..."
                             : errorSections
                               ? "Error loading sections"
-                              : formData.semester
-                                ? "Section auto selected"
-                                : "Select Semester first"
+                              : "Select Section"
                         }
-                        isClearable={false}
                       />
+                      {fieldErrors.addmitted_section && (
+                        <small className="text-danger">{fieldErrors.addmitted_section}</small>
+                      )}
                     </div>
 
                     {/* Period (formerly Lecture) */}
@@ -955,12 +986,15 @@ const StfAttendance = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            feeappfrom: opt?.value || "",
-                            subject: "",
-                            teacher: "",
-                          }))
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              feeappfrom: opt?.value || "",
+                              subject: "",
+                              teacher: "",
+                            }));
+                            clearFieldError("feeappfrom");
+                          }
                         }
                         placeholder={
                           loadingLectures
@@ -970,6 +1004,9 @@ const StfAttendance = () => {
                               : "Select Period"
                         }
                       />
+                      {fieldErrors.feeappfrom && (
+                        <small className="text-danger">{fieldErrors.feeappfrom}</small>
+                      )}
                     </div>
 
                     {/* Subject */}
@@ -999,11 +1036,14 @@ const StfAttendance = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            subject: opt?.value || "",
-                            teacher: "",
-                          }))
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              subject: opt?.value || "",
+                              teacher: "",
+                            }));
+                            clearFieldError("subject");
+                          }
                         }
                         placeholder={
                           loadingSubjects
@@ -1013,6 +1053,9 @@ const StfAttendance = () => {
                               : "Select Subject"
                         }
                       />
+                      {fieldErrors.subject && (
+                        <small className="text-danger">{fieldErrors.subject}</small>
+                      )}
                     </div>
 
                     {/* Lecture (formerly Professor) - Auto-selected and Disabled */}
@@ -1040,7 +1083,10 @@ const StfAttendance = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({ ...prev, teacher: opt?.value || "" }))
+                          {
+                            setFormData((prev) => ({ ...prev, teacher: opt?.value || "" }));
+                            clearFieldError("teacher");
+                          }
                         }
                         placeholder={
                           loadingProfessors
@@ -1051,6 +1097,9 @@ const StfAttendance = () => {
                         }
                         isDisabled={true}
                       />
+                      {fieldErrors.teacher && (
+                        <small className="text-danger">{fieldErrors.teacher}</small>
+                      )}
                     </div>
 
                     {/* SMS + Attendance Row */}
@@ -1215,7 +1264,7 @@ const StfAttendance = () => {
                         <th>College Admission No</th>
                         <th>Student Name</th>
                         <th>Mark Attendance</th>
-                        {/* <th>BarCode</th> */}
+                        <th>Roll no</th>
                         <th>Primary Guardian</th>
                         <th>Father Mobile No</th>
                         <th>Mother Mobile No</th>
@@ -1256,7 +1305,7 @@ const StfAttendance = () => {
                                 <option value="A">Absent</option>
                               </select>
                             </td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
                             <td>{student.primary_guardian}</td>
                             <td>
                               <input

@@ -148,7 +148,7 @@ const AdmBookBarcode = () => {
       .filter((barcode) => barcode !== "");
 
     if (barcodeNumbers.length === 0) {
-      alert("No barcode numbers available. Please enter barcode numbers.");
+      alert("No barcode numbers available. Please Enter Roll No numbers.");
       return;
     }
 

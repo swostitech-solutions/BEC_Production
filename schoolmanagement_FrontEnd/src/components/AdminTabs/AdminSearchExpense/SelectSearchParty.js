@@ -311,6 +311,7 @@ const SelectStudentModal = ({ show, handleClose, onSelect }) => {
     let partyTypeValue = "";
     if (formData.party_type === "Customer") partyTypeValue = "C";
     else if (formData.party_type === "Supplier") partyTypeValue = "S";
+    else if (formData.party_type === "Both") partyTypeValue = "B";
     if (orgId) queryParams.push(`org_id=${orgId}`);
     if (branchId) queryParams.push(`branch_id=${branchId}`);
     if (formData.party_name)
@@ -397,7 +398,7 @@ const SelectStudentModal = ({ show, handleClose, onSelect }) => {
                       </button>
                       <button
                         type="button"
-                        className="btn btn-primary me-2"
+                        className="btn btn-secondary me-2"
                         style={{
                           width: "150px",
                         }}
@@ -453,6 +454,7 @@ const SelectStudentModal = ({ show, handleClose, onSelect }) => {
                         <option value="">Select party type</option>
                         <option value="Customer">Customer</option>
                         <option value="Supplier">Supplier</option>
+                        <option value="Both">Both</option>
                       </select>
                     </div>
                     <div className="col-md-4 mb-2">
@@ -477,35 +479,8 @@ const SelectStudentModal = ({ show, handleClose, onSelect }) => {
                         onChange={handleInputChange}
                       />
                     </div>
-                    <div className="col-12 col-md-3 mb-1">
-                      <span className="me-3" style={{ fontWeight: "700" }}>
-                        {/* Send SMS to: */}
-                      </span>
-                      <div className="d-flex flex-row me-2">
-                        <div className="form-check">
-                          {/* <input
-                            className="form-check-input"
-                            type="checkbox"
-                            // name="flexRadioDefault"
-                            id="flexRadioDefault3"
-                            onChange={() => setIsActive(!isActive)}
-                          /> */}
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="activeFilter"
-                            checked={isActive}
-                            onChange={() => setIsActive(!isActive)}
-                          />
-                          <label
-                            className="form-check-label"
-                            htmlFor="flexRadioDefault3"
-                          >
-                            Active
-                          </label>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Active filter intentionally hidden in UI.
+                        Keep default `isActive=true` so search continues to fetch active parties only. */}
                   </div>
 
                   {/* Results Table */}

@@ -14,6 +14,7 @@ const StudentChangePassword = ({ onClose }) => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
   const navigate = useNavigate();
 
   // Load username from sessionStorage on component mount
@@ -63,6 +64,7 @@ const StudentChangePassword = ({ onClose }) => {
   const handleSave = async () => {
     // Clear previous errors
     setErrors({});
+    setSubmitMessage({ type: "", text: "" });
 
     // Validate form
     if (!validateForm()) {
@@ -83,15 +85,38 @@ const StudentChangePassword = ({ onClose }) => {
       const response = await api.post("RegisterEmployee/ChangePassword/", requestBody);
 
       if (response.data.message?.toLowerCase() === "success") {
-        alert("Password changed successfully!");
+        setSubmitMessage({ type: "success", text: "Password changed successfully!" });
         handleClear();
       } else {
-        alert(response.data.message || "Failed to change password.");
+        const backendData = response.data || {};
+        const mappedErrors = {};
+
+        if (backendData.old_password) mappedErrors.oldPassword = backendData.old_password;
+        if (backendData.new_password) mappedErrors.newPassword = backendData.new_password;
+        if (backendData.confirm_password) mappedErrors.confirmPassword = backendData.confirm_password;
+        if (Object.keys(mappedErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...mappedErrors }));
+        }
+
+        setSubmitMessage({
+          type: "danger",
+          text: backendData.message || "Failed to change password.",
+        });
       }
     } catch (error) {
       console.error("Error changing password:", error);
       const errorMessage = error.response?.data?.message || error.message || "An error occurred while changing password.";
-      alert(errorMessage);
+      const backendData = error.response?.data || {};
+      const mappedErrors = {};
+
+      if (backendData.old_password) mappedErrors.oldPassword = backendData.old_password;
+      if (backendData.new_password) mappedErrors.newPassword = backendData.new_password;
+      if (backendData.confirm_password) mappedErrors.confirmPassword = backendData.confirm_password;
+      if (Object.keys(mappedErrors).length > 0) {
+        setErrors((prev) => ({ ...prev, ...mappedErrors }));
+      }
+
+      setSubmitMessage({ type: "danger", text: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -102,6 +127,7 @@ const StudentChangePassword = ({ onClose }) => {
     setNewPassword("");
     setConfirmPassword("");
     setErrors({});
+    setSubmitMessage({ type: "", text: "" });
   };
 
   const handleClose = () => {
@@ -162,6 +188,13 @@ const StudentChangePassword = ({ onClose }) => {
                   </button>
                 </div>
               </div>
+
+              {submitMessage.text && (
+                <div className={`alert alert-${submitMessage.type}`} role="alert">
+                  {submitMessage.text}
+                </div>
+              )}
+
               {/* 🔲 Bottom grey box for form */}
               <div className="row mt-3 mx-2">
                 <div className="col-12 custom-section-box  ">
@@ -179,12 +212,9 @@ const StudentChangePassword = ({ onClose }) => {
                             readOnly
                             placeholder="Username"
                             style={{ backgroundColor: "#e9ecef" }}
-                            isInvalid={!!errors.username}
                           />
                           {errors.username && (
-                            <Form.Control.Feedback type="invalid" style={{ display: "block" }}>
-                              {errors.username}
-                            </Form.Control.Feedback>
+                            <small className="text-danger">{errors.username}</small>
                           )}
                         </div>
                       </Form.Group>
@@ -206,7 +236,6 @@ const StudentChangePassword = ({ onClose }) => {
                               }}
                               disabled={loading}
                               placeholder="Enter current password"
-                              isInvalid={!!errors.oldPassword}
                             />
                             <InputGroup.Text
                               style={{
@@ -222,12 +251,10 @@ const StudentChangePassword = ({ onClose }) => {
                                 <BsEye size={18} />
                               )}
                             </InputGroup.Text>
-                            {errors.oldPassword && (
-                              <Form.Control.Feedback type="invalid" style={{ display: "block" }}>
-                                {errors.oldPassword}
-                              </Form.Control.Feedback>
-                            )}
                           </InputGroup>
+                          {errors.oldPassword && (
+                            <small className="text-danger">{errors.oldPassword}</small>
+                          )}
                         </div>
                       </Form.Group>
 
@@ -248,7 +275,6 @@ const StudentChangePassword = ({ onClose }) => {
                               }}
                               disabled={loading}
                               placeholder="Enter new password"
-                              isInvalid={!!errors.newPassword}
                             />
                             <InputGroup.Text
                               style={{
@@ -264,12 +290,10 @@ const StudentChangePassword = ({ onClose }) => {
                                 <BsEye size={18} />
                               )}
                             </InputGroup.Text>
-                            {errors.newPassword && (
-                              <Form.Control.Feedback type="invalid" style={{ display: "block" }}>
-                                {errors.newPassword}
-                              </Form.Control.Feedback>
-                            )}
                           </InputGroup>
+                          {errors.newPassword && (
+                            <small className="text-danger">{errors.newPassword}</small>
+                          )}
                         </div>
                       </Form.Group>
 
@@ -291,7 +315,6 @@ const StudentChangePassword = ({ onClose }) => {
                               }}
                               disabled={loading}
                               placeholder="Confirm new password"
-                              isInvalid={!!errors.confirmPassword}
                             />
                             <InputGroup.Text
                               style={{
@@ -307,12 +330,10 @@ const StudentChangePassword = ({ onClose }) => {
                                 <BsEye size={18} />
                               )}
                             </InputGroup.Text>
-                            {errors.confirmPassword && (
-                              <Form.Control.Feedback type="invalid" style={{ display: "block" }}>
-                                {errors.confirmPassword}
-                              </Form.Control.Feedback>
-                            )}
                           </InputGroup>
+                          {errors.confirmPassword && (
+                            <small className="text-danger">{errors.confirmPassword}</small>
+                          )}
                         </div>
                       </Form.Group>
                     </Col>

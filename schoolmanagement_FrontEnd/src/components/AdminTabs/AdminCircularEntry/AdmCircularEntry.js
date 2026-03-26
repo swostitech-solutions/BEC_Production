@@ -877,45 +877,6 @@ const CircularEntry = () => {
     setSelectedSection(newVal ? sectionMapped[0]?.id : null);
   };
 
-  useEffect(() => {
-    if (!Array.isArray(selectedSemIds) || selectedSemIds.length === 0) {
-      setSectionSelections({});
-      setSelectAllSection(false);
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      setSectionSelections({});
-      setSelectAllSection(false);
-      setSelectedSection(null);
-      return;
-    }
-
-    const autoSelections = {};
-    SectionList.forEach((section) => {
-      autoSelections[section.id] = true;
-    });
-
-    setSectionSelections((prev) => {
-      const prevSelected = Object.keys(prev).filter((k) => prev[k]);
-      const nextSelected = Object.keys(autoSelections);
-      const sameSelection =
-        prevSelected.length === nextSelected.length &&
-        nextSelected.every((k) => prev[k]);
-
-      return sameSelection ? prev : autoSelections;
-    });
-
-    setSelectAllSection(true);
-    setSelectedSection((prev) => {
-      const hasPrev = SectionList.some(
-        (section) => Number(section.id) === Number(prev)
-      );
-      return hasPrev ? prev : SectionList[0]?.id || null;
-    });
-  }, [SectionList, selectedSemIds]);
-
   return (
     <div className="container-fluid px-3">
       <div className="row">

@@ -1,4 +1,3 @@
-
 // import React, { useState, useEffect } from "react";
 // import "./AdmADHOCFee.css";
 // import ReactPaginate from "react-paginate";
@@ -105,17 +104,17 @@
 //     fetchSessions();
 //   }, []);
 
-// useEffect(() => {
-//   const selectedIds = Object.keys(selectedSessions)
-//     .filter((id) => selectedSessions[id])
-//     .map(Number);
+//   useEffect(() => {
+//     const selectedIds = Object.keys(selectedSessions)
+//       .filter((id) => selectedSessions[id])
+//       .map(Number);
 
-//   if (selectedIds.length > 0) {
-//     localStorage.setItem("selectedSessionIds", JSON.stringify(selectedIds));
-//   } else {
-//     localStorage.removeItem("selectedSessionIds");
-//   }
-// }, [selectedSessions]);
+//     if (selectedIds.length > 0) {
+//       localStorage.setItem("selectedSessionIds", JSON.stringify(selectedIds));
+//     } else {
+//       localStorage.removeItem("selectedSessionIds");
+//     }
+//   }, [selectedSessions]);
 
 //   // Handle single session selection
 //   const handleSessionChange = (id) => {
@@ -186,17 +185,17 @@
 
 //     fetchCourses();
 //   }, [selectedSessions]);
-// useEffect(() => {
-//   const selectedIds = Object.keys(selectedCourses)
-//     .filter((id) => selectedCourses[id])
-//     .map(Number);
+//   useEffect(() => {
+//     const selectedIds = Object.keys(selectedCourses)
+//       .filter((id) => selectedCourses[id])
+//       .map(Number);
 
-//   if (selectedIds.length > 0) {
-//     localStorage.setItem("selectedCourseIds", JSON.stringify(selectedIds));
-//   } else {
-//     localStorage.removeItem("selectedCourseIds");
-//   }
-// }, [selectedCourses]);
+//     if (selectedIds.length > 0) {
+//       localStorage.setItem("selectedCourseIds", JSON.stringify(selectedIds));
+//     } else {
+//       localStorage.removeItem("selectedCourseIds");
+//     }
+//   }, [selectedCourses]);
 
 //   // Handle single course checkbox change
 //   const handleCourseChange = (id) => {
@@ -310,17 +309,20 @@
 
 //     fetchDepartments();
 //   }, [selectedSessions, selectedCourses]);
-// useEffect(() => {
-//   const selectedIds = Object.keys(selectedDepartments)
-//     .filter((id) => selectedDepartments[id])
-//     .map(Number);
+//   useEffect(() => {
+//     const selectedIds = Object.keys(selectedDepartments)
+//       .filter((id) => selectedDepartments[id])
+//       .map(Number);
 
-//   if (selectedIds.length > 0) {
-//     localStorage.setItem("selectedDepartmentIds", JSON.stringify(selectedIds));
-//   } else {
-//     localStorage.removeItem("selectedDepartmentIds");
-//   }
-// }, [selectedDepartments]);
+//     if (selectedIds.length > 0) {
+//       localStorage.setItem(
+//         "selectedDepartmentIds",
+//         JSON.stringify(selectedIds)
+//       );
+//     } else {
+//       localStorage.removeItem("selectedDepartmentIds");
+//     }
+//   }, [selectedDepartments]);
 
 //   // Handle single department checkbox change
 //   const handleDepartmentChange = (id) => {
@@ -788,92 +790,90 @@
 //     setIsAllChecked(false);
 //   };
 
-
 //   useEffect(() => {
 //     // fetchFeePeriods();
 //     fetchFeeElements();
 //   }, []);
 
-// useEffect(() => {
-//   const fetchPeriods = async () => {
-//     try {
-//       const token = localStorage.getItem("accessToken");
+//   useEffect(() => {
+//     const fetchPeriods = async () => {
+//       try {
+//         const token = localStorage.getItem("accessToken");
 
-//       const organization_id = sessionStorage.getItem("organization_id");
-//       const branch_id = sessionStorage.getItem("branch_id");
+//         const organization_id = sessionStorage.getItem("organization_id");
+//         const branch_id = sessionStorage.getItem("branch_id");
 
-//       // get FIRST selected batch, course & department
-//       const batch_id = Object.keys(selectedSessions).find(
-//         (id) => selectedSessions[id]
-//       );
-//       const course_id = Object.keys(selectedCourses).find(
-//         (id) => selectedCourses[id]
-//       );
-//       const department_id = Object.keys(selectedDepartments).find(
-//         (id) => selectedDepartments[id]
-//       );
+//         // get FIRST selected batch, course & department
+//         const batch_id = Object.keys(selectedSessions).find(
+//           (id) => selectedSessions[id]
+//         );
+//         const course_id = Object.keys(selectedCourses).find(
+//           (id) => selectedCourses[id]
+//         );
+//         const department_id = Object.keys(selectedDepartments).find(
+//           (id) => selectedDepartments[id]
+//         );
 
-//       if (
-//         !token ||
-//         !organization_id ||
-//         !branch_id ||
-//         !batch_id ||
-//         !course_id ||
-//         !department_id
-//       ) {
-//         setPeriods([]);
-//         return;
-//       }
+//         if (
+//           !token ||
+//           !organization_id ||
+//           !branch_id ||
+//           !batch_id ||
+//           !course_id ||
+//           !department_id
+//         ) {
+//           setPeriods([]);
+//           return;
+//         }
 
-//       const url = `http://31.97.63.174:9000/api/Semester/GetSemesterByDepartment/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${batch_id}&course_id=${course_id}&department_id=${department_id}`;
+//         const url = `${ApiUrl.apiurl}Semester/GetSemesterByDepartment/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${batch_id}&course_id=${course_id}&department_id=${department_id}`;
 
-//       const response = await fetch(url, {
-//         method: "GET",
-//         headers: {
-//           "Content-Type": "application/json",
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-
-//       if (!response.ok) {
-//         throw new Error("Failed to fetch periods");
-//       }
-
-//       const data = await response.json();
-//       console.log("Period API Response:", data);
-
-//       // ✅ API returns array directly
-//       if (Array.isArray(data)) {
-//         const mappedPeriods = data.map((period) => ({
-//           id: period.id,
-//           period_name:
-//             period.semester_description ||
-//             period.semester_code ||
-//             "Unnamed Period",
-//         }));
-
-//         setPeriods(mappedPeriods);
-
-//         // initialize checkbox state
-//         const initialSelection = {};
-//         mappedPeriods.forEach((p) => {
-//           initialSelection[p.id] = false;
+//         const response = await fetch(url, {
+//           method: "GET",
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
 //         });
 
-//         setSelectedFeePeriods(initialSelection);
-//         setIsAllFeePeriodsSelected(false);
-//       } else {
+//         if (!response.ok) {
+//           throw new Error("Failed to fetch periods");
+//         }
+
+//         const data = await response.json();
+//         console.log("Period API Response:", data);
+
+//         // ✅ API returns array directly
+//         if (Array.isArray(data)) {
+//           const mappedPeriods = data.map((period) => ({
+//             id: period.id,
+//             period_name:
+//               period.semester_description ||
+//               period.semester_code ||
+//               "Unnamed Period",
+//           }));
+
+//           setPeriods(mappedPeriods);
+
+//           // initialize checkbox state
+//           const initialSelection = {};
+//           mappedPeriods.forEach((p) => {
+//             initialSelection[p.id] = false;
+//           });
+
+//           setSelectedFeePeriods(initialSelection);
+//           setIsAllFeePeriodsSelected(false);
+//         } else {
+//           setPeriods([]);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching periods:", error);
 //         setPeriods([]);
 //       }
-//     } catch (error) {
-//       console.error("Error fetching periods:", error);
-//       setPeriods([]);
-//     }
-//   };
+//     };
 
-//   fetchPeriods();
-// }, [selectedSessions, selectedCourses, selectedDepartments]);
-
+//     fetchPeriods();
+//   }, [selectedSessions, selectedCourses, selectedDepartments]);
 
 //   const fetchFeeElements = async () => {
 //     try {
@@ -921,110 +921,91 @@
 //   };
 
 //   // API call to fetch classes
-// const handleSearch = async () => {
-//   const selectedSessionIds = Object.keys(selectedSessions)
-//     .filter((id) => selectedSessions[id])
-//     .map(Number);
-//   const selectedCourseIds = Object.keys(selectedCourses)
-//     .filter((id) => selectedCourses[id])
-//     .map(Number);
-//   const selectedDepartmentIds = Object.keys(selectedDepartments)
-//     .filter((id) => selectedDepartments[id])
-//     .map(Number);
-//   const selectedAcademicYearIds = Object.keys(selectedAcademicYears)
-//     .filter((id) => selectedAcademicYears[id])
-//     .map(Number);
-//   const selectedSemesterIds = Object.keys(selectedSemesters)
-//     .filter((id) => selectedSemesters[id])
-//     .map(Number);
-//   const selectedSectionIds = Object.keys(selectedSections)
-//     .filter((id) => selectedSections[id])
-//     .map(Number);
+//   const handleSearch = async () => {
+//     const selectedSessionIds = Object.keys(selectedSessions)
+//       .filter((id) => selectedSessions[id])
+//       .map(Number);
+//     const selectedCourseIds = Object.keys(selectedCourses)
+//       .filter((id) => selectedCourses[id])
+//       .map(Number);
+//     const selectedDepartmentIds = Object.keys(selectedDepartments)
+//       .filter((id) => selectedDepartments[id])
+//       .map(Number);
+//     const selectedAcademicYearIds = Object.keys(selectedAcademicYears)
+//       .filter((id) => selectedAcademicYears[id])
+//       .map(Number);
+//     const selectedSemesterIds = Object.keys(selectedSemesters)
+//       .filter((id) => selectedSemesters[id])
+//       .map(Number);
+//     const selectedSectionIds = Object.keys(selectedSections)
+//       .filter((id) => selectedSections[id])
+//       .map(Number);
 
-//   const organization_id = sessionStorage.getItem("organization_id");
-//   const branch_id = sessionStorage.getItem("branch_id");
-
-//   if (
-//     !organization_id ||
-//     !branch_id ||
-//     selectedSessionIds.length === 0 ||
-//     selectedCourseIds.length === 0 ||
-//     selectedDepartmentIds.length === 0 ||
-//     selectedAcademicYearIds.length === 0 ||
-//     selectedSemesterIds.length === 0 ||
-//     selectedSectionIds.length === 0
-//   ) {
-//     alert("Please select all required filters before searching.");
-//     setShowTable(false);
-//     return;
-//   }
-
-//   try {
-//     const url = `${
-//       ApiUrl.apiurl
-//     }Filter/GetStudentBasedCourseSection/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${selectedSessionIds.join(
-//       ","
-//     )}&course_ids=${selectedCourseIds.join(
-//       ","
-//     )}&department_ids=${selectedDepartmentIds.join(
-//       ","
-//     )}&academic_year_id=${selectedAcademicYearIds.join(
-//       ","
-//     )}&semester_ids=${selectedSemesterIds.join(
-//       ","
-//     )}&section_ids=${selectedSectionIds.join(",")}`;
-
-//     console.log("Fetching students from:", url);
-
-//     const response = await fetch(url, {
-//       method: "GET",
-//       headers: {
-//         "Content-Type": "application/json",
-//         Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-//       },
-//     });
-
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-
-//     const result = await response.json();
-//     console.log("Student API Response:", result);
+//     const organization_id = sessionStorage.getItem("organization_id");
+//     const branch_id = sessionStorage.getItem("branch_id");
 
 //     if (
-//       result.message?.toLowerCase() === "success" &&
-//       Array.isArray(result.data)
+//       !organization_id ||
+//       !branch_id ||
+//       selectedSessionIds.length === 0 ||
+//       selectedCourseIds.length === 0 ||
+//       selectedDepartmentIds.length === 0 ||
+//       selectedAcademicYearIds.length === 0 ||
+//       selectedSemesterIds.length === 0 ||
+//       selectedSectionIds.length === 0
 //     ) {
-//       setStudents(result.data);
-//       setCurrentPage(0);
-//       setShowTable(true);
-
-//       //  CLEAR FILTER FIELDS AFTER SUCCESS
-//       setSelectedSessions({});
-//       setIsAllSessionsSelected(false);
-//       setSelectedCourses({});
-//       setIsAllCoursesSelected(false);
-//       setSelectedDepartments({});
-//       setIsAllDepartmentsSelected(false);
-//       setSelectedAcademicYears({});
-//       setIsAllAcademicYearsSelected(false);
-//       setSelectedSemesters({});
-//       setIsAllSemestersSelected(false);
-//       setSelectedSections({});
-//       setIsAllSectionsSelected(false);
-
-//       console.log("Filters cleared after successful search ✅");
-//     } else {
-//       console.error("Failed to fetch student data:", result.message);
+//       alert("Please select all required filters before searching.");
 //       setShowTable(false);
+//       return;
 //     }
-//   } catch (error) {
-//     console.error("Error fetching student data:", error);
-//     alert("An error occurred while fetching student data. Please try again.");
-//   }
-// };
 
+//     try {
+//       const url = `${ApiUrl.apiurl
+//         }Filter/GetStudentBasedCourseSection/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${selectedSessionIds.join(
+//           ","
+//         )}&course_ids=${selectedCourseIds.join(
+//           ","
+//         )}&department_ids=${selectedDepartmentIds.join(
+//           ","
+//         )}&academic_year_id=${selectedAcademicYearIds.join(
+//           ","
+//         )}&semester_ids=${selectedSemesterIds.join(
+//           ","
+//         )}&section_ids=${selectedSectionIds.join(",")}`;
 
+//       console.log("Fetching students from:", url);
+
+//       const response = await fetch(url, {
+//         method: "GET",
+//         headers: {
+//           "Content-Type": "application/json",
+//           Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+//         },
+//       });
+
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! status: ${response.status}`);
+//       }
+
+//       const result = await response.json();
+//       console.log("Student API Response:", result);
+
+//       if (
+//         result.message?.toLowerCase() === "success" &&
+//         Array.isArray(result.data)
+//       ) {
+//         setStudents(result.data);
+//         setCurrentPage(0);
+//         setShowTable(true);
+//       } else {
+//         console.error("Failed to fetch student data:", result.message);
+//         setShowTable(false);
+//       }
+//     } catch (error) {
+//       console.error("Error fetching student data:", error);
+//       alert("An error occurred while fetching student data. Please try again.");
+//     }
+//   };
 
 //   // const handleSectionChange = (sectionId) => {
 //   //   setSelectedSections((prevState) => ({
@@ -1203,14 +1184,35 @@
 
 //       if (response.ok) {
 //         console.log("Assigned Data Response:", result);
-//         alert("Data assigned successfully!");
+//         alert("Adhoc Fees added Successfully");
 
-//         //  Clear all selections after success
+//         // ✅ CLEAR EVERYTHING HERE (ONLY AFTER ASSIGN)
 //         setStudents([]);
+//         setShowTable(false);
+
+//         setSelectedSessions({});
+//         setIsAllSessionsSelected(false);
+
+//         setSelectedCourses({});
+//         setIsAllCoursesSelected(false);
+
+//         setSelectedDepartments({});
+//         setIsAllDepartmentsSelected(false);
+
+//         setSelectedAcademicYears({});
+//         setIsAllAcademicYearsSelected(false);
+
+//         setSelectedSemesters({});
+//         setIsAllSemestersSelected(false);
+
+//         setSelectedSections({});
+//         setIsAllSectionsSelected(false);
+
 //         setSelectedFeePeriods({});
 //         setSelectedElements({});
 //         setAmounts({});
 //         setRemarks({});
+
 //       } else {
 //         console.error("Failed to assign data:", result);
 //         alert(result.message || "An error occurred while assigning data.");
@@ -1845,84 +1847,81 @@
 //           </div>
 //         </div>
 //       </div>
-//       <div className="container-fluid mt-4">
-//         <div className="table-responsive">
-//           {showTable && students.length > 0 ? (
-//             <table className=" table  table-bordered">
-//               <thead>
-//                 <tr>
-//                   <th>
+
+//       <div className="table-responsive">
+//         {showTable && students.length > 0 ? (
+//           <table className=" table  table-bordered">
+//             <thead>
+//               <tr>
+//                 <th>
+//                   <input
+//                     type="checkbox"
+//                     checked={isAllChecked}
+//                     onChange={handleSelectAllStudents}
+//                   />
+//                 </th>
+//                 <th>Course Name</th>
+//                 <th>Branch</th>
+//                 <th>Name</th>
+//                 <th>Academic Year</th>
+//                 <th>Semester</th>
+//                 <th>Section</th>
+//                 <th>Admission Number</th>
+//                 <th>Father Name</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {currentStudents.map((student) => (
+//                 <tr key={student.student_id}>
+//                   <td>
 //                     <input
 //                       type="checkbox"
-//                       checked={isAllChecked}
-//                       onChange={handleSelectAllStudents}
+//                       checked={student.checked || false}
+//                       onChange={() =>
+//                         handleCheckboxChange(student.student_id)
+//                       }
 //                     />
-//                   </th>
-//                   <th>Course Name</th>
-//                   <th>Branch</th>
-//                   <th>Name</th>
-//                   <th>Academic Year</th>
-//                   <th>Semester</th>
-//                   <th>Section</th>
-//                   <th>Admission Number</th>
-//                   <th>Father Name</th>
+//                   </td>
+//                   <td>{student.course_name}</td>
+//                   <td>{student.department}</td>
+//                   <td>{student.student_name}</td>
+//                   <td>{student.academic_year}</td>
+//                   <td>{student.semester}</td>
+//                   <td>{student.section}</td>
+//                   <td>{student.college_admission_no}</td>
+//                   <td>{student.father_name}</td>
 //                 </tr>
-//               </thead>
-//               <tbody>
-//                 {currentStudents.map((student) => (
-//                   <tr key={student.student_id}>
-//                     <td>
-//                       <input
-//                         type="checkbox"
-//                         checked={student.checked || false}
-//                         onChange={() =>
-//                           handleCheckboxChange(student.student_id)
-//                         }
-//                       />
-//                     </td>
-//                     <td>{student.course_name}</td>
-//                     <td>{student.department}</td>
-//                     <td>{student.student_name}</td>
-//                     <td>{student.academic_year}</td>
-//                     <td>{student.semester}</td>
-//                     <td>{student.section}</td>
-//                     <td>{student.college_admission_no}</td>
-//                     <td>{student.father_name}</td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           ) : (
-//             showTable && <p>No data available </p>
-//           )}
-//           <ReactPaginate
-//             previousLabel={"Previous"}
-//             nextLabel={"Next"}
-//             breakLabel={"..."}
-//             breakClassName={"page-item"}
-//             breakLinkClassName={"page-link"}
-//             pageCount={pageCount}
-//             marginPagesDisplayed={2}
-//             pageRangeDisplayed={5}
-//             onPageChange={handlePageClick}
-//             containerClassName={"pagination justify-content-center"}
-//             pageClassName={"page-item"}
-//             pageLinkClassName={"page-link"}
-//             previousClassName={"page-item"}
-//             previousLinkClassName={"page-link"}
-//             nextClassName={"page-item"}
-//             nextLinkClassName={"page-link"}
-//             activeClassName={"active"}
-//           />
-//         </div>
+//               ))}
+//             </tbody>
+//           </table>
+//         ) : (
+//           showTable && <p>No data available </p>
+//         )}
+//         <ReactPaginate
+//           previousLabel={"Previous"}
+//           nextLabel={"Next"}
+//           breakLabel={"..."}
+//           breakClassName={"page-item"}
+//           breakLinkClassName={"page-link"}
+//           pageCount={pageCount}
+//           marginPagesDisplayed={2}
+//           pageRangeDisplayed={5}
+//           onPageChange={handlePageClick}
+//           containerClassName={"pagination justify-content-center"}
+//           pageClassName={"page-item"}
+//           pageLinkClassName={"page-link"}
+//           previousClassName={"page-item"}
+//           previousLinkClassName={"page-link"}
+//           nextClassName={"page-item"}
+//           nextLinkClassName={"page-link"}
+//           activeClassName={"active"}
+//         />
 //       </div>
+
 //     </div>
 //   );
 // };
 // export default AdmADHOCFee;
-
-
-
 
 import React, { useState, useEffect } from "react";
 import "./AdmADHOCFee.css";
@@ -1991,7 +1990,7 @@ const AdmADHOCFee = () => {
 
         if (!branch_id || !organization_id) {
           console.error(
-            "Branch ID or Organization ID not found in session storage."
+            "Branch ID or Organization ID not found in session storage.",
           );
           return;
         }
@@ -2004,7 +2003,7 @@ const AdmADHOCFee = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -2071,7 +2070,7 @@ const AdmADHOCFee = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       const selectedIds = Object.keys(selectedSessions).filter(
-        (id) => selectedSessions[id]
+        (id) => selectedSessions[id],
       );
 
       if (selectedIds.length === 0) {
@@ -2093,7 +2092,7 @@ const AdmADHOCFee = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         const data = await response.json();
@@ -2153,10 +2152,10 @@ const AdmADHOCFee = () => {
     const fetchDepartments = async () => {
       // Get the first selected session and course IDs
       const selectedSessionIds = Object.keys(selectedSessions).filter(
-        (id) => selectedSessions[id]
+        (id) => selectedSessions[id],
       );
       const selectedCourseIds = Object.keys(selectedCourses).filter(
-        (id) => selectedCourses[id]
+        (id) => selectedCourses[id],
       );
 
       if (selectedSessionIds.length === 0 || selectedCourseIds.length === 0) {
@@ -2189,13 +2188,13 @@ const AdmADHOCFee = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Network response not ok: ${response.status} - ${errorText}`
+            `Network response not ok: ${response.status} - ${errorText}`,
           );
         }
 
@@ -2243,7 +2242,7 @@ const AdmADHOCFee = () => {
     if (selectedIds.length > 0) {
       localStorage.setItem(
         "selectedDepartmentIds",
-        JSON.stringify(selectedIds)
+        JSON.stringify(selectedIds),
       );
     } else {
       localStorage.removeItem("selectedDepartmentIds");
@@ -2280,13 +2279,13 @@ const AdmADHOCFee = () => {
     const fetchAcademicYears = async () => {
       //  Extract selected IDs from checkbox objects
       const selectedSessionIds = Object.keys(selectedSessions).filter(
-        (id) => selectedSessions[id]
+        (id) => selectedSessions[id],
       );
       const selectedCourseIds = Object.keys(selectedCourses).filter(
-        (id) => selectedCourses[id]
+        (id) => selectedCourses[id],
       );
       const selectedDepartmentIds = Object.keys(selectedDepartments).filter(
-        (id) => selectedDepartments[id]
+        (id) => selectedDepartments[id],
       );
 
       //  Ensure all required fields are selected
@@ -2335,7 +2334,7 @@ const AdmADHOCFee = () => {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Network response not ok: ${response.status} - ${errorText}`
+            `Network response not ok: ${response.status} - ${errorText}`,
           );
         }
 
@@ -2404,16 +2403,16 @@ const AdmADHOCFee = () => {
   useEffect(() => {
     const fetchSemesters = async () => {
       const selectedSessionIds = Object.keys(selectedSessions).filter(
-        (id) => selectedSessions[id]
+        (id) => selectedSessions[id],
       );
       const selectedCourseIds = Object.keys(selectedCourses).filter(
-        (id) => selectedCourses[id]
+        (id) => selectedCourses[id],
       );
       const selectedDepartmentIds = Object.keys(selectedDepartments).filter(
-        (id) => selectedDepartments[id]
+        (id) => selectedDepartments[id],
       );
       const selectedAcademicYearIds = Object.keys(selectedAcademicYears).filter(
-        (id) => selectedAcademicYears[id]
+        (id) => selectedAcademicYears[id],
       );
 
       if (
@@ -2532,19 +2531,19 @@ const AdmADHOCFee = () => {
     const fetchSections = async () => {
       // Extract selected IDs from checkbox objects
       const selectedSessionIds = Object.keys(selectedSessions).filter(
-        (id) => selectedSessions[id]
+        (id) => selectedSessions[id],
       );
       const selectedCourseIds = Object.keys(selectedCourses).filter(
-        (id) => selectedCourses[id]
+        (id) => selectedCourses[id],
       );
       const selectedDepartmentIds = Object.keys(selectedDepartments).filter(
-        (id) => selectedDepartments[id]
+        (id) => selectedDepartments[id],
       );
       const selectedAcademicYearIds = Object.keys(selectedAcademicYears).filter(
-        (id) => selectedAcademicYears[id]
+        (id) => selectedAcademicYears[id],
       );
       const selectedSemesterIds = Object.keys(selectedSemesters).filter(
-        (id) => selectedSemesters[id]
+        (id) => selectedSemesters[id],
       );
 
       // Ensure all required fields are selected
@@ -2594,7 +2593,7 @@ const AdmADHOCFee = () => {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Network response not ok: ${response.status} - ${errorText}`
+            `Network response not ok: ${response.status} - ${errorText}`,
           );
         }
 
@@ -2639,34 +2638,6 @@ const AdmADHOCFee = () => {
     selectedAcademicYears,
     selectedSemesters,
   ]);
-
-  useEffect(() => {
-    const selectedSemesterIds = Object.keys(selectedSemesters).filter(
-      (id) => selectedSemesters[id]
-    );
-
-    if (selectedSemesterIds.length === 0 || !Array.isArray(sections) || sections.length === 0) {
-      setSelectedSections({});
-      setIsAllSectionsSelected(false);
-      return;
-    }
-
-    const autoSelected = {};
-    sections.forEach((section) => {
-      autoSelected[section.id] = true;
-    });
-
-    setSelectedSections((prev) => {
-      const prevKeys = Object.keys(prev).filter((key) => prev[key]);
-      const nextKeys = Object.keys(autoSelected);
-      const sameSelection =
-        prevKeys.length === nextKeys.length &&
-        nextKeys.every((key) => prev[key]);
-
-      return sameSelection ? prev : autoSelected;
-    });
-    setIsAllSectionsSelected(true);
-  }, [sections, selectedSemesters]);
 
   //  Checkbox Handlers
   const handleSectionChange = (sectionId) => {
@@ -2759,13 +2730,13 @@ const AdmADHOCFee = () => {
 
         // get FIRST selected batch, course & department
         const batch_id = Object.keys(selectedSessions).find(
-          (id) => selectedSessions[id]
+          (id) => selectedSessions[id],
         );
         const course_id = Object.keys(selectedCourses).find(
-          (id) => selectedCourses[id]
+          (id) => selectedCourses[id],
         );
         const department_id = Object.keys(selectedDepartments).find(
-          (id) => selectedDepartments[id]
+          (id) => selectedDepartments[id],
         );
 
         if (
@@ -2832,7 +2803,7 @@ const AdmADHOCFee = () => {
   const fetchFeeElements = async () => {
     try {
       const response = await fetch(
-        `${ApiUrl.apiurl}FeeElementType/GetAllFeeElements/A`
+        `${ApiUrl.apiurl}FeeElementType/GetAllFeeElements/A`,
       );
       const result = await response.json();
 
@@ -2898,34 +2869,36 @@ const AdmADHOCFee = () => {
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
 
-    if (
-      !organization_id ||
-      !branch_id ||
-      selectedSessionIds.length === 0 ||
-      selectedCourseIds.length === 0 ||
-      selectedDepartmentIds.length === 0 ||
-      selectedAcademicYearIds.length === 0 ||
-      selectedSemesterIds.length === 0 ||
-      selectedSectionIds.length === 0
-    ) {
-      alert("Please select all required filters before searching.");
+    const missingFields = [];
+    if (!organization_id) missingFields.push("Organization");
+    if (!branch_id) missingFields.push("Branch");
+    if (selectedSessionIds.length === 0) missingFields.push("Session");
+    if (selectedCourseIds.length === 0) missingFields.push("Course");
+    if (selectedDepartmentIds.length === 0) missingFields.push("Department");
+    if (selectedAcademicYearIds.length === 0) missingFields.push("Academic Year");
+    if (selectedSemesterIds.length === 0) missingFields.push("Semester");
+    if (selectedSectionIds.length === 0) missingFields.push("Section");
+
+    if (missingFields.length > 0) {
+      alert(`Please select required field(s): ${missingFields.join(", ")}.`);
       setShowTable(false);
       return;
     }
 
     try {
-      const url = `${ApiUrl.apiurl
-        }Filter/GetStudentBasedCourseSection/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${selectedSessionIds.join(
-          ","
-        )}&course_ids=${selectedCourseIds.join(
-          ","
-        )}&department_ids=${selectedDepartmentIds.join(
-          ","
-        )}&academic_year_id=${selectedAcademicYearIds.join(
-          ","
-        )}&semester_ids=${selectedSemesterIds.join(
-          ","
-        )}&section_ids=${selectedSectionIds.join(",")}`;
+      const url = `${
+        ApiUrl.apiurl
+      }Filter/GetStudentBasedCourseSection/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${selectedSessionIds.join(
+        ",",
+      )}&course_ids=${selectedCourseIds.join(
+        ",",
+      )}&department_ids=${selectedDepartmentIds.join(
+        ",",
+      )}&academic_year_id=${selectedAcademicYearIds.join(
+        ",",
+      )}&semester_ids=${selectedSemesterIds.join(
+        ",",
+      )}&section_ids=${selectedSectionIds.join(",")}`;
 
       console.log("Fetching students from:", url);
 
@@ -2993,7 +2966,7 @@ const AdmADHOCFee = () => {
       (students) =>
         students.student_id === student_id
           ? { ...students, checked: !students.checked } // Toggle checked state for the specific student
-          : students // Keep other students unchanged
+          : students, // Keep other students unchanged
     );
 
     setStudents(updatedStudents); // Update the state with the modified students array
@@ -3071,7 +3044,7 @@ const AdmADHOCFee = () => {
       .map((elementId) => ({
         element_id: parseInt(elementId, 10),
         amount: amounts[elementId] || "",
-        remarks: remarks[elementId] || "",
+        // remarks: remarks[elementId] || "",
       }))
       .filter((element) => !isNaN(element.element_id));
 
@@ -3096,10 +3069,10 @@ const AdmADHOCFee = () => {
         alert("Amount is missing or invalid for one of the fee elements.");
         return;
       }
-      if (feeElement.remarks.trim() === "") {
-        alert("Remarks are missing for one of the fee elements.");
-        return;
-      }
+      // if (feeElement.remarks.trim() === "") {
+      //   alert("Remarks are missing for one of the fee elements.");
+      //   return;
+      // }
     }
 
     //  Get created_by from session storage
@@ -3166,7 +3139,6 @@ const AdmADHOCFee = () => {
         setSelectedElements({});
         setAmounts({});
         setRemarks({});
-
       } else {
         console.error("Failed to assign data:", result);
         alert(result.message || "An error occurred while assigning data.");
@@ -3764,7 +3736,7 @@ const AdmADHOCFee = () => {
                   </th>
                   <th>Element Name</th>
                   <th>Amount</th>
-                  <th>Remark</th>
+                  {/* <th>Remark</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -3781,19 +3753,25 @@ const AdmADHOCFee = () => {
                     <td>
                       <input
                         type="number"
+                        className="adhoc-element-input"
                         value={amounts[element.id] || ""}
                         onChange={(e) => handleAmountChange(e, element.id)}
+                        disabled={!selectedElements[element.id]}
+                        required={selectedElements[element.id] || false}
                         style={{ width: "100%" }}
                       />
                     </td>
-                    <td>
+                    {/* <td>
                       <input
                         type="text"
+                        className="adhoc-element-input"
                         value={remarks[element.id] || ""}
                         onChange={(e) => handleRemarkChange(e, element.id)}
+                        disabled={!selectedElements[element.id]}
+                        required={selectedElements[element.id] || false}
                         style={{ width: "100%" }}
                       />
-                    </td>
+                    </td> */}
                   </tr>
                 ))}
               </tbody>
@@ -3831,9 +3809,7 @@ const AdmADHOCFee = () => {
                     <input
                       type="checkbox"
                       checked={student.checked || false}
-                      onChange={() =>
-                        handleCheckboxChange(student.student_id)
-                      }
+                      onChange={() => handleCheckboxChange(student.student_id)}
                     />
                   </td>
                   <td>{student.course_name}</td>
@@ -3871,7 +3847,6 @@ const AdmADHOCFee = () => {
           activeClassName={"active"}
         />
       </div>
-
     </div>
   );
 };

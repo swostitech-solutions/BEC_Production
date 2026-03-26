@@ -25,6 +25,7 @@ const AdmInventorySearch = () => {
     sub_category: "",
     item_name: "",
     inventory_type: "",
+    inventory_location: "",
     status: "",  // Used for Asset Code No
   });
 
@@ -43,6 +44,13 @@ const AdmInventorySearch = () => {
     { value: "Consumable", label: "Consumable" },
     { value: "Non-Consumable", label: "Non-Consumable" },
     { value: "Asset", label: "Asset" },
+  ];
+
+  const inventoryLocationOptions = [
+    { value: "", label: "All Locations" },
+    { value: "Medical", label: "Medical" },
+    { value: "Hostel", label: "Hostel" },
+    { value: "Nursing College", label: "Nursing College" },
   ];
 
   const statusOptions = [
@@ -171,6 +179,7 @@ const AdmInventorySearch = () => {
       if (filters.sub_category) params.sub_category_id = filters.sub_category;
       if (filters.item_name) params.item_name = filters.item_name;
       if (filters.inventory_type) params.inventory_type = filters.inventory_type;
+      if (filters.inventory_location) params.inventory_location = filters.inventory_location;
       if (filters.status) params.status = filters.status;  // Asset Code No filter
       if (filters.from_date) params.from_date = filters.from_date;
       if (filters.to_date) params.to_date = filters.to_date;
@@ -208,6 +217,7 @@ const AdmInventorySearch = () => {
       sub_category: "",
       item_name: "",
       inventory_type: "",
+      inventory_location: "",
       status: "",  // Asset Code No
     });
     setFilteredSubCategories(subCategories);
@@ -275,6 +285,7 @@ const AdmInventorySearch = () => {
         "Sr No",
         "Category",
         "Sub Category",
+        "Inventory Location",
         "Name",
         "Quantity",
         "Value",
@@ -287,6 +298,7 @@ const AdmInventorySearch = () => {
       index + 1,
       item.category_name,
       item.sub_category_name,
+      item.inventory_location || "N/A",
       item.item_name,
       item.quantity,
       Number(item.item_value).toFixed(2),
@@ -302,7 +314,7 @@ const AdmInventorySearch = () => {
       0
     );
 
-    data.push(["", "", "", "Total:", totalQuantity, totalValue, "", ""]);
+    data.push(["", "", "", "Total:", totalQuantity, totalValue, "", "", ""]);
 
     doc.autoTable({
       startY: 30,
@@ -527,6 +539,32 @@ const AdmInventorySearch = () => {
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
+                        <label htmlFor="inventory-location" className="form-label">
+                          Inventory Location
+                        </label>
+                        <Select
+                          className="detail"
+                          id="inventory-location"
+                          classNamePrefix="react-select"
+                          options={inventoryLocationOptions}
+                          value={
+                            filters.inventory_location
+                              ? inventoryLocationOptions.find(
+                                (opt) => opt.value === filters.inventory_location
+                              )
+                              : inventoryLocationOptions[0]
+                          }
+                          onChange={(selectedOption) =>
+                            handleInputChange(
+                              "inventory_location",
+                              selectedOption?.value || ""
+                            )
+                          }
+                          placeholder="Select"
+                        />
+                      </div>
+
+                      <div className="col-12 col-md-3 mb-3">
                         <label htmlFor="status" className="form-label">
                           Asset Code No
                         </label>
@@ -556,6 +594,7 @@ const AdmInventorySearch = () => {
                           <th>Sr No</th>
                           <th>Category</th>
                           <th>Sub Category</th>
+                          <th>Inventory Location</th>
                           <th>Name</th>
                           <th>Quantity</th>
                           <th>Value</th>
@@ -573,6 +612,7 @@ const AdmInventorySearch = () => {
                               <td>{index + 1}</td>
                               <td>{item.category_name}</td>
                               <td>{item.sub_category_name}</td>
+                              <td>{item.inventory_location || "N/A"}</td>
                               <td>{item.item_name}</td>
                               <td>{item.quantity}</td>
                               <td>{Number(item.item_value).toFixed(2)}</td>
@@ -706,6 +746,15 @@ const AdmInventorySearch = () => {
                     <span style={{ textAlign: 'right' }}>{selectedItem.inventory_type || "N/A"}</span>
                   </div>
                 </div>
+                <div className="col-md-6">
+                  <div className="d-flex justify-content-between">
+                    <strong style={{ fontWeight: '600' }}>Inventory Location:</strong>
+                    <span style={{ textAlign: 'right' }}>{selectedItem.inventory_location || "N/A"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="row mb-2">
                 <div className="col-md-6">
                   <div className="d-flex justify-content-between">
                     <strong style={{ fontWeight: '600' }}>Asset Code No:</strong>

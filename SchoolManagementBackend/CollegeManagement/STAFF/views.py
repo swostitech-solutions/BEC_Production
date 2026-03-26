@@ -476,7 +476,7 @@ class StaffRegistrationDocumentCreateUpdateAPIView(UpdateAPIView):
             # get employee Instance
             if organization_id and branch_id and employee_id:
                 try:
-                    EmployeeInstance = EmployeeMaster.objects.get(organization=organization_id,branch=branch_id,id=employee_id,is_active=True)
+                    EmployeeInstance = EmployeeMaster.objects.get(organization=organization_id,branch=branch_id,id=employee_id)
                 except EmployeeMaster.DoesNotExist:
                     return Response({'message':'No Employee Found'},status=status.HTTP_400_BAD_REQUEST)
             else:
@@ -531,6 +531,9 @@ class StaffRegistrationDocumentCreateUpdateAPIView(UpdateAPIView):
                 if item.get('document_details_id') and int(item.get('document_details_id')) != 0
             }
 
+            # Track IDs of documents created during this request so they are never deactivated
+            newly_created_doc_ids = set()
+
             # Map existing docs by document_type_id for fast lookup
             doc_map = {doc.document_type_id: doc for doc in SCH_EMPLOYEE_DOCUMENTS_Records} if SCH_EMPLOYEE_DOCUMENTS_Records else {}
 
@@ -581,6 +584,7 @@ class StaffRegistrationDocumentCreateUpdateAPIView(UpdateAPIView):
                                 new_doc.refresh_from_db()
                                 new_doc.document_path = request.build_absolute_uri(new_doc.document_file.url)
                                 new_doc.save()
+                            newly_created_doc_ids.add(new_doc.document_id)  # protect from deactivation
                             debug_logs.append(f"Created new doc type_id={document_type_id}")
                         except Exception as inner_e:
                             print(f"Error creating new doc: {inner_e}")
@@ -623,6 +627,7 @@ class StaffRegistrationDocumentCreateUpdateAPIView(UpdateAPIView):
                                 EmployeeDocumentInstance.refresh_from_db()
                                 EmployeeDocumentInstance.document_path = request.build_absolute_uri(EmployeeDocumentInstance.document_file.url)
                                 EmployeeDocumentInstance.save()
+                            newly_created_doc_ids.add(EmployeeDocumentInstance.document_id)  # protect from deactivation
                             debug_logs.append(f"Saved doc type_id={document_type_id}, path={EmployeeDocumentInstance.document_path}")
                         except Exception as inner_e:
                             print(f"Error saving doc: {inner_e}")
@@ -634,13 +639,14 @@ class StaffRegistrationDocumentCreateUpdateAPIView(UpdateAPIView):
 
             # ✅ Deactivate any existing DB docs whose ID was NOT in the submitted list
             # (i.e. records the user removed from the UI)
-            # When all docs removed: submitted_doc_ids=set() → deactivates ALL active docs
+            # Exclude both pre-existing kept IDs AND any docs just created this request.
+            safe_ids = submitted_doc_ids | newly_created_doc_ids
             removed_qs = EmployeeDocument.objects.filter(
                 organization=organization_id,
                 branch=branch_id,
                 employee_id=employee_id,
                 is_active=True
-            ).exclude(document_id__in=submitted_doc_ids)
+            ).exclude(document_id__in=safe_ids)
             removed_count = removed_qs.count()
             removed_qs.update(is_active=False, updated_by=int(data.get('created_by') or 0) or None)
             debug_logs.append(f"Deactivated {removed_count} removed document(s)")
@@ -682,7 +688,7 @@ class StaffRegistrationFamilyCreateUpdateAPIView(UpdateAPIView):
 
             if organization_id and branch_id and employee_id:
                 try:
-                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id,is_active=True)
+                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id)
                 except EmployeeMaster.DoesNotExist:
                     return Response({"message":"No Employee Found !!!"}, status=status.HTTP_404_NOT_FOUND)
             else:
@@ -839,7 +845,7 @@ class StaffRegistrationQualificationCreateUpdateAPIView(UpdateAPIView):
             # get employee Instance
             if organization_id and branch_id and employee_id:
                 try:
-                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id,is_active=True)
+                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id)
                 except EmployeeMaster.DoesNotExist:
                     return Response({"message":"No Employee Found !!!"}, status=status.HTTP_404_NOT_FOUND)
             else:
@@ -963,7 +969,7 @@ class StaffRegistrationCourseCreateUpdateAPIView(UpdateAPIView):
             # get employee Instance
             if organization_id and branch_id and employee_id:
                 try:
-                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id,is_active=True)
+                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id)
                 except EmployeeMaster.DoesNotExist:
                     return Response({"message":"No Employee Found !!!"}, status=status.HTTP_404_NOT_FOUND)
             else:
@@ -1089,7 +1095,7 @@ class StaffRegistrationLANGUAGECreateUpdateAPIView(UpdateAPIView):
             # Get employee instance
             if organization_id and branch_id and employee_id:
                 try:
-                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id,is_active=True)
+                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id)
                 except EmployeeMaster.DoesNotExist:
                     return Response({"message":"No Employee Found !!!"}, status=status.HTTP_404_NOT_FOUND)
             else:
@@ -1160,7 +1166,7 @@ class StaffRegistrationExperienceCreateUpdateAPIView(UpdateAPIView):
             # get employee Instance
             if organization_id and branch_id and employee_id:
                 try:
-                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id,is_active=True)
+                    EmployeeInstance = EmployeeMaster.objects.get(id=employee_id,organization=organization_id, branch=branch_id)
                 except EmployeeMaster.DoesNotExist:
                     return Response({"message":"No Employee Found !!!"}, status=status.HTTP_404_NOT_FOUND)
             else:
@@ -2027,10 +2033,17 @@ class EmployeeDetailsListAPIView(ListAPIView):
             last_name= serializer.validated_data.get('last_name')
             employee_type = serializer.validated_data.get('employee_type')
 
+            # is_active filter: "true" → True, "false" → False, not provided → default True
+            is_active_param = serializer.validated_data.get('is_active', None)
+            if is_active_param is not None:
+                is_active_filter = is_active_param.lower() == 'true'
+            else:
+                is_active_filter = True  # default: show active staff
+
             try:
                 filterdata = EmployeeMaster.objects.filter(organization=organization_id,
                                                                branch_id=branch_id,
-                                                               is_active=True)
+                                                               is_active=is_active_filter).order_by('-created_at')
             except:
                 filterdata=None
 
@@ -2159,3 +2172,280 @@ class EmployeeDetailsListAPIView(ListAPIView):
 #             message=error_message,
 #
 #         )
+
+
+class StaffAllDetailsForPDFAPIView(APIView):
+    """
+    Bulk endpoint: returns every employee with ALL their details in a single
+    HTTP call.  Uses 8 SQL queries (one per table) regardless of how many
+    employees exist, instead of N x 8 individual requests.
+
+    GET /api/STAFF/AllEmployeeDetailsForPDF/
+        ?organization_id=<id>&branch_id=<id>
+    """
+
+    def get(self, request, *args, **kwargs):
+        try:
+            organization_id = request.query_params.get('organization_id')
+            branch_id = request.query_params.get('branch_id')
+
+            if not organization_id or not branch_id:
+                return Response(
+                    {'message': 'organization_id and branch_id are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Optional: filter to specific employee IDs (comma-separated)
+            employee_ids_param = request.query_params.get('employee_ids', '')
+            filtered_ids = [
+                int(i.strip()) for i in employee_ids_param.split(',')
+                if i.strip().isdigit()
+            ] if employee_ids_param else []
+
+            # ── 1. Fetch employees (1 query) ───────────────────────────────────
+            emp_qs = EmployeeMaster.objects.filter(
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            )
+            if filtered_ids:
+                emp_qs = emp_qs.filter(id__in=filtered_ids)
+
+            employees = emp_qs.select_related(
+                'gender', 'nationality', 'religion', 'blood_group',
+                'mother_tongue', 'employee_type', 'designation'
+            )
+
+            if not employees.exists():
+                return Response({'message': 'No employees found'}, status=status.HTTP_204_NO_CONTENT)
+
+            emp_ids = list(employees.values_list('id', flat=True))
+
+            # ── 2-8. Fetch all related tables in bulk (7 more queries) ────────
+            addresses = Address.objects.filter(
+                reference_id__in=emp_ids,
+                is_active=True
+            )
+            documents = EmployeeDocument.objects.filter(
+                employee_id__in=emp_ids,
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            ).select_related('document_type')
+            family_records = EmployeeFamilyDetail.objects.filter(
+                employee_id__in=emp_ids,
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            ).select_related('relation_gender')
+            qualifications = EmployeeQualification.objects.filter(
+                employee_id__in=emp_ids,
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            )
+            courses = EmployeeCourse.objects.filter(
+                employee_id__in=emp_ids,
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            )
+            languages = EmployeeLanguage.objects.filter(
+                employee_id__in=emp_ids,
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            )
+            experiences = EmployeeExperience.objects.filter(
+                employee_id__in=emp_ids,
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            )
+
+            # ── Index related records by employee_id for O(1) lookup ──────────
+            addr_map = {a.reference_id: a for a in addresses}
+
+            # ── Build city/state/country lookup dicts ─────────────────────────
+            city_map = {c.id: c.city_name for c in City.objects.all()}
+            state_map = {s.id: s.state_name for s in State.objects.all()}
+            country_map = {co.id: co.country_name for co in Country.objects.all()}
+
+            doc_map = {}
+            for d in documents:
+                doc_map.setdefault(d.employee_id, []).append(d)
+
+            family_map = {}
+            for f in family_records:
+                family_map.setdefault(f.employee_id, []).append(f)
+
+            qual_map = {}
+            for q in qualifications:
+                qual_map.setdefault(q.employee_id, []).append(q)
+
+            course_map = {}
+            for c in courses:
+                course_map.setdefault(c.employee_id, []).append(c)
+
+            lang_map = {}
+            for l in languages:
+                lang_map.setdefault(l.employee_id, []).append(l)
+
+            exp_map = {}
+            for e in experiences:
+                exp_map.setdefault(e.employee_id, []).append(e)
+
+            # ── Build response ────────────────────────────────────────────────
+            result = []
+            for emp in employees:
+                eid = emp.id
+                addr = addr_map.get(eid)
+
+                # Basic info
+                basic = {
+                    'id': eid,
+                    'employee_code': emp.employee_code,
+                    'nuid': emp.nuid,
+                    'title': emp.title,
+                    'first_name': emp.first_name,
+                    'middle_name': emp.middle_name,
+                    'last_name': emp.last_name,
+                    'employee_name': ' '.join(filter(None, [emp.title, emp.first_name, emp.middle_name, emp.last_name])),
+                    'date_of_birth': emp.date_of_birth,
+                    'place_of_birth': emp.place_of_birth,
+                    'marital_status': emp.marital_status,
+                    'gender': emp.gender.gender_name if emp.gender else '',
+                    'gender_id': emp.gender.id if emp.gender else None,
+                    'blood_group': emp.blood_group.blood_name if emp.blood_group else '',
+                    'nationality': emp.nationality.nationality_code if emp.nationality else '',
+                    'religion': emp.religion.religion_code if emp.religion else '',
+                    'mother_tongue': emp.mother_tongue.mother_tongue_name if emp.mother_tongue else '',
+                    'mother_tongue_id': emp.mother_tongue.id if emp.mother_tongue else None,
+                    'email': emp.email,
+                    'phone_number': emp.phone_number,
+                    'office_email': emp.office_email,
+                    'emergency_contact_number': emp.emergency_contact_number,
+                    'employee_type': emp.employee_type.employee_type_description if emp.employee_type else '',
+                    'employee_type_id': emp.employee_type.id if emp.employee_type else None,
+                    'designation': emp.designation.designation_name if emp.designation else '',
+                    'highest_qualification': emp.highest_qualification,
+                    'date_of_joining': emp.date_of_joining,
+                    'date_of_leaving': emp.date_of_leaving,
+                    'payroll_group': emp.payroll_group,
+                    'is_active': emp.is_active,
+                }
+
+                # Address
+                address_data = {
+                    'present_address': addr.present_address if addr else '',
+                    'present_city': city_map.get(addr.present_city, addr.present_city) if addr and addr.present_city else '',
+                    'present_state': state_map.get(addr.present_state, addr.present_state) if addr and addr.present_state else '',
+                    'present_country': country_map.get(addr.present_country, addr.present_country) if addr and addr.present_country else '',
+                    'present_pincode': addr.present_pincode if addr else '',
+                    'present_phone_number': addr.present_phone_number if addr else '',
+                    'permanent_address': addr.permanent_address if addr else '',
+                    'permanent_city': city_map.get(addr.permanent_city, addr.permanent_city) if addr and addr.permanent_city else '',
+                    'permanent_state': state_map.get(addr.permanent_state, addr.permanent_state) if addr and addr.permanent_state else '',
+                    'permanent_country': country_map.get(addr.permanent_country, addr.permanent_country) if addr and addr.permanent_country else '',
+                    'permanent_pincode': addr.permanent_pincode if addr else '',
+                    'permanent_phone_number': addr.permanent_phone_number if addr else '',
+                } if addr else {}
+
+                # Family / relations
+                family_data = []
+                for f in family_map.get(eid, []):
+                    family_data.append({
+                        'family_details_id': f.family_detail_id,
+                        'employee_relation': f.employee_relation,
+                        'relation_title': f.relation_title,
+                        'relation_first_name': f.relation_first_name,
+                        'relation_middle_name': f.relation_middle_name,
+                        'relation_last_name': f.relation_last_name,
+                        'employee_relation_name': ' '.join(filter(None, [f.relation_title, f.relation_first_name, f.relation_middle_name, f.relation_last_name])),
+                        'relation_dob': f.relation_dob,
+                        'relation_gender': f.relation_gender.gender_name if f.relation_gender else '',
+                        'relation_gender_id': f.relation_gender.id if f.relation_gender else None,
+                        'relation_marital_status': f.relation_marital_status,
+                        'relation_employed': f.relation_employed,
+                        'relation_occupation': f.relation_occupation,
+                        'relation_dependent': f.relation_dependent,
+                        'relation_pf_nominee': f.relation_pf_nominee,
+                        'relation_pf_share': f.relation_pf_share,
+                    })
+
+                # Education / qualifications
+                education_data = []
+                for q in qual_map.get(eid, []):
+                    education_data.append({
+                        'qualification_id': q.employee_qualification_id,
+                        'qualification': q.qualification,
+                        'highest_qualification': q.highest_qualification,
+                        'date_from': q.date_from,
+                        'date_to': q.date_to,
+                        'university': q.university,
+                        'institution': q.institution,
+                        'marks': str(q.marks) if q.marks is not None else '',
+                    })
+
+                # Courses / training
+                course_data = []
+                for c in course_map.get(eid, []):
+                    course_data.append({
+                        'course_id': c.employee_course_id,
+                        'course_name': c.course_name,
+                        'course_place': c.course_place,
+                        'date_from': c.date_from,
+                        'date_to': c.date_to,
+                        'valid_upto': c.valid_upto,
+                        'course_results': c.course_results,
+                    })
+
+                # Languages
+                lang_records = lang_map.get(eid, [])
+                language_data = lang_records[0].language_code if lang_records else ''
+
+                # Experiences
+                experience_data = []
+                for ex in exp_map.get(eid, []):
+                    experience_data.append({
+                        'experience_id': ex.employee_experience_id,
+                        'previous_company_worked': ex.previous_company_worked,
+                        'date_from': ex.date_from,
+                        'date_to': ex.date_to,
+                        'reason_for_leaving': ex.reason_for_leaving,
+                        'experience_letter_provided': ex.experience_letter_provided,
+                    })
+
+                # Documents
+                document_data = []
+                for d in doc_map.get(eid, []):
+                    document_data.append({
+                        'document_id': d.document_id,
+                        'document_type_id': d.document_type.id if d.document_type else None,
+                        'document_name': d.document_type.document_code if d.document_type else '',
+                        'document_number': d.document_number,
+                        'valid_from': d.valid_from,
+                        'valid_to': d.valid_to,
+                        'document_path': request.build_absolute_uri(d.document_file.url) if d.document_file else (d.document_path or ''),
+                    })
+
+                result.append({
+                    'basic': basic,
+                    'address': address_data,
+                    'family': family_data,
+                    'education': education_data,
+                    'courses': course_data,
+                    'language_code': language_data,
+                    'experience': experience_data,
+                    'documents': document_data,
+                })
+
+            return Response({'message': 'Success', 'data': result}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            ExceptionTrack.objects.create(
+                request=str(request),
+                process_name='Staff-All-Details-For-PDF',
+                message=str(e),
+            )
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

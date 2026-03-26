@@ -852,12 +852,12 @@ const AdmBookMovements = () => {
                         </div>
                       </div>
 
-                      {/* <div
+                      <div
                         className="col-12 col-md-3 mb-1"
                         style={{ minWidth: "250px" }}
                       >
                         <label htmlFor="student-barcode" className="form-label">
-                          Student Barcode
+                          Roll No
                         </label>
                         <div className="d-flex align-items-center">
                           <input
@@ -865,12 +865,12 @@ const AdmBookMovements = () => {
                             id="student-barcode"
                             className="form-control detail"
                             value={barCode}
-                            placeholder="Enter student barcode"
+                            placeholder="Enter Roll No"
                             disabled
                             style={{ width: "100%" }}
                           />
                         </div>
-                      </div> */}
+                      </div>
 
                       {/* Session Dropdown */}
                       <div className="col-md-3" style={{ minWidth: "250px" }}>
@@ -1190,7 +1190,7 @@ const AdmBookMovements = () => {
                           <th>Sr No</th>
                           <th>Name</th>
                           <th>College Admission No</th>
-                          {/* <th>Student BarCode</th> */}
+                          <th>Roll No</th>
                           <th>Course</th>
                           <th>Section</th>
                           <th>Book</th>
@@ -1227,7 +1227,7 @@ const AdmBookMovements = () => {
                                 <td>{offset + index + 1}</td>
                                 <td>{displayName}</td>
                                 <td>{admissionNo}</td>
-                                {/* <td>{studentBarcode}</td> */}
+                                <td>{studentBarcode}</td>
                                 <td>{courseName}</td>
                                 <td>{sectionName}</td>
                                 <td>{bookName}</td>
@@ -1235,41 +1235,43 @@ const AdmBookMovements = () => {
                                 <td>
                                   {item.issue_date
                                     ? new Date(item.issue_date)
-                                      .toISOString()
-                                      .split("T")[0]
-                                      .split("-")
-                                      .reverse()
-                                      .join("-")
+                                        .toISOString()
+                                        .split("T")[0]
+                                        .split("-")
+                                        .reverse()
+                                        .join("-")
                                     : ""}
                                 </td>
-                                <td>{displayName || ""}</td>
+                                <td>Librarian</td>
                                 <td>
                                   {item.due_date
                                     ? new Date(item.due_date)
-                                      .toISOString()
-                                      .split("T")[0]
-                                      .split("-")
-                                      .reverse()
-                                      .join("-")
+                                        .toISOString()
+                                        .split("T")[0]
+                                        .split("-")
+                                        .reverse()
+                                        .join("-")
                                     : ""}
                                 </td>
                                 <td>
                                   {item.return_date
                                     ? new Date(item.return_date)
-                                      .toISOString()
-                                      .split("T")[0]
-                                      .split("-")
-                                      .reverse()
-                                      .join("-")
+                                        .toISOString()
+                                        .split("T")[0]
+                                        .split("-")
+                                        .reverse()
+                                        .join("-")
                                     : ""}
                                 </td>
-                                <td>{isReturned ? (displayName || "") : ""}</td>
+                                <td>{isReturned ? displayName || "" : ""}</td>
                                 <td>
                                   <input
                                     type="checkbox"
                                     name="bookSelect"
                                     checked={!!selectedReturns[offset + index]}
-                                    onChange={() => handleCheckboxChange(offset + index)}
+                                    onChange={() =>
+                                      handleCheckboxChange(offset + index)
+                                    }
                                     disabled={isReturned}
                                   />
                                 </td>
@@ -1281,7 +1283,7 @@ const AdmBookMovements = () => {
                                       onChange={(e) =>
                                         handleReturnDateChange(
                                           offset + index,
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       max={getCurrentDate()}

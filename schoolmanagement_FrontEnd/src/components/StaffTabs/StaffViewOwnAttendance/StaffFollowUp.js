@@ -232,7 +232,7 @@
 
 //               <div  className="col-12">
 //                 <div className="table-responsive">
-//                   <table className="table">
+//                   <table className="table table-bordered ">
 //                     <thead>
 //                       <tr>
 //                         <th>Sr.No</th>

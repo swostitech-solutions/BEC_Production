@@ -14,6 +14,7 @@ const StaffChangePassword = ({ onClose }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState({ type: "", text: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -54,6 +55,8 @@ const StaffChangePassword = ({ onClose }) => {
   };
 
   const handleSave = async () => {
+    setSubmitMessage({ type: "", text: "" });
+
     // Validate form
     if (!validateForm()) {
       return;
@@ -72,15 +75,18 @@ const StaffChangePassword = ({ onClose }) => {
       const response = await api.post("RegisterEmployee/ChangePassword/", requestBody);
 
       if (response.data.message?.toLowerCase() === "success") {
-        alert("Password changed successfully!");
+        setSubmitMessage({ type: "success", text: "Password changed successfully!" });
         handleClear();
       } else {
-        alert(response.data.message || "Failed to change password.");
+        setSubmitMessage({
+          type: "danger",
+          text: response.data.message || "Failed to change password.",
+        });
       }
     } catch (error) {
       console.error("Error changing password:", error);
       const errorMessage = error.response?.data?.message || error.message || "An error occurred while changing password.";
-      alert(errorMessage);
+      setSubmitMessage({ type: "danger", text: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -94,6 +100,7 @@ const StaffChangePassword = ({ onClose }) => {
     setShowNewPassword(false);
     setShowConfirmPassword(false);
     setErrors({});
+    setSubmitMessage({ type: "", text: "" });
   };
 
   const handleClose = () => {
@@ -155,6 +162,13 @@ const StaffChangePassword = ({ onClose }) => {
                   </button>
                 </div>
               </div>
+
+              {submitMessage.text && (
+                <div className={`alert alert-${submitMessage.type}`} role="alert">
+                  {submitMessage.text}
+                </div>
+              )}
+
               {/* 🔲 Bottom grey box for form */}
               <div className="row mt-3 mx-2">
                 <div className="col-12 custom-section-box  ">
@@ -171,11 +185,10 @@ const StaffChangePassword = ({ onClose }) => {
                             disabled={true}
                             readOnly
                             style={{ backgroundColor: "#e9ecef" }}
-                            isInvalid={!!errors.username}
                           />
-                          <Form.Control.Feedback type="invalid">
-                            {errors.username}
-                          </Form.Control.Feedback>
+                          {errors.username && (
+                            <small className="text-danger">{errors.username}</small>
+                          )}
                         </div>
                       </Form.Group>
 
@@ -196,7 +209,6 @@ const StaffChangePassword = ({ onClose }) => {
                               }}
                               disabled={loading}
                               placeholder="Enter current password"
-                              isInvalid={!!errors.oldPassword}
                             />
                             <InputGroup.Text
                               onClick={() => setShowOldPassword(!showOldPassword)}
@@ -204,10 +216,10 @@ const StaffChangePassword = ({ onClose }) => {
                             >
                               {showOldPassword ? <BsEyeSlash /> : <BsEye />}
                             </InputGroup.Text>
-                            <Form.Control.Feedback type="invalid">
-                              {errors.oldPassword}
-                            </Form.Control.Feedback>
                           </InputGroup>
+                          {errors.oldPassword && (
+                            <small className="text-danger">{errors.oldPassword}</small>
+                          )}
                         </div>
                       </Form.Group>
 
@@ -228,7 +240,6 @@ const StaffChangePassword = ({ onClose }) => {
                               }}
                               disabled={loading}
                               placeholder="Enter new password"
-                              isInvalid={!!errors.newPassword}
                             />
                             <InputGroup.Text
                               onClick={() => setShowNewPassword(!showNewPassword)}
@@ -236,10 +247,10 @@ const StaffChangePassword = ({ onClose }) => {
                             >
                               {showNewPassword ? <BsEyeSlash /> : <BsEye />}
                             </InputGroup.Text>
-                            <Form.Control.Feedback type="invalid">
-                              {errors.newPassword}
-                            </Form.Control.Feedback>
                           </InputGroup>
+                          {errors.newPassword && (
+                            <small className="text-danger">{errors.newPassword}</small>
+                          )}
                         </div>
                       </Form.Group>
 
@@ -261,7 +272,6 @@ const StaffChangePassword = ({ onClose }) => {
                               }}
                               disabled={loading}
                               placeholder="Confirm new password"
-                              isInvalid={!!errors.confirmPassword}
                             />
                             <InputGroup.Text
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -269,10 +279,10 @@ const StaffChangePassword = ({ onClose }) => {
                             >
                               {showConfirmPassword ? <BsEyeSlash /> : <BsEye />}
                             </InputGroup.Text>
-                            <Form.Control.Feedback type="invalid">
-                              {errors.confirmPassword}
-                            </Form.Control.Feedback>
                           </InputGroup>
+                          {errors.confirmPassword && (
+                            <small className="text-danger">{errors.confirmPassword}</small>
+                          )}
                         </div>
                       </Form.Group>
                     </Col>

@@ -69,16 +69,20 @@ const AdmBookDashboard = () => {
       const issuesResult = await issuesResponse.json();
 
       if (issuesResponse.ok && issuesResult.message === "success") {
-        // Get only the 10 most recent issues
-        // Sort by issue_date descending, then by book_issue_id descending
         const allIssues = issuesResult.data || [];
-        const sortedIssues = allIssues.sort((a, b) => {
-          const dateDiff = new Date(b.issue_date) - new Date(a.issue_date);
+        // Sort by the most recent activity (return_date if returned, else issue_date)
+        // so the latest issued OR returned books always surface to the top
+        const getLatestDate = (issue) => {
+          const issueTs = issue.issue_date ? new Date(issue.issue_date).getTime() : 0;
+          const returnTs = issue.return_date ? new Date(issue.return_date).getTime() : 0;
+          return Math.max(issueTs, returnTs);
+        };
+        const sortedIssues = [...allIssues].sort((a, b) => {
+          const dateDiff = getLatestDate(b) - getLatestDate(a);
           if (dateDiff !== 0) return dateDiff;
           return (b.book_issue_id || 0) - (a.book_issue_id || 0);
         });
-        const recent = sortedIssues.slice(0, 10);
-        setRecentIssues(recent);
+        setRecentIssues(sortedIssues.slice(0, 10));
       }
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
@@ -301,7 +305,7 @@ const AdmBookDashboard = () => {
                       color: "#333",
                     }}
                   >
-                    📋 Recent Book Issues
+                    📋 Recent Top 10 Issue / Return Books
                   </h5>
                   {recentIssues.length > 0 ? (
                     <Table bordered size="sm">
@@ -312,6 +316,7 @@ const AdmBookDashboard = () => {
                           <th>Borrower</th>
                           <th>Type</th>
                           <th>Issue Date</th>
+                          <th>Return Date</th>
                           <th>Status</th>
                         </tr>
                       </thead>
@@ -332,6 +337,7 @@ const AdmBookDashboard = () => {
                               </span>
                             </td>
                             <td>{formatDate(issue.issue_date)}</td>
+                            <td>{issue.return_date ? formatDate(issue.return_date) : "-"}</td>
                             <td>
                               <span
                                 className={`badge ${issue.return_date

@@ -14,6 +14,7 @@ import useStudentDetails from "../../hooks/useStudentDetails";
 import useStudentFeeFilterData from "../../hooks/useStudentFeeFilterData";
 import useStudentFeeReceipts from "../../hooks/useStudentFeeReceipts";
 import api from "../../../utils/api";
+import { openFeeReceiptPdf } from "../../AdminTabs/AdminFeeSearch/feeReceiptPdf";
 
 const StdPayment = () => {
   const navigate = useNavigate();
@@ -108,7 +109,7 @@ const StdPayment = () => {
     return "-";
   };
 
-  // Group fees by semester_id only - all fees in the same semester are grouped together
+  // Group fees by semester_id and collapse duplicate fee heads within a semester.
   const groupedFees = useMemo(() => {
     if (!feedetails || feedetails.length === 0) return [];
 
@@ -130,14 +131,72 @@ const StdPayment = () => {
       groups[groupKey].subFees.push(fee);
     });
 
+    const dedupeSubFees = (subFees) => {
+      const dedupedMap = {};
+
+      subFees.forEach((subFee) => {
+        const elementName = (subFee.element_name || "").trim().toUpperCase();
+        const dedupeKey = [
+          subFee.semester_id ?? "",
+          subFee.academic_year_id ?? "",
+          elementName,
+        ].join("|");
+
+        const elementAmount = parseFloat(subFee.element_amount || 0);
+        const paidAmount = parseFloat(subFee.paid_amount || 0);
+        const discountAmount = parseFloat(
+          subFee.discount || subFee.element_discount_amount || 0
+        );
+        const candidateBalance = elementAmount - paidAmount;
+
+        if (!dedupedMap[dedupeKey]) {
+          dedupedMap[dedupeKey] = {
+            ...subFee,
+            element_amount: elementAmount,
+            paid_amount: paidAmount,
+            discount: discountAmount,
+          };
+          return;
+        }
+
+        const existing = dedupedMap[dedupeKey];
+        const existingAmount = parseFloat(existing.element_amount || 0);
+        const existingPaid = parseFloat(existing.paid_amount || 0);
+        const existingDiscount = parseFloat(
+          existing.discount || existing.element_discount_amount || 0
+        );
+        const existingBalance = existingAmount - existingPaid;
+
+        // Keep the strongest representative row instead of summing duplicates.
+        const candidateScore =
+          candidateBalance + paidAmount + discountAmount + elementAmount;
+        const existingScore =
+          existingBalance + existingPaid + existingDiscount + existingAmount;
+
+        if (candidateScore > existingScore) {
+          dedupedMap[dedupeKey] = {
+            ...subFee,
+            element_amount: elementAmount,
+            paid_amount: paidAmount,
+            discount: discountAmount,
+          };
+        }
+      });
+
+      return Object.values(dedupedMap);
+    };
+
     // Calculate totals for each group (excluding sub-fees where all values are zero)
     return Object.values(groups).map((group) => {
-      const totals = group.subFees
+      const normalizedSubFees = dedupeSubFees(group.subFees);
+      const totals = normalizedSubFees
         .filter((subFee) => {
           // Exclude sub-fees where total, paid, and discount are all zero
           const elementAmount = parseFloat(subFee.element_amount || 0);
           const paidAmount = parseFloat(subFee.paid_amount || 0);
-          const discountAmount = parseFloat(subFee.discount || 0);
+          const discountAmount = parseFloat(
+            subFee.discount || subFee.element_discount_amount || 0
+          );
           return !(elementAmount === 0 && paidAmount === 0 && discountAmount === 0);
         })
         .reduce(
@@ -157,6 +216,7 @@ const StdPayment = () => {
 
       return {
         ...group,
+        subFees: normalizedSubFees,
         ...totals,
       };
     });
@@ -219,11 +279,11 @@ const StdPayment = () => {
   );
 
   // Handle receipt link click
-  const handleReceiptClick = async (receiptId) => {
-    if (!receiptId) return;
+  const handleReceiptClick = async (receiptNo) => {
+    if (!receiptNo) return;
 
     try {
-      setSelectedReceipt(receiptId);
+      setSelectedReceipt(receiptNo);
 
       const orgId =
         localStorage.getItem("orgId") ||
@@ -231,21 +291,18 @@ const StdPayment = () => {
       const branchId =
         localStorage.getItem("branchId") || sessionStorage.getItem("branch_id");
 
-      const response = await api.get(
-        "FeeReceipt/GetFeeReceiptBasedOnReceiptId/",
-        {
-          params: {
-            receipt_id: receiptId,
-            organization_id: orgId,
-            branch_id: branchId,
-          },
-        }
-      );
+      const response = await api.get("FeeReceipt/GetFeeReceiptsBasedOnReceiptNo/", {
+        params: {
+          receipt_no: receiptNo,
+          organization_id: orgId,
+          branch_id: branchId,
+        },
+      });
 
       const result = response.data;
-      if (result && result.data) {
-        setReceiptDetails(result.data);  // Access the nested 'data' property
-        setShowReceiptModal(true);
+      if (result && result.receipt_data) {
+        openFeeReceiptPdf(result.receipt_data);
+        return;
       }
     } catch (err) {
       console.error("Error fetching receipt details:", err);
@@ -833,11 +890,7 @@ const StdPayment = () => {
                                   <Button
                                     variant="link"
                                     size="sm"
-                                    onClick={() =>
-                                      handleReceiptClick(
-                                        receipt.receipt_id || receipt.id
-                                      )
-                                    }
+                                    onClick={() => handleReceiptClick(receipt.receipt_no)}
                                     style={{
                                       color: "#007bff",
                                       textDecoration: "underline",

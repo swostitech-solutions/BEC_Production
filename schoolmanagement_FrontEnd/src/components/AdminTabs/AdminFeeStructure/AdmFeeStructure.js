@@ -44,6 +44,7 @@ function AdmFeeStructure() {
   const [feeStructureName, setFeeStructureName] = useState("");
   const [version, setVersion] = useState("");
   const [isResetting, setIsResetting] = useState(false);
+  const [errors, setErrors] = useState({});
 
   // const [disabledSemesters, setDisabledSemesters] = useState(Array(8).fill(true));
   // Use refs for the fields that don't rely on state
@@ -137,6 +138,7 @@ const handleClear = () => {
   setSelectedSection(null);
   setSelectedCategory(null);
   setSelectedNewExisting(null);
+  setErrors({});
 
   //  CLEAR OPTIONS
   setCourses([]);
@@ -555,31 +557,6 @@ useEffect(() => {
   ]);
 
   useEffect(() => {
-    if (isResetting || !selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections, isResetting]);
-
-  useEffect(() => {
     const fetchFrequencyOptions = async () => {
       // Guard clauses - need at least Batch and Course to filter Frequency properly
       if (isResetting) return;
@@ -976,6 +953,7 @@ if (feeElement.amount === "") {
 
   setFeeElement({
     element_type_id: "",
+    name: "",
     frequency: "",
     amount: "",
     semesters: Array(visibleSemesters).fill(""), // ⬅ Correct reset
@@ -1000,17 +978,27 @@ const handleSave = async () => {
       return;
     }
 
-    // Validation
-    if (!selectedCategory) return alert("Please select a category.");
-    if (!selectedSession) return alert("Please select a Session.");
-    if (!selectedCourse) return alert("Please select a Course.");
-    if (!selectedDepartment) return alert("Please select a Department.");
-    if (!selectedAcademicYear) return alert("Please select an Academic Year.");
-    if (!selectedSemester) return alert("Please select a Semester.");
-    if (!selectedSection) return alert("Please select a Section.");
-    if (!selectedNewExisting) return alert("Please select New/Existing.");
+    // Required field validation: Fee Structure Name to Section
+    const fieldErrors = {};
     if (!feeStructureName.trim())
-      return alert("Please enter Fee Structure Name");
+      fieldErrors.feeStructureName = "Fee Structure Name is required.";
+    if (!selectedSession) fieldErrors.session = "Session is required.";
+    if (!selectedCourse) fieldErrors.course = "Course is required.";
+    if (!selectedDepartment) fieldErrors.department = "Department is required.";
+    if (!selectedAcademicYear)
+      fieldErrors.academicYear = "Academic Year is required.";
+    if (!selectedSemester) fieldErrors.semester = "Semester is required.";
+    if (!selectedSection) fieldErrors.section = "Section is required.";
+
+    if (Object.keys(fieldErrors).length > 0) {
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setErrors({});
+
+    // Validation
+    if (!selectedNewExisting) return alert("Please select New/Existing.");
     if (!version.trim()) return alert("Please enter Version");
     if (feeStructure.length === 0)
       return alert("Please add at least one fee element.");
@@ -1042,7 +1030,7 @@ const handleSave = async () => {
         section: Number(selectedSection.value),
         version_no: version.trim(),
         new_existing: selectedNewExisting.value,
-        category: Number(selectedCategory.value),
+        category: selectedCategory ? Number(selectedCategory.value) : null,
         created_by: Number(user_id),
       },
       fee_structure_detail: feeStructure.map((item, index) => ({
@@ -1149,7 +1137,7 @@ if (!response.ok) {
             {/* Fee Structure Name */}
             <div className="col-12 col-md-3 mb-3">
               <label htmlFor="fee-structure-name" className="form-label">
-                Fee Structure Name
+                Fee Structure Name <span className="text-danger">*</span>
               </label>
               <div className="d-flex align-items-center">
                 <input
@@ -1157,15 +1145,21 @@ if (!response.ok) {
                   className="form-control detail"
                   placeholder="Enter Fee Structure Name"
                   value={feeStructureName}
-                  onChange={(e) => setFeeStructureName(e.target.value)}
+                  onChange={(e) => {
+                    setFeeStructureName(e.target.value);
+                    setErrors((prev) => ({ ...prev, feeStructureName: "" }));
+                  }}
                 />
               </div>
+              {errors.feeStructureName && (
+                <small className="text-danger">{errors.feeStructureName}</small>
+              )}
             </div>
 
             {/* Session */}
             <div className="col-12 col-md-3 mb-2">
               <label htmlFor="session" className="form-label">
-                Session
+                Session <span className="text-danger">*</span>
               </label>
 
               <Select
@@ -1179,13 +1173,17 @@ if (!response.ok) {
                 onChange={(selectedOption) => {
                   setSelectedSession(selectedOption);
                   handleSessionChange(selectedOption);
+                  setErrors((prev) => ({ ...prev, session: "" }));
                 }}
               />
+              {errors.session && (
+                <small className="text-danger">{errors.session}</small>
+              )}
             </div>
             {/* Course */}
             <div className="col-12 col-md-3 mb-2">
               <label htmlFor="admitted-course" className="form-label">
-                Course
+                Course <span className="text-danger">*</span>
               </label>
               <Select
                 key={`course-${formKey}`}
@@ -1193,14 +1191,20 @@ if (!response.ok) {
                 id="admitted-course"
                 options={courses}
                 value={selectedCourse}
-                onChange={setSelectedCourse}
+                onChange={(option) => {
+                  setSelectedCourse(option);
+                  setErrors((prev) => ({ ...prev, course: "" }));
+                }}
                 placeholder="Select Course"
               />
+              {errors.course && (
+                <small className="text-danger">{errors.course}</small>
+              )}
             </div>
             {/* Branch */}
             <div className="col-12 col-md-3 mb-2">
               <label htmlFor="branch" className="form-label">
-                Department
+                Department <span className="text-danger">*</span>
               </label>
               <Select
                 key={`dept-${formKey}`}
@@ -1208,15 +1212,21 @@ if (!response.ok) {
                 className="detail"
                 options={departments}
                 value={selectedDepartment}
-                onChange={setSelectedDepartment}
+                onChange={(option) => {
+                  setSelectedDepartment(option);
+                  setErrors((prev) => ({ ...prev, department: "" }));
+                }}
                 placeholder="Select Department"
               />
+              {errors.department && (
+                <small className="text-danger">{errors.department}</small>
+              )}
             </div>
 
             {/* Academic Year */}
             <div className="col-12 col-md-3 mb-2">
               <label htmlFor="session" className="form-label">
-                Academic Year
+                Academic Year <span className="text-danger">*</span>
               </label>
 
               <Select
@@ -1227,13 +1237,19 @@ if (!response.ok) {
                 classNamePrefix="react-select"
                 options={academicYears}
                 value={selectedAcademicYear}
-                onChange={(option) => setSelectedAcademicYear(option)}
+                onChange={(option) => {
+                  setSelectedAcademicYear(option);
+                  setErrors((prev) => ({ ...prev, academicYear: "" }));
+                }}
               />
+              {errors.academicYear && (
+                <small className="text-danger">{errors.academicYear}</small>
+              )}
             </div>
             {/* Semester */}
             <div className="col-12 col-md-3 mb-2">
               <label htmlFor="semester" className="form-label">
-                Semester
+                Semester <span className="text-danger">*</span>
               </label>
               <Select
                 key={`sem-${formKey}`}
@@ -1243,13 +1259,19 @@ if (!response.ok) {
                 classNamePrefix="react-select"
                 options={semesters}
                 value={selectedSemester}
-                onChange={(option) => setSelectedSemester(option)}
+                onChange={(option) => {
+                  setSelectedSemester(option);
+                  setErrors((prev) => ({ ...prev, semester: "" }));
+                }}
               />
+              {errors.semester && (
+                <small className="text-danger">{errors.semester}</small>
+              )}
             </div>
             {/* Section */}
             <div className="col-12 col-md-3 mb-2">
               <label htmlFor="section" className="form-label">
-                Section
+                Section <span className="text-danger">*</span>
               </label>
               <Select
                 key={`sec-${formKey}`}
@@ -1257,17 +1279,15 @@ if (!response.ok) {
                 className="detail"
                 options={sections}
                 value={selectedSection}
-                isDisabled={true}
-                isClearable={false}
-                onChange={() => {}}
-                placeholder={
-                  !selectedSemester?.value
-                    ? "Select Semester first"
-                    : sections?.length > 0
-                    ? "Section auto selected"
-                    : "Loading Section..."
-                }
+                onChange={(option) => {
+                  setSelectedSection(option);
+                  setErrors((prev) => ({ ...prev, section: "" }));
+                }}
+                placeholder="Select Section"
               />
+              {errors.section && (
+                <small className="text-danger">{errors.section}</small>
+              )}
             </div>
 
             {/* Category */}
@@ -1281,8 +1301,9 @@ if (!response.ok) {
                 className="detail"
                 options={categoryOptions}
                 value={selectedCategory} // Bind to the selectedCategory state
-                placeholder="Select Category"
+                placeholder="Select Category (Optional)"
                 classNamePrefix="react-select"
+                isClearable
                 onChange={(selectedOption) => {
                   setSelectedCategory(selectedOption); // Update selected category
                 }}
@@ -1348,7 +1369,7 @@ if (!response.ok) {
                     <select
                       className="detail"
                       style={{ width: "200px" }}
-                      value={feeElement.element_type_id || null}
+                      value={feeElement.element_type_id}
                       onChange={(e) => {
                         const selectedOption = elementNameOptions.find(
                           (o) => o.value.toString() === e.target.value

@@ -198,7 +198,7 @@ function Dashboard() {
           : (feeDue && (feeDue.total_assigned_fees > 0)
             ? "All Clear"
             : "No Info")),
-      link: "/student/payment",
+      link: "/student/payment-gateway",
     },
     {
       icon: <FaBell size={32} />,

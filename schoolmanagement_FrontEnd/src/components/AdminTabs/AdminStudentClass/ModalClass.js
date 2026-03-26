@@ -10,6 +10,7 @@ import useFetchAcademicYearByFilter from "../../hooks/useFetchAcademicYearByFilt
 import useFetchSemesterByFilter from "../../hooks/useFetchSemesterByFilter";
 import useFetchSectionByFilter from "../../hooks/useFetchSectionByFilter";
 import { ApiUrl } from "../../../ApiUrl";
+import ReactPaginate from "react-paginate";
 
 const ModalClass = ({ show, onSelectStudent, handleClose }) => {
   const [students, setStudents] = useState([]);
@@ -28,6 +29,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState(null);
   const [selectedSemester, setSelectedSemester] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
+ 
 
   // ====================== HOOK CALLS (Filtered) ======================
   const { BatchList } = useFetchSessionList(organizationId, branchId);
@@ -89,6 +91,18 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
   const handleOpen = () => {
     setIsModalOpen(true);
   };
+   const [currentPage, setCurrentPage] = useState(1);
+   const itemsPerPage = 10;
+   const indexOfLastItem = currentPage * itemsPerPage;
+   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+   const currentStudents = studentData.slice(indexOfFirstItem, indexOfLastItem);
+
+   const totalPages = Math.ceil(studentData.length / itemsPerPage);
+
+   const handlePageChange = (selectedItem) => {
+     setCurrentPage(selectedItem.selected + 1);
+   };
 
   const handleSearch = async () => {
     try {
@@ -151,6 +165,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
         setStudentData(mappedData);
         setFullStudentData(mappedData);
         setStudentError("");
+           setCurrentPage(1);
       } else {
         setStudentData([]);
         setFullStudentData([]);
@@ -217,13 +232,14 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
 
     // 🔹 Reset data
     setStudentData(fullStudentData);
+    setCurrentPage(0);
   };
 
   const openModal = () => {
     setIsModalOpen(true);
   };
 
-  // ✅ Reset modal state every time it closes
+  //  Reset modal state every time it closes
   useEffect(() => {
     if (!show) {
       setFilters({
@@ -335,13 +351,13 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
-                    {/* <div className="col-12 col-md-3 mb-2">
+                    <div className="col-12 col-md-3 mb-2">
                       <label
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
                         {" "}
-                        Student Barcode{" "}
+                        Roll No{" "}
                       </label>
                       <input
                         type="text"
@@ -349,10 +365,10 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.barcode}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Student Barcode"
+                        placeholder="Roll No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
-                    </div> */}
+                    </div>
                     <div className="col-12 col-md-3 mb-2">
                       <label className="form-label">Session</label>
                       <Select
@@ -368,7 +384,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                             ? {
                                 value: selectedBatch,
                                 label: BatchList.find(
-                                  (b) => b.id === selectedBatch
+                                  (b) => b.id === selectedBatch,
                                 )?.batch_description,
                               }
                             : null
@@ -401,7 +417,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                             ? {
                                 value: selectedCourse,
                                 label: CourseList.find(
-                                  (c) => c.id === selectedCourse
+                                  (c) => c.id === selectedCourse,
                                 )?.course_name,
                               }
                             : null
@@ -431,7 +447,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                             ? {
                                 value: selectedDepartment,
                                 label: BranchList.find(
-                                  (d) => d.id === selectedDepartment
+                                  (d) => d.id === selectedDepartment,
                                 )?.department_description,
                               }
                             : null
@@ -457,12 +473,12 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         }
                         value={
                           AcademicYearList?.find(
-                            (a) => a.id === selectedAcademicYear
+                            (a) => a.id === selectedAcademicYear,
                           )
                             ? {
                                 value: selectedAcademicYear,
                                 label: AcademicYearList.find(
-                                  (a) => a.id === selectedAcademicYear
+                                  (a) => a.id === selectedAcademicYear,
                                 )?.academic_year_description,
                               }
                             : null
@@ -490,7 +506,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                             ? {
                                 value: selectedSemester,
                                 label: SemesterList.find(
-                                  (s) => s.id === selectedSemester
+                                  (s) => s.id === selectedSemester,
                                 )?.semester_description,
                               }
                             : null
@@ -517,7 +533,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                             ? {
                                 value: selectedSection,
                                 label: SectionList.find(
-                                  (s) => s.id === selectedSection
+                                  (s) => s.id === selectedSection,
                                 )?.section_name,
                               }
                             : null
@@ -588,6 +604,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                     <table className="table table-bordered table-striped">
                       <thead>
                         <tr>
+                          <th>Sr No</th>
                           <th>Student Name</th>
                           <th>ONMRC Registration No</th>
                           <th>Admission No</th>
@@ -599,13 +616,14 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Roll No</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {studentData.map((student, index) => (
+                        {currentStudents.map((student, index) => (
                           <tr key={index}>
+                            <td>{indexOfFirstItem + index + 1}</td>
                             <td>{student.studentname}</td>
                             <td>{student.school_admission_no}</td>
                             <td>{student.admission_no}</td>
@@ -617,7 +635,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                             <td>{student.section_name}</td>
                             <td>{student.father_name}</td>
                             <td>{student.mother_name}</td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
                             <td>
                               <button
                                 className="btn btn-success"
@@ -630,6 +648,28 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                  <div className="d-flex justify-content-center mt-3">
+                    <ReactPaginate
+                      previousLabel={"Previous"}
+                      nextLabel={"Next"}
+                      breakLabel={"..."}
+                      breakClassName={"page-item"}
+                      breakLinkClassName={"page-link"}
+                      pageCount={totalPages}
+                      marginPagesDisplayed={2}
+                      pageRangeDisplayed={5}
+                      onPageChange={handlePageChange}
+                      containerClassName={"pagination justify-content-center"}
+                      pageClassName={"page-item"}
+                      pageLinkClassName={"page-link"}
+                      previousClassName={"page-item"}
+                      previousLinkClassName={"page-link"}
+                      nextClassName={"page-item"}
+                      nextLinkClassName={"page-link"}
+                      activeClassName={"active"}
+                      forcePage={currentPage - 1}
+                    />
                   </div>
                 </div>
               </div>

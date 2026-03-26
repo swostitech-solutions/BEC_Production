@@ -39,7 +39,6 @@ const AdmStudentHostelCreate = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
   const [show, setShow] = useState(false);
-  const [formMessage, setFormMessage] = useState("");
 
   const handleShow = () => setShow(true);
   const handleClose = () => setShow(false);
@@ -180,7 +179,7 @@ const AdmStudentHostelCreate = () => {
 
         if (!branch_id || !organization_id) {
           console.error(
-            "Branch ID or Organization ID not found in session storage."
+            "Branch ID or Organization ID not found in session storage.",
           );
           return;
         }
@@ -193,7 +192,7 @@ const AdmStudentHostelCreate = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`, // attach token
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -243,7 +242,7 @@ const AdmStudentHostelCreate = () => {
         }
 
         console.log(
-          `Fetching courses for organization_id=${organization_id}, branch_id=${branch_id}, batch_id=${batch_id}`
+          `Fetching courses for organization_id=${organization_id}, branch_id=${branch_id}, batch_id=${batch_id}`,
         );
 
         const response = await fetch(
@@ -254,7 +253,7 @@ const AdmStudentHostelCreate = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -308,7 +307,7 @@ const AdmStudentHostelCreate = () => {
         }
 
         console.log(
-          `Fetching departments for organization_id=${organization_id}, branch_id=${branch_id}, batch_id=${batch_id}, course_id=${course_id}`
+          `Fetching departments for organization_id=${organization_id}, branch_id=${branch_id}, batch_id=${batch_id}, course_id=${course_id}`,
         );
 
         const response = await fetch(
@@ -319,13 +318,13 @@ const AdmStudentHostelCreate = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Network response not ok: ${response.status} - ${errorText}`
+            `Network response not ok: ${response.status} - ${errorText}`,
           );
         }
 
@@ -415,7 +414,7 @@ const AdmStudentHostelCreate = () => {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Network response not ok: ${response.status} - ${errorText}`
+            `Network response not ok: ${response.status} - ${errorText}`,
           );
         }
 
@@ -504,7 +503,7 @@ const AdmStudentHostelCreate = () => {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Network response not ok: ${response.status} - ${errorText}`
+            `Network response not ok: ${response.status} - ${errorText}`,
           );
         }
 
@@ -600,7 +599,7 @@ const AdmStudentHostelCreate = () => {
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(
-            `Network response not ok: ${response.status} - ${errorText}`
+            `Network response not ok: ${response.status} - ${errorText}`,
           );
         }
 
@@ -646,31 +645,6 @@ const AdmStudentHostelCreate = () => {
     selectedAcademicYear,
     selectedSemester,
   ]);
-
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections]);
 
   useEffect(() => {
     const fetchHostelList = async () => {
@@ -724,16 +698,20 @@ const AdmStudentHostelCreate = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`, // ✅ TOKEN PASSED
             },
-          }
+          },
         );
         const data = await res.json();
 
-        setBlockOptions(
-          data.map((item) => ({
-            value: item.id,
-            label: item.block_name,
-          }))
-        );
+        if (Array.isArray(data)) {
+          setBlockOptions(
+            data.map((item) => ({
+              value: item.id,
+              label: item.block_name,
+            })),
+          );
+        } else {
+          setBlockOptions([]);
+        }
       } catch (error) {
         console.error("Error fetching block list:", error);
         setBlockOptions([]);
@@ -766,12 +744,16 @@ const AdmStudentHostelCreate = () => {
         });
         const data = await response.json();
 
-        setFloorList(
-          data.map((floor) => ({
-            value: floor.id,
-            label: floor.floor_number,
-          }))
-        );
+        if (Array.isArray(data)) {
+          setFloorList(
+            data.map((floor) => ({
+              value: floor.id,
+              label: floor.floor_number,
+            })),
+          );
+        } else {
+          setFloorList([]);
+        }
       } catch (error) {
         console.error("Error fetching floors:", error);
         setFloorList([]);
@@ -782,12 +764,13 @@ const AdmStudentHostelCreate = () => {
   }, [selectedHostel, selectedBlock]);
 
   useEffect(() => {
-    if (!selectedHostel?.value) {
-      setRoomTypes([]);
-      return;
-    }
-
     const fetchRoomTypes = async () => {
+      if (!selectedFloor?.value || !selectedHostel?.value) {
+        setRoomTypes([]);
+        setSelectedRoomType(null);
+        return;
+      }
+
       try {
         const organization_id = sessionStorage.getItem("organization_id") || 1;
         const branch_id = sessionStorage.getItem("branch_id") || 1;
@@ -800,16 +783,20 @@ const AdmStudentHostelCreate = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`, // ✅ TOKEN PASSED
             },
-          }
+          },
         );
         const data = await response.json();
 
-        setRoomTypes(
-          data.map((item) => ({
-            value: item.id,
-            label: item.room_type,
-          }))
-        );
+        if (Array.isArray(data)) {
+          setRoomTypes(
+            data.map((item) => ({
+              value: item.id,
+              label: item.room_type,
+            })),
+          );
+        } else {
+          setRoomTypes([]);
+        }
       } catch (error) {
         console.error("Error fetching Room Types:", error);
         setRoomTypes([]);
@@ -817,7 +804,7 @@ const AdmStudentHostelCreate = () => {
     };
 
     fetchRoomTypes();
-  }, [selectedHostel]);
+  }, [selectedHostel, selectedFloor]);
 
   useEffect(() => {
     if (
@@ -946,7 +933,7 @@ const AdmStudentHostelCreate = () => {
         }
 
         const response = await fetch(
-          `/api/Transport/routemasterlist/${orgId}/${branchId}/`
+          `/api/Transport/routemasterlist/${orgId}/${branchId}/`,
         );
 
         if (!response.ok) {
@@ -967,7 +954,16 @@ const AdmStudentHostelCreate = () => {
 
     fetchRoutes();
   }, []);
+  // When hostel changes
+  // When Hostel changes → reset all dependent fields
 
+  // When Block changes → reset Floor, Room Type, Room, Bed
+
+  // When Floor changes → reset Room, Bed
+
+  // When Room Type changes → reset Room, Bed
+
+  // When Room changes → reset Bed
   const handleSearch = async () => {
     try {
       const academicSessionId = localStorage.getItem("academicSessionId") || "";
@@ -990,7 +986,7 @@ const AdmStudentHostelCreate = () => {
       if (sectionId) queryParams.append("section_id", sectionId);
 
       const response = await fetch(
-        `${ApiUrl.apiurl}HOSTEL/GetStudentHostelList/?${queryParams.toString()}`
+        `${ApiUrl.apiurl}HOSTEL/GetStudentHostelList/?${queryParams.toString()}`,
       );
 
       const data = await response.json();
@@ -1013,7 +1009,7 @@ const AdmStudentHostelCreate = () => {
 
     try {
       const response = await fetch(
-        `${ApiUrl.apiurl}HOSTEL/HostelDetailsRetereiveByStudent/${student.student_id}`
+        `${ApiUrl.apiurl}HOSTEL/HostelDetailsRetereiveByStudent/${student.student_id}`,
       );
       const data = await response.json();
       if (data.message === "success") {
@@ -1061,7 +1057,20 @@ const AdmStudentHostelCreate = () => {
     setFloorList([]);
     setRoomList([]);
     setBedList([]);
-    setFormMessage("");
+  };
+  const handleHostelChange = (option) => {
+    setSelectedHostel(option);
+    setSelectedBlock(null);
+    setSelectedFloor(null);
+    setSelectedRoomType(null);
+    setSelectedRoom(null);
+    setSelectedBed(null);
+
+    setBlockOptions([]);
+    setFloorList([]);
+    setRoomTypes([]);
+    setRoomList([]);
+    setBedList([]);
   };
 
   const handleSave = async () => {
@@ -1072,7 +1081,7 @@ const AdmStudentHostelCreate = () => {
       const created_by = Number(localStorage.getItem("user_id")) || 1;
 
       if (!studentId) {
-        setFormMessage("Error: Please select a student.");
+        alert("Please select a student.");
         return;
       }
       if (
@@ -1083,11 +1092,9 @@ const AdmStudentHostelCreate = () => {
         !selectedRoom?.value ||
         !selectedBed?.value
       ) {
-        setFormMessage("Error: Please select all hostel fields.");
+        alert("Please select all hostel fields.");
         return;
       }
-
-      setFormMessage("");
 
       // ===== CHOICE SEMESTER IDS =====
       let choice_semesters = [];
@@ -1123,22 +1130,22 @@ const AdmStudentHostelCreate = () => {
             Authorization: `Bearer ${token}`, // ✅ TOKEN PASSED
           },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       const result = await response.json();
       console.log("API Save Response:", result);
 
       if (result?.message?.toLowerCase() === "success") {
+        alert("✅ Hostel Assigned Successfully!");
         // Reset form after success
         resetForm();
-        setFormMessage("Hostel assigned successfully!");
       } else {
-        setFormMessage("Error: Failed to assign hostel.");
+        alert("Failed to Assign Hostel");
       }
     } catch (error) {
       console.error("Error in handleSave:", error);
-      setFormMessage("Error: Error while saving hostel data.");
+      alert("Error while saving hostel data");
     }
   };
 
@@ -1187,13 +1194,6 @@ const AdmStudentHostelCreate = () => {
                     Close
                   </button>
                 </div>
-                {formMessage && (
-                  <div
-                    className={`mt-2 small ${formMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}
-                  >
-                    {formMessage}
-                  </div>
-                )}
               </div>
 
               <div className="row mt-3 mx-2 mt-2">
@@ -1318,16 +1318,8 @@ const AdmStudentHostelCreate = () => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester?.value
-                              ? "Select Semester first"
-                              : sections?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
+                          onChange={setSelectedSection}
+                          placeholder="Select Section"
                         />
                       </div>
                       <div className="col-12 col-md-3 mb-2">
@@ -1339,7 +1331,7 @@ const AdmStudentHostelCreate = () => {
                           className="detail"
                           options={hostelList}
                           value={selectedHostel}
-                          onChange={(option) => setSelectedHostel(option)}
+                          onChange={handleHostelChange} // ✅ defined now
                           placeholder="Select Hostel"
                         />
                       </div>
@@ -1353,7 +1345,17 @@ const AdmStudentHostelCreate = () => {
                           placeholder="Select Block"
                           options={blockOptions}
                           value={selectedBlock}
-                          onChange={(option) => setSelectedBlock(option)}
+                          onChange={(option) => {
+                            setSelectedBlock(option);
+                            setSelectedFloor(null);
+                            setSelectedRoomType(null);
+                            setSelectedRoom(null);
+                            setSelectedBed(null);
+                            setFloorList([]);
+                            setRoomTypes([]);
+                            setRoomList([]);
+                            setBedList([]);
+                          }}
                         />
                       </div>
                       <div className="col-12 col-md-3 mb-2">
@@ -1363,7 +1365,15 @@ const AdmStudentHostelCreate = () => {
                         <Select
                           options={floorList}
                           value={selectedFloor}
-                          onChange={(option) => setSelectedFloor(option)}
+                          onChange={(option) => {
+                            setSelectedFloor(option);
+                            setSelectedRoomType(null);
+                            setSelectedRoom(null);
+                            setSelectedBed(null);
+                            setRoomTypes([]);
+                            setRoomList([]);
+                            setBedList([]);
+                          }}
                           placeholder="Select Floor No"
                           className="detail"
                         />
@@ -1377,7 +1387,13 @@ const AdmStudentHostelCreate = () => {
                           placeholder="Select Room Type"
                           options={roomTypes}
                           value={selectedRoomType}
-                          onChange={(option) => setSelectedRoomType(option)}
+                          onChange={(option) => {
+                            setSelectedRoomType(option);
+                            setSelectedRoom(null);
+                            setSelectedBed(null);
+                            setRoomList([]);
+                            setBedList([]);
+                          }}
                         />
                       </div>
                       <div className="col-12 col-md-3 mb-2">
@@ -1388,7 +1404,11 @@ const AdmStudentHostelCreate = () => {
                           className="detail"
                           options={roomList}
                           value={selectedRoom}
-                          onChange={(option) => setSelectedRoom(option)}
+                          onChange={(option) => {
+                            setSelectedRoom(option);
+                            setSelectedBed(null);
+                            setBedList([]);
+                          }}
                           placeholder="Select Room"
                         />
                       </div>
@@ -1423,6 +1443,6 @@ const AdmStudentHostelCreate = () => {
       </div>
     </div>
   );
-};
+};;;
 
 export default AdmStudentHostelCreate;

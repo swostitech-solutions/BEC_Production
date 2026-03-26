@@ -33,7 +33,7 @@ const AdmAttendanceEntry = ({
   setFormData,
   frontCover,
   setFrontCover,
-  submitErrors = {},
+  requiredErrors = {},
 }) => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
@@ -122,41 +122,6 @@ const AdmAttendanceEntry = ({
     selectedAcademicYear, // academic_year_id
     selectedSemester // semester_id
   );
-
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection("");
-      setFormData((prev) => ({
-        ...prev,
-        addmitted_section: "",
-      }));
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const matchingSection = SectionList.find(
-      (sec) => Number(sec.id) === Number(selectedSection),
-    );
-
-    const sectionToUse = matchingSection || SectionList[0];
-    const nextSectionId = sectionToUse?.id ? String(sectionToUse.id) : "";
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setSelectedSection(nextSectionId);
-    setFormData((prev) => ({
-      ...prev,
-      addmitted_section: nextSectionId,
-      feegroup: "",
-      feeappfrom: "",
-    }));
-    localStorage.setItem("selectedSectionId", nextSectionId);
-  }, [selectedSemester, SectionList]);
 
   const {
     genders,
@@ -438,7 +403,9 @@ const AdmAttendanceEntry = ({
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    // For checkboxes use the boolean `checked` value, not the string "on"
+    const finalValue = type === "checkbox" ? checked : value;
 
     // 🚫 Prevent Year > 4 digits for date inputs
     if (["dob", "doj", "date_of_admission"].includes(name)) {
@@ -530,18 +497,10 @@ const AdmAttendanceEntry = ({
       sessionStorage.setItem("CategoryLogic", "true");
     }
 
-    // Auto-set feeappfrom based on admission_type
-    let updatedFormData = { ...formData, [name]: value };
-    
-    if (name === "admission_type") {
-      if (value === "Regular") {
-        updatedFormData.feeappfrom = "1st Semester";
-      } else if (value === "Lateral") {
-        updatedFormData.feeappfrom = "3rd Semester";
-      }
-    }
-
-    setFormData(updatedFormData);
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: finalValue,
+    }));
   };
 
   useEffect(() => {
@@ -561,25 +520,6 @@ const AdmAttendanceEntry = ({
       localStorage.removeItem("selectedCategoryId");
     }
   }, [formData.category]);
-
-  // Auto-set feeappfrom based on admission_type
-  useEffect(() => {
-    if (formData.admission_type) {
-      let feeApplicableValue = "";
-      if (formData.admission_type === "Regular") {
-        feeApplicableValue = "1st Semester";
-      } else if (formData.admission_type === "Lateral") {
-        feeApplicableValue = "3rd Semester";
-      }
-      
-      if (feeApplicableValue && formData.feeappfrom !== feeApplicableValue) {
-        setFormData((prev) => ({
-          ...prev,
-          feeappfrom: feeApplicableValue,
-        }));
-      }
-    }
-  }, [formData.admission_type, formData.feeappfrom]);
 
   useEffect(() => {
     const orgId = formData.organization;
@@ -764,7 +704,24 @@ const AdmAttendanceEntry = ({
                         disabled
                       />{" "}
                     </div>
-
+                    <div className="col-12 col-md-3 mb-3">
+                      <label htmlFor="barcode" className="form-label">
+                        Roll No
+                      </label>
+                      <input
+                        type="text"
+                        id="barcode"
+                        className="form-control detail"
+                        placeholder="Enter Roll No"
+                        name="barcode"
+                        value={formData.barcode}
+                        onChange={handleInputChange}
+                        // disabled
+                      />
+                      {errors.barcode && (
+                        <small style={{ color: "red" }}>{errors.barcode}</small>
+                      )}
+                    </div>
                     <div className="col-12 col-md-5  ">
                       <label htmlFor="student-name" className="form-label">
                         {" "}
@@ -786,9 +743,9 @@ const AdmAttendanceEntry = ({
                             {errors.first_name}
                           </small>
                         )}
-                        {!errors.first_name && submitErrors.first_name && (
+                        {!errors.first_name && requiredErrors.first_name && (
                           <small style={{ color: "red" }}>
-                            {submitErrors.first_name}
+                            {requiredErrors.first_name}
                           </small>
                         )}
                         <input
@@ -819,9 +776,9 @@ const AdmAttendanceEntry = ({
                             {errors.last_name}
                           </small>
                         )}
-                        {!errors.last_name && submitErrors.last_name && (
+                        {!errors.last_name && requiredErrors.last_name && (
                           <small style={{ color: "red" }}>
-                            {submitErrors.last_name}
+                            {requiredErrors.last_name}
                           </small>
                         )}
                       </div>
@@ -876,6 +833,11 @@ const AdmAttendanceEntry = ({
                           })
                         }
                       />
+                      {requiredErrors.gender && (
+                        <small style={{ color: "red" }}>
+                          {requiredErrors.gender}
+                        </small>
+                      )}
                     </div>
 
                     {/* Organization */}
@@ -951,9 +913,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Session"
                       />
-                      {submitErrors.batch && (
+                      {requiredErrors.batch && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.batch}
+                          {requiredErrors.batch}
                         </small>
                       )}
                     </div>
@@ -993,9 +955,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Course"
                       />
-                      {submitErrors.course && (
+                      {requiredErrors.course && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.course}
+                          {requiredErrors.course}
                         </small>
                       )}
                     </div>
@@ -1035,9 +997,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Department"
                       />
-                      {submitErrors.department && (
+                      {requiredErrors.department && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.department}
+                          {requiredErrors.department}
                         </small>
                       )}
                     </div>
@@ -1079,9 +1041,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Academic Year"
                       />
-                      {submitErrors.academic_year && (
+                      {requiredErrors.academic_year && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.academic_year}
+                          {requiredErrors.academic_year}
                         </small>
                       )}
                     </div>
@@ -1106,11 +1068,9 @@ const AdmAttendanceEntry = ({
                         }
                         onChange={(opt) => {
                           setSelectedSemester(opt?.value || "");
-                          setSelectedSection("");
                           setFormData((prev) => ({
                             ...prev,
                             semester: opt?.value || "",
-                            addmitted_section: "",
                             feegroup: "",
                             feeappfrom: "",
                           }));
@@ -1123,9 +1083,9 @@ const AdmAttendanceEntry = ({
                         }
                         placeholder="Select Semester"
                       />
-                      {submitErrors.semester && (
+                      {requiredErrors.semester && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.semester}
+                          {requiredErrors.semester}
                         </small>
                       )}
                     </div>
@@ -1137,39 +1097,37 @@ const AdmAttendanceEntry = ({
                       </label>
                       <Select
                         className=" detail"
-                        isDisabled={true}
+                        isDisabled={false}
                         value={
-                          SectionList?.find(
-                            (s) => Number(s.id) === Number(selectedSection),
-                          )
+                          SectionList?.find((s) => s.id === selectedSection)
                             ? {
                                 value: selectedSection,
                                 label: SectionList.find(
-                                  (s) => Number(s.id) === Number(selectedSection),
+                                  (s) => s.id === selectedSection,
                                 )?.section_name,
                               }
                             : null
                         }
-                        onChange={() => {}}
+                        onChange={(opt) => {
+                          setSelectedSection(opt?.value || "");
+                          setFormData((prev) => ({
+                            ...prev,
+                            addmitted_section: opt?.value || "",
+                            feegroup: "",
+                            feeappfrom: "",
+                          }));
+                        }}
                         options={
                           SectionList?.map((s) => ({
                             value: s.id,
                             label: s.section_name,
                           })) || []
                         }
-                        placeholder={
-                          sectionFilterLoading
-                            ? "Loading Section..."
-                            : selectedSemester
-                              ? "Section auto selected"
-                              : "Select Semester first"
-                        }
-                        isLoading={sectionFilterLoading}
-                        isClearable={false}
+                        placeholder="Select Section"
                       />
-                      {submitErrors.addmitted_section && (
+                      {requiredErrors.addmitted_section && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.addmitted_section}
+                          {requiredErrors.addmitted_section}
                         </small>
                       )}
                     </div>
@@ -1177,6 +1135,7 @@ const AdmAttendanceEntry = ({
                     <div className="col-12 col-md-4 mb-4">
                       <label htmlFor="date_of_admission" className="form-label">
                         Date Of Admission{" "}
+                        <span style={{ color: "red" }}>*</span>
                       </label>
                       <input
                         type="date"
@@ -1187,9 +1146,9 @@ const AdmAttendanceEntry = ({
                         onChange={handleInputChange}
                         disabled={isDisabled}
                       />
-                      {submitErrors.date_of_admission && (
+                      {requiredErrors.date_of_admission && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.date_of_admission}
+                          {requiredErrors.date_of_admission}
                         </small>
                       )}
                     </div>
@@ -1206,7 +1165,9 @@ const AdmAttendanceEntry = ({
                         placeholder="Select Admission Type"
                         options={[
                           { value: "Regular", label: "Regular" },
-                          { value: "Lateral", label: "Lateral" },
+                          { value: "Irregular", label: "Irregular" },
+                          { value: "Government", label: "Government" },
+                          { value: "Management", label: "Management" },
                         ]}
                         value={
                           formData.admission_type
@@ -1225,30 +1186,29 @@ const AdmAttendanceEntry = ({
                           })
                         }
                       />
-                      {submitErrors.admission_type && (
+                      {requiredErrors.admission_type && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.admission_type}
+                          {requiredErrors.admission_type}
                         </small>
                       )}
                     </div>
 
                     <div className="col-12 col-md-4 mb-2">
-                      <label htmlFor="doj" className="form-label">
-                        Date Of Join<span style={{ color: "red" }}>*</span>
+                      <label htmlFor="dob" className="form-label">
+                        Date Of Birth <span style={{ color: "red" }}>*</span>
                       </label>
-
                       <input
                         type="date"
-                        id="doj"
+                        id="dob"
                         className="form-control detail"
-                        name="doj"
-                        value={formData.doj || ""}
+                        name="dob"
+                        value={formData.dob || ""}
                         onChange={handleInputChange}
                         disabled={isDisabled}
                       />
-                      {submitErrors.doj && (
+                      {requiredErrors.dob && (
                         <small style={{ color: "red" }}>
-                          {submitErrors.doj}
+                          {requiredErrors.dob}
                         </small>
                       )}
                     </div>
@@ -1272,34 +1232,15 @@ const AdmAttendanceEntry = ({
                       )}
                     </div> */}
 
-                    {/* <div className="col-12 col-md-4 mb-4">
-                      <label htmlFor="barcode" className="form-label">
-                        Barcode
-                      </label>
-                      <input
-                        type="text"
-                        id="barcode"
-                        className="form-control detail"
-                        placeholder="Enter barcode"
-                        name="barcode"
-                        value={formData.barcode}
-                        onChange={handleInputChange}
-                        // disabled
-                      />
-                      {errors.barcode && (
-                        <small style={{ color: "red" }}>{errors.barcode}</small>
-                      )}
-                    </div> */}
-
                     <div className="col-12 col-md-4 mb-2">
                       <label htmlFor="registration-no" className="form-label">
-                        BPUT Registration Number
+                        ONMRC Registration No
                       </label>
                       <input
                         type="text"
                         id="registration-no"
                         className="form-control detail"
-                        placeholder="Enter BPUT registration number"
+                        placeholder="Enter ONMRC registration no"
                         name="registration_no"
                         value={formData.registration_no}
                         onChange={handleInputChange}
@@ -1742,16 +1683,17 @@ const AdmAttendanceEntry = ({
                       )}
                     </div>
 
+                    {/* Date of Join */}
                     <div className="col-12 col-md-4 mb-4">
-                      <label htmlFor="date-of-birth" className="form-label">
-                        Date Of Birth
+                      <label htmlFor="doj" className="form-label">
+                        Date Of Join
                       </label>
                       <input
                         type="date"
-                        id="date-of-birth"
+                        id="doj"
                         className="form-control detail"
-                        name="dob"
-                        value={formData.dob || ""}
+                        name="doj"
+                        value={formData.doj || ""}
                         onChange={handleInputChange}
                         disabled={isDisabled}
                       />

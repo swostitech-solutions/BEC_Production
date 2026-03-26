@@ -35,7 +35,8 @@ const StudentSearch = () => {
   const [studentData, setStudentData] = useState([]);
   const [termOptions, setTermOptions] = useState([]);
   const [selectedTerms, setSelectedTerms] = useState({});
-  const [validationMessage, setValidationMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [termErrors, setTermErrors] = useState({});
 
   const [isViewClicked, setIsViewClicked] = useState(false);
   const navigate = useNavigate();
@@ -392,31 +393,6 @@ const StudentSearch = () => {
     fetchSections();
   }, [selectedSession, selectedCourse, selectedDepartment, selectedAcademicYear, selectedSemester]);
 
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections, selectedSection]);
-
   // Fetch Term Options for the table dropdown
   useEffect(() => {
     const fetchTermOptions = async () => {
@@ -466,13 +442,21 @@ const StudentSearch = () => {
     const orgId = sessionStorage.getItem("organization_id") || localStorage.getItem("orgId");
     const branchId = sessionStorage.getItem("branch_id") || localStorage.getItem("branchId");
 
-    const classId = selectedCourse?.value;
-    if (!classId) {
-      setValidationMessage("Error: Please select a Course.");
+    const sessionId = selectedSession?.value;
+    if (!sessionId) {
+      setFieldErrors((prev) => ({ ...prev, selectedSession: "Session is required" }));
       return;
     }
 
-    setValidationMessage("");
+    setFieldErrors((prev) => ({ ...prev, selectedSession: "" }));
+
+    const classId = selectedCourse?.value;
+    if (!classId) {
+      setFieldErrors((prev) => ({ ...prev, selectedCourse: "Course is required" }));
+      return;
+    }
+
+    setFieldErrors((prev) => ({ ...prev, selectedCourse: "" }));
 
     const queryParams = new URLSearchParams({
       academic_year_id: academicSessionId,
@@ -527,8 +511,9 @@ const StudentSearch = () => {
     setSelectedSection(null);
     setStudentData([]);
     setSelectedTerms({});
+    setFieldErrors({});
+    setTermErrors({});
     setIsViewClicked(false);
-    setValidationMessage("");
   };
 
   const handleClose = () => {
@@ -540,15 +525,18 @@ const StudentSearch = () => {
       ...prev,
       [studentId]: termValue,
     }));
+    setTermErrors((prev) => ({ ...prev, [studentId]: "" }));
   };
 
   const handleAddDataClick = (student) => {
     const selectedTermId = selectedTerms[student.student_course_id];
     if (!selectedTermId) {
-      setValidationMessage("Error: Please select a Term first.");
+      setTermErrors((prev) => ({
+        ...prev,
+        [student.student_course_id]: "Term is required",
+      }));
       return;
     }
-    setValidationMessage("");
     const selectedTermOption = termOptions.find((t) => t.value === parseInt(selectedTermId));
     navigate("/staff/add-student-data", {
       state: {
@@ -564,10 +552,12 @@ const StudentSearch = () => {
   const handleViewReport = (student) => {
     const selectedTermId = selectedTerms[student.student_course_id];
     if (!selectedTermId) {
-      setValidationMessage("Error: Please select a Term first.");
+      setTermErrors((prev) => ({
+        ...prev,
+        [student.student_course_id]: "Term is required",
+      }));
       return;
     }
-    setValidationMessage("");
     const selectedTermOption = termOptions.find((t) => t.value === parseInt(selectedTermId));
     navigate("/staff/view-student-report", {
       state: {
@@ -624,9 +614,6 @@ const StudentSearch = () => {
                     Close
                   </button>
                 </div>
-                {validationMessage && (
-                  <div className="mt-2 small text-danger">{validationMessage}</div>
-                )}
               </div>
 
               <div className="row mt-3 mx-2">
@@ -660,9 +647,9 @@ const StudentSearch = () => {
                         />
                       </div>
 
-                      {/* <div className="col-12 col-md-3 mb-4">
+                      <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="student-barcode" className="form-label">
-                          Student BarCode
+                          Roll No
                         </label>
                         <input
                           type="text"
@@ -671,7 +658,7 @@ const StudentSearch = () => {
                           value={formData.studentBarcode}
                           onChange={handleInputChange}
                         />
-                      </div> */}
+                      </div>
 
                       {/* Session Dropdown */}
                       <div className="col-12 col-md-3 mb-4">
@@ -686,6 +673,7 @@ const StudentSearch = () => {
                           placeholder="Select Session"
                           onChange={(option) => {
                             setSelectedSession(option);
+                            setFieldErrors((prev) => ({ ...prev, selectedSession: "" }));
                             setSelectedCourse(null);
                             setSelectedDepartment(null);
                             setSelectedAcademicYear(null);
@@ -694,6 +682,9 @@ const StudentSearch = () => {
                           }}
                           isClearable
                         />
+                        {fieldErrors.selectedSession && (
+                          <small className="text-danger">{fieldErrors.selectedSession}</small>
+                        )}
                       </div>
 
                       {/* Course Dropdown */}
@@ -709,7 +700,7 @@ const StudentSearch = () => {
                           placeholder="Select Course"
                           onChange={(option) => {
                             setSelectedCourse(option);
-                            setValidationMessage("");
+                            setFieldErrors((prev) => ({ ...prev, selectedCourse: "" }));
                             setSelectedDepartment(null);
                             setSelectedAcademicYear(null);
                             setSelectedSemester(null);
@@ -718,6 +709,9 @@ const StudentSearch = () => {
                           isDisabled={!selectedSession}
                           isClearable
                         />
+                        {fieldErrors.selectedCourse && (
+                          <small className="text-danger">{fieldErrors.selectedCourse}</small>
+                        )}
                       </div>
 
                       {/* Department Dropdown */}
@@ -776,7 +770,6 @@ const StudentSearch = () => {
                           placeholder="Select Semester"
                           onChange={(option) => {
                             setSelectedSemester(option);
-                            setValidationMessage("");
                             setSelectedSection(null);
                           }}
                           isDisabled={!selectedAcademicYear}
@@ -794,20 +787,14 @@ const StudentSearch = () => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester?.value
-                              ? "Select Semester first"
-                              : sections?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
+                          placeholder="Select Section"
+                          onChange={setSelectedSection}
+                          isDisabled={!selectedSemester}
+                          isClearable
                         />
                       </div>
 
-                      <div className="col-12 col-md-3 mb-4">
+                      {/* <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="roll-number" className="form-label">
                           Roll Number
                         </label>
@@ -818,7 +805,7 @@ const StudentSearch = () => {
                           value={formData.rollNo}
                           onChange={handleInputChange}
                         />
-                      </div>
+                      </div> */}
 
                       <div className="col-12 col-md-3 mb-4">
                         <label htmlFor="father-name" className="form-label">
@@ -889,7 +876,7 @@ const StudentSearch = () => {
                         <th>Student Name</th>
                         <th>Enrollment No</th>
                         <th>Roll No</th>
-                        {/* <th>BarCode</th> */}
+                        {/* <th>Roll no</th> */}
                         <th>Father Name</th>
                         <th>Mother Name</th>
                         <th>Select Term</th>
@@ -906,8 +893,8 @@ const StudentSearch = () => {
                             <td>{student.section_name}</td>
                             <td>{student.full_name}</td>
                             <td>{student.enrollment_no}</td>
-                            <td>{student.rollno || "-"}</td>
-                            {/* <td>{student.barcode || "-"}</td> */}
+                            {/* <td>{student.rollno || "-"}</td> */}
+                            <td>{student.barcode || "-"}</td>
                             <td>{student.father_name || "-"}</td>
                             <td>{student.mother_name || "-"}</td>
                             <td>
@@ -926,6 +913,9 @@ const StudentSearch = () => {
                                   </option>
                                 ))}
                               </select>
+                              {termErrors[student.student_course_id] && (
+                                <small className="text-danger">{termErrors[student.student_course_id]}</small>
+                              )}
                             </td>
 
                             <td>

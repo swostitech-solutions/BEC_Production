@@ -5,7 +5,7 @@ import { ApiUrl } from "../../../ApiUrl";
 import { Button } from "react-bootstrap";
 import Modal from "./Modal"; // Assuming you have a Modal component for selecting students
 
-const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
+const AdmOtherDetails = ({ formData, setFormData }) => {
   const { id } = useParams();
   const [showModal, setShowModal] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null); // To track which row is selected
@@ -140,7 +140,23 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
 
   // Function to handle adding a new row
   const handleAddRow = () => {
-    // Sibling details are optional, so rows can be added without field validation.
+    // Validate required fields before adding a new row in sibling details
+    const incompleteSiblings = formData.sibilingsDetails.filter(
+      (detail) =>
+        !detail.admissionNo ||
+        !detail.studentName ||
+        !detail.class ||
+        !detail.section
+    );
+
+    if (incompleteSiblings.length > 0) {
+      alert(
+        "Please fill in all required fields (Admission No, Student Name, Class, Section) for sibling details before adding a new one."
+      );
+      return; // Prevent adding a new row
+    }
+
+    // If validation passes, add a new row
     setFormData((prevData) => ({
       ...prevData,
       sibilingsDetails: [
@@ -226,11 +242,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       }
                       readOnly
                     />
-                    {submitErrors.sibilingsDetails?.[index]?.admissionNo && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.sibilingsDetails[index].admissionNo}
-                      </small>
-                    )}
                   </td>
                   <td>
                     <input
@@ -241,11 +252,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       }
                       readOnly
                     />
-                    {submitErrors.sibilingsDetails?.[index]?.studentName && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.sibilingsDetails[index].studentName}
-                      </small>
-                    )}
                     <Button
                       style={{ marginLeft: "16px" }}
                       variant="primary"
@@ -263,11 +269,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       }
                       readOnly
                     />
-                    {submitErrors.sibilingsDetails?.[index]?.class && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.sibilingsDetails[index].class}
-                      </small>
-                    )}
                   </td>
                   <td>
                     <input
@@ -278,11 +279,6 @@ const AdmOtherDetails = ({ formData, setFormData, submitErrors = {} }) => {
                       }
                       readOnly
                     />
-                    {submitErrors.sibilingsDetails?.[index]?.section && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.sibilingsDetails[index].section}
-                      </small>
-                    )}
                   </td>
                   <td>
                     <Button

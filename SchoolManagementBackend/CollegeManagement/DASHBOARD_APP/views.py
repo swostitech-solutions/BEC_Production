@@ -1,7 +1,7 @@
 # import datetime
 from datetime import date
 
-from django.db.models import Sum, Case, When, F, Count
+from django.db.models import Sum, Case, When, F, Count, Q
 from django.db.models import Sum, Case, When, Value, DecimalField
 from django.db.models.functions import TruncDate
 from django.http import Http404
@@ -62,7 +62,7 @@ class AttendanceDashBoardListAPIView(ListAPIView):
                 present_student= Attendance_Record.filter(present__iexact="P").count()
                 absent_student = Attendance_Record.filter(present__iexact="A").count()
                 leave_student = Attendance_Record.filter(present__iexact="L").count()
-                not_marked_student= Attendance_Record.filter(present__iexact="").count()
+                not_marked_student = max(0, total_student - (present_student + absent_student + leave_student))
 
                 response_data={
                     'total_student':total_student,
@@ -79,7 +79,7 @@ class AttendanceDashBoardListAPIView(ListAPIView):
                     'present_student': 0,
                     'absent_student': 0,
                     'leave_student': 0,
-                    'not_marked_student': 0
+                    'not_marked_student': total_student
 
                 }
 
@@ -131,40 +131,39 @@ class AttendanceCourseSemesterSectionWiseListAPIView(ListAPIView):
             attendance_date = serializer.validated_data.get('date')
 
             try:
-                # ATTENDANCE_RECORD= Attendance.objects.filter(
-                #     # academic_year_id= serializer.validated_data.get('academic_year_id'),
-                #     organization= organization_id,
-                #     branch = branch_id,
-                #     batch = batch_id,
-                #     attendance_date = attendance_date,
-                #     is_active=True
-                # ).order_by('course','department','academic_year','semester','section')
                 ATTENDANCE_RECORD = Attendance.objects.filter(
                     organization=organization_id,
                     branch=branch_id,
-                    # batch=batch_id,  # Removed: Show all attendance for the date regardless of batch
                     attendance_date=attendance_date,
                     is_active=True
                 )
-                Attendance_data = (ATTENDANCE_RECORD.values(
-                    'course__course_name',
-                    'department__department_description',
-                    'academic_year__academic_year_code',
-                    'semester__semester_description',
-                    'section__section_name',
+
+                # Get ALL distinct sections from StudentCourse across all batches
+                section_groups = StudentCourse.objects.filter(
+                    organization=organization_id,
+                    branch=branch_id,
+                    is_active=True
+                ).values(
+                    'batch', 'batch__batch_description',
+                    'course', 'course__course_name',
+                    'department', 'department__department_description',
+                    'academic_year', 'academic_year__academic_year_code',
+                    'semester', 'semester__semester_description',
+                    'section', 'section__section_name',
                 ).annotate(
-                    total_student=Count('student', distinct=True),
-                    # total_present=Count()
+                    total_enrolled=Count('id')
                 ).order_by(
+                    'batch',
                     'course',
                     'department',
                     'academic_year',
                     'semester',
                     'section',
-                ))
+                )
 
             except:
-                ATTENDANCE_RECORD=[]
+                ATTENDANCE_RECORD = []
+                section_groups = []
 
 
 
@@ -178,26 +177,42 @@ class AttendanceCourseSemesterSectionWiseListAPIView(ListAPIView):
             #     semester_list = AcademicYear.objects.filter(organization=organization_id,branch=branch_id,batch=batch_id,is_active=True)
             #     section_list= Section.objects.filter(organization=organization_id,branch=branch_id,batch=batch_id,is_active=True)
 
-            if ATTENDANCE_RECORD :
+            if section_groups:
                 response_data=[]
 
-                total_present_student = ATTENDANCE_RECORD.filter(present__iexact="P").count()
-                total_absent_student = ATTENDANCE_RECORD.filter(present__iexact="A").count()
-                total_leave_student = ATTENDANCE_RECORD.filter(present__iexact="L").count()
-                not_marked_student = ATTENDANCE_RECORD.filter(present__iexact="").count()
-                for item in Attendance_data:
+                for item in section_groups:
+                    section_attendance = ATTENDANCE_RECORD.filter(
+                        course=item['course'],
+                        department=item['department'],
+                        academic_year=item['academic_year'],
+                        semester=item['semester'],
+                        section=item['section'],
+                    ) if ATTENDANCE_RECORD else []
+
+                    if section_attendance:
+                        section_present = section_attendance.filter(present__iexact='P').count()
+                        section_absent = section_attendance.filter(present__iexact='A').count()
+                        section_leave = section_attendance.filter(present__iexact='L').count()
+                    else:
+                        section_present = 0
+                        section_absent = 0
+                        section_leave = 0
+
+                    total_enrolled = item['total_enrolled']
+                    not_marked = max(0, total_enrolled - (section_present + section_absent + section_leave))
+
                     data = {
+                        'session': item.get('batch__batch_description'),
                         'course_name': item.get('course__course_name'),
                         'department': item.get('department__department_description'),
                         'academic_year': item.get('academic_year__academic_year_code'),
                         'semester': item.get('semester__semester_description'),
                         'section_name': item.get('section__section_name'),
-                        'total_student': item.get('total_student'),
-                        # 'total_student': ATTENDANCE_RECORD.count(),
-                        'total_present': total_present_student,
-                        'total_absent': total_absent_student,
-                        'total_leave': total_leave_student,
-                        'not_marked_student': not_marked_student
+                        'total_student': total_enrolled,
+                        'total_present': section_present,
+                        'total_absent': section_absent,
+                        'total_leave': section_leave,
+                        'not_marked_student': not_marked
                     }
                     response_data.append(data)
                 return Response({'message': 'success', 'data': response_data}, status=status.HTTP_200_OK)

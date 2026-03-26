@@ -3,14 +3,13 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import Select from "react-select";
 import axios from "axios";
+import { toast } from "react-toastify";
 import { ApiUrl } from "../../../ApiUrl";
 
 const AdmNewInventory = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [statusMessage, setStatusMessage] = useState("");
 
   // Check if we're in edit mode
   const editMode = location.state?.editMode || false;
@@ -31,9 +30,11 @@ const AdmNewInventory = () => {
     item_value: "",
     quantity: "",
     inventory_type: "",
+    inventory_location: "",
     status: "",  // Used for Asset Code No
     description: "",
   });
+  const [errors, setErrors] = useState({});
 
   // Dropdown options
   const [categories, setCategories] = useState([]);
@@ -44,6 +45,12 @@ const AdmNewInventory = () => {
     { value: "Consumable", label: "Consumable" },
     { value: "Non-Consumable", label: "Non-Consumable" },
     { value: "Asset", label: "Asset" },
+  ];
+
+  const inventoryLocationOptions = [
+    { value: "Medical", label: "Medical" },
+    { value: "Hostel", label: "Hostel" },
+    { value: "Nursing College", label: "Nursing College" },
   ];
 
   const statusOptions = [
@@ -135,6 +142,7 @@ const AdmNewInventory = () => {
         item_value: itemData.item_value || "",
         quantity: itemData.quantity || "",
         inventory_type: itemData.inventory_type || "",
+        inventory_location: itemData.inventory_location || "",
         status: itemData.status || "",
         description: itemData.description || "",
       });
@@ -150,7 +158,6 @@ const AdmNewInventory = () => {
   const handleCategoryChange = (selectedOption) => {
     const categoryId = selectedOption?.value || "";
     setFormData({ ...formData, category: categoryId, sub_category: "" });
-    setErrors((prev) => ({ ...prev, category: "", sub_category: "" }));
 
     if (categoryId) {
       fetchSubCategories(categoryId);
@@ -162,42 +169,43 @@ const AdmNewInventory = () => {
   // Handle input changes
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
-    setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   // Handle Save
   const handleSave = async () => {
+    // Validation - build object of errors
     const newErrors = {};
-    if (!formData.purchase_date) newErrors.purchase_date = "Purchase Date is required.";
-    if (!formData.category) newErrors.category = "Inventory Category is required.";
-    if (!formData.sub_category) newErrors.sub_category = "Inventory Sub-Category is required.";
-    if (!formData.item_name.trim()) newErrors.item_name = "Item Name is required.";
-    if (!formData.item_value || parseFloat(formData.item_value) < 0) {
-      newErrors.item_value = "Enter a valid Value.";
-    }
-    if (!formData.quantity || parseInt(formData.quantity) < 0) {
-      newErrors.quantity = "Enter a valid Quantity.";
-    }
-    if (!formData.inventory_type) newErrors.inventory_type = "Inventory Type is required.";
-    if (!formData.status.trim()) newErrors.status = "Asset Code No is required.";
+    if (!formData.purchase_date) newErrors.purchase_date = "Purchase date is required";
+    if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.sub_category) newErrors.sub_category = "Sub-category is required";
+    if (!formData.item_name.trim()) newErrors.item_name = "Item name is required";
+    if (!formData.item_value || parseFloat(formData.item_value) < 0)
+      newErrors.item_value = "Valid item value is required";
+    if (!formData.quantity || parseInt(formData.quantity) < 0)
+      newErrors.quantity = "Valid quantity is required";
+    if (!formData.inventory_type)
+      newErrors.inventory_type = "Inventory type is required";
+    if (!formData.inventory_location)
+      newErrors.inventory_location = "Inventory location is required";
+    if (!formData.status) newErrors.status = "Asset code is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
+    // clear any previous errors prior to submitting
     setErrors({});
-    setStatusMessage("");
 
     // Validate required IDs
     if (!orgId || !branchId) {
-      setStatusMessage("Error: Organization and Branch information is missing. Please log in again.");
+      toast.error("Organization and Branch information is missing. Please log in again.");
       console.error("Missing:", { orgId, branchId });
       return;
     }
 
     if (!userId) {
-      setStatusMessage("Error: User information is missing. Please log in again.");
+      toast.error("User information is missing. Please log in again.");
       console.error("Missing userId:", userId);
       return;
     }
@@ -225,6 +233,7 @@ const AdmNewInventory = () => {
             item_value: parseFloat(formData.item_value),
             quantity: parseInt(formData.quantity),
             inventory_type: formData.inventory_type,
+            inventory_location: formData.inventory_location,
             status: formData.status,
             purchase_date: formData.purchase_date,
             description: formData.description || "",
@@ -247,6 +256,7 @@ const AdmNewInventory = () => {
             item_value: parseFloat(formData.item_value),
             quantity: parseInt(formData.quantity),
             inventory_type: formData.inventory_type,
+            inventory_location: formData.inventory_location,
             status: formData.status,
             purchase_date: formData.purchase_date,
             description: formData.description || "",
@@ -264,18 +274,20 @@ const AdmNewInventory = () => {
           ? "Inventory Item updated successfully!"
           : "Inventory Item added successfully!";
 
-        setStatusMessage(response.data.message || successMessage);
+        alert(successMessage);
+        toast.success(
+          response.data.message ||
+          (editMode ? "Inventory Item updated successfully" : "Inventory Item added successfully")
+        );
         handleClear();
         // Navigate to search page
         setTimeout(() => {
           navigate("/admin/inventory-search");
         }, 1500);
       } else {
-        setStatusMessage(
-          `Error: ${
-            response.data.message ||
-            (editMode ? "Failed to update inventory item" : "Failed to add inventory item")
-          }`
+        toast.error(
+          response.data.message ||
+          (editMode ? "Failed to update inventory item" : "Failed to add inventory item")
         );
       }
     } catch (error) {
@@ -299,7 +311,7 @@ const AdmNewInventory = () => {
         }
       }
 
-      setStatusMessage(`Error: ${errorMessage}`);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -314,11 +326,10 @@ const AdmNewInventory = () => {
       item_value: "",
       quantity: "",
       inventory_type: "",
+      inventory_location: "",
       status: "",  // Asset Code No
     });
     setFilteredSubCategories(subCategories);
-    setErrors({});
-    setStatusMessage("");
   };
 
   const handleClose = () => {
@@ -370,11 +381,6 @@ const AdmNewInventory = () => {
                     Close
                   </button>
                 </div>
-                {statusMessage && (
-                  <div className={`mt-2 small ${statusMessage.startsWith("Error:") ? "text-danger" : "text-success"}`}>
-                    {statusMessage}
-                  </div>
-                )}
               </div>
 
               {/* Field data */}
@@ -396,7 +402,11 @@ const AdmNewInventory = () => {
                             handleInputChange("purchase_date", e.target.value)
                           }
                         />
-                        {errors.purchase_date && <div className="text-danger small mt-1">{errors.purchase_date}</div>}
+                        {errors.purchase_date && (
+                          <small className="text-danger">
+                            {errors.purchase_date}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -430,7 +440,11 @@ const AdmNewInventory = () => {
                           onChange={handleCategoryChange}
                           placeholder="Select"
                         />
-                        {errors.category && <div className="text-danger small mt-1">{errors.category}</div>}
+                        {errors.category && (
+                          <small className="text-danger">
+                            {errors.category}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -469,7 +483,11 @@ const AdmNewInventory = () => {
                           }
                           placeholder="Select"
                         />
-                        {errors.sub_category && <div className="text-danger small mt-1">{errors.sub_category}</div>}
+                        {errors.sub_category && (
+                          <small className="text-danger">
+                            {errors.sub_category}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -486,7 +504,11 @@ const AdmNewInventory = () => {
                             handleInputChange("item_name", e.target.value)
                           }
                         />
-                        {errors.item_name && <div className="text-danger small mt-1">{errors.item_name}</div>}
+                        {errors.item_name && (
+                          <small className="text-danger">
+                            {errors.item_name}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -505,7 +527,11 @@ const AdmNewInventory = () => {
                           min="0"
                           step="0.01"
                         />
-                        {errors.item_value && <div className="text-danger small mt-1">{errors.item_value}</div>}
+                        {errors.item_value && (
+                          <small className="text-danger">
+                            {errors.item_value}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -523,7 +549,11 @@ const AdmNewInventory = () => {
                           }
                           min="0"
                         />
-                        {errors.quantity && <div className="text-danger small mt-1">{errors.quantity}</div>}
+                        {errors.quantity && (
+                          <small className="text-danger">
+                            {errors.quantity}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -550,7 +580,42 @@ const AdmNewInventory = () => {
                           }
                           placeholder="Select"
                         />
-                        {errors.inventory_type && <div className="text-danger small mt-1">{errors.inventory_type}</div>}
+                        {errors.inventory_type && (
+                          <small className="text-danger">
+                            {errors.inventory_type}
+                          </small>
+                        )}
+                      </div>
+
+                      <div className="col-12 col-md-3 mb-3">
+                        <label htmlFor="inventory-location" className="form-label">
+                          Inventory Location
+                        </label>
+                        <Select
+                          className="detail"
+                          id="inventory-location"
+                          classNamePrefix="react-select"
+                          options={inventoryLocationOptions}
+                          value={
+                            formData.inventory_location
+                              ? inventoryLocationOptions.find(
+                                (opt) => opt.value === formData.inventory_location
+                              )
+                              : null
+                          }
+                          onChange={(selectedOption) =>
+                            handleInputChange(
+                              "inventory_location",
+                              selectedOption?.value || ""
+                            )
+                          }
+                          placeholder="Select"
+                        />
+                        {errors.inventory_location && (
+                          <small className="text-danger">
+                            {errors.inventory_location}
+                          </small>
+                        )}
                       </div>
 
                       <div className="col-12 col-md-3 mb-3">
@@ -567,7 +632,11 @@ const AdmNewInventory = () => {
                             handleInputChange("status", e.target.value)
                           }
                         />
-                        {errors.status && <div className="text-danger small mt-1">{errors.status}</div>}
+                        {errors.status && (
+                          <small className="text-danger">
+                            {errors.status}
+                          </small>
+                        )}
                       </div>
                     </div>
                   </div>

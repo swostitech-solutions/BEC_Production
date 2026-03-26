@@ -40,6 +40,7 @@ const StaffAssignmentEntry = () => {
   });
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const organizationId = sessionStorage.getItem("organization_id");
   const branchId = sessionStorage.getItem("branch_id");
@@ -112,41 +113,6 @@ const StaffAssignmentEntry = () => {
     academicYearId,
     semesterId
   );
-
-  useEffect(() => {
-    if (!formData.semester) {
-      setFormData((prev) => ({
-        ...prev,
-        addmitted_section: "",
-      }));
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      setFormData((prev) => ({
-        ...prev,
-        addmitted_section: "",
-      }));
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(formData.addmitted_section)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      addmitted_section:
-        Number(prev.addmitted_section) === Number(nextSectionId)
-          ? prev.addmitted_section
-          : Number(nextSectionId),
-    }));
-  }, [formData.semester, formData.addmitted_section, SectionList]);
 
   // ---- Lecture, Subject, and Professor dependent dropdowns ----
   const lectureParams = {
@@ -260,6 +226,7 @@ const StaffAssignmentEntry = () => {
     }));
 
     localStorage.setItem("assignmentDate", selectedDate);
+    setFieldErrors((prev) => ({ ...prev, assignmentDate: "" }));
   };
 
   const resetAssignmentFields = () => {
@@ -286,6 +253,7 @@ const StaffAssignmentEntry = () => {
     setSmsRecipient("B");
     setMessage("");
     setRemainingChars(5000);
+    setFieldErrors({});
   };
 
   const fetchAssignments = async () => {
@@ -409,6 +377,7 @@ const StaffAssignmentEntry = () => {
     });
 
     setIsEditMode(false);
+    setFieldErrors({});
   };
 
   const [message, setMessage] = useState("");
@@ -425,6 +394,7 @@ const StaffAssignmentEntry = () => {
       ...prevState,
       assignmentDetails: inputMessage,
     }));
+    setFieldErrors((prev) => ({ ...prev, assignmentDetails: "" }));
 
     setMessage(inputMessage);
     setRemainingChars(
@@ -522,20 +492,23 @@ const StaffAssignmentEntry = () => {
       assignmentDetails,
     } = formData;
 
-    if (
-      !batch ||
-      !course ||
-      !branch ||
-      !academic_year ||
-      !semester ||
-      !addmitted_section ||
-      !lectureId ||
-      !subjectId ||
-      !professorId ||
-      !assignmentDate ||
-      !assignmentDetails
-    ) {
-      alert("⚠️ Please fill all mandatory fields before saving.");
+    const requiredErrors = {};
+    if (!batch) requiredErrors.batch = "Session is required";
+    if (!course) requiredErrors.course = "Course is required";
+    if (!branch) requiredErrors.branch = "Department is required";
+    if (!academic_year) requiredErrors.academic_year = "Academic year is required";
+    if (!semester) requiredErrors.semester = "Semester is required";
+    if (!addmitted_section) requiredErrors.addmitted_section = "Section is required";
+    if (!lectureId) requiredErrors.lectureId = "Period is required";
+    if (!subjectId) requiredErrors.subjectId = "Subject is required";
+    if (!professorId) requiredErrors.professorId = "Lecture is required";
+    if (!assignmentDate) requiredErrors.assignmentDate = "Assignment date is required";
+    if (!assignmentDetails || !assignmentDetails.trim()) {
+      requiredErrors.assignmentDetails = "Assignment details are required";
+    }
+
+    setFieldErrors(requiredErrors);
+    if (Object.keys(requiredErrors).length > 0) {
       return;
     }
 
@@ -625,20 +598,23 @@ const StaffAssignmentEntry = () => {
       assignmentDetails,
     } = formData;
 
-    if (
-      !batch ||
-      !course ||
-      !branch ||
-      !academic_year ||
-      !semester ||
-      !addmitted_section ||
-      !lectureId ||
-      !subjectId ||
-      !professorId ||
-      !assignmentDate ||
-      !assignmentDetails
-    ) {
-      alert("⚠️ Please fill all required fields before updating.");
+    const requiredErrors = {};
+    if (!batch) requiredErrors.batch = "Session is required";
+    if (!course) requiredErrors.course = "Course is required";
+    if (!branch) requiredErrors.branch = "Department is required";
+    if (!academic_year) requiredErrors.academic_year = "Academic year is required";
+    if (!semester) requiredErrors.semester = "Semester is required";
+    if (!addmitted_section) requiredErrors.addmitted_section = "Section is required";
+    if (!lectureId) requiredErrors.lectureId = "Period is required";
+    if (!subjectId) requiredErrors.subjectId = "Subject is required";
+    if (!professorId) requiredErrors.professorId = "Lecture is required";
+    if (!assignmentDate) requiredErrors.assignmentDate = "Assignment date is required";
+    if (!assignmentDetails || !assignmentDetails.trim()) {
+      requiredErrors.assignmentDetails = "Assignment details are required";
+    }
+
+    setFieldErrors(requiredErrors);
+    if (Object.keys(requiredErrors).length > 0) {
       return;
     }
 
@@ -907,6 +883,7 @@ const StaffAssignmentEntry = () => {
                               ...prev,
                               batch: opt?.value || "",
                             }));
+                            setFieldErrors((prev) => ({ ...prev, batch: "" }));
                           }}
                           placeholder={
                             loadingBatch
@@ -916,6 +893,9 @@ const StaffAssignmentEntry = () => {
                                 : "Select Session"
                           }
                         />
+                        {fieldErrors.batch && (
+                          <small className="text-danger">{fieldErrors.batch}</small>
+                        )}
                       </div>
                       {/* Course */}
                       <div className="col-12 col-md-3 mb-1">
@@ -953,11 +933,14 @@ const StaffAssignmentEntry = () => {
                               : null
                           }
                           onChange={(opt) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              course: opt?.value || "",
-                              branch: "",
-                            }))
+                            {
+                              setFormData((prev) => ({
+                                ...prev,
+                                course: opt?.value || "",
+                                branch: "",
+                              }));
+                              setFieldErrors((prev) => ({ ...prev, course: "" }));
+                            }
                           }
                           placeholder={
                             loadingCourses
@@ -967,6 +950,9 @@ const StaffAssignmentEntry = () => {
                                 : "Select Course"
                           }
                         />
+                        {fieldErrors.course && (
+                          <small className="text-danger">{fieldErrors.course}</small>
+                        )}
                       </div>
 
                       {/* Department */}
@@ -1005,10 +991,13 @@ const StaffAssignmentEntry = () => {
                               : null
                           }
                           onChange={(opt) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              branch: opt?.value || "",
-                            }))
+                            {
+                              setFormData((prev) => ({
+                                ...prev,
+                                branch: opt?.value || "",
+                              }));
+                              setFieldErrors((prev) => ({ ...prev, branch: "" }));
+                            }
                           }
                           placeholder={
                             loadingBranches
@@ -1018,6 +1007,9 @@ const StaffAssignmentEntry = () => {
                                 : "Select Department"
                           }
                         />
+                        {fieldErrors.branch && (
+                          <small className="text-danger">{fieldErrors.branch}</small>
+                        )}
                       </div>
 
                       {/* Academic Year */}
@@ -1054,10 +1046,13 @@ const StaffAssignmentEntry = () => {
                               : null
                           }
                           onChange={(opt) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              academic_year: opt?.value || "",
-                            }))
+                            {
+                              setFormData((prev) => ({
+                                ...prev,
+                                academic_year: opt?.value || "",
+                              }));
+                              setFieldErrors((prev) => ({ ...prev, academic_year: "" }));
+                            }
                           }
                           placeholder={
                             loadingAcademicYears
@@ -1067,6 +1062,9 @@ const StaffAssignmentEntry = () => {
                                 : "Select Academic Year"
                           }
                         />
+                        {fieldErrors.academic_year && (
+                          <small className="text-danger">{fieldErrors.academic_year}</small>
+                        )}
                       </div>
 
                       {/* Semester */}
@@ -1102,11 +1100,13 @@ const StaffAssignmentEntry = () => {
                               : null
                           }
                           onChange={(opt) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              semester: opt?.value || "",
-                              addmitted_section: "",
-                            }))
+                            {
+                              setFormData((prev) => ({
+                                ...prev,
+                                semester: opt?.value || "",
+                              }));
+                              setFieldErrors((prev) => ({ ...prev, semester: "" }));
+                            }
                           }
                           placeholder={
                             loadingSemesters
@@ -1116,6 +1116,9 @@ const StaffAssignmentEntry = () => {
                                 : "Select Semester"
                           }
                         />
+                        {fieldErrors.semester && (
+                          <small className="text-danger">{fieldErrors.semester}</small>
+                        )}
                       </div>
 
                       {/* Section */}
@@ -1150,21 +1153,26 @@ const StaffAssignmentEntry = () => {
                               }
                               : null
                           }
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
+                          onChange={(opt) =>
+                            {
+                              setFormData((prev) => ({
+                                ...prev,
+                                addmitted_section: opt?.value || "",
+                              }));
+                              setFieldErrors((prev) => ({ ...prev, addmitted_section: "" }));
+                            }
+                          }
                           placeholder={
-                            !formData.semester
-                              ? "Select Semester first"
-                              : loadingSections
-                                ? "Loading Sections..."
-                                : errorSections
-                                  ? "Error loading sections"
-                                  : SectionList?.length > 0
-                                    ? "Section auto selected"
-                                    : "Loading Section..."
+                            loadingSections
+                              ? "Loading Sections..."
+                              : errorSections
+                                ? "Error loading sections"
+                                : "Select Section"
                           }
                         />
+                        {fieldErrors.addmitted_section && (
+                          <small className="text-danger">{fieldErrors.addmitted_section}</small>
+                        )}
                       </div>
                       {/* Period Dropdown */}
                       <div className="col-12 col-md-3 mb-1">
@@ -1200,6 +1208,7 @@ const StaffAssignmentEntry = () => {
                               subjectId: "",
                               professorId: "",
                             }));
+                            setFieldErrors((prev) => ({ ...prev, lectureId: "" }));
                           }}
                           placeholder={
                             loadingLectures
@@ -1209,6 +1218,9 @@ const StaffAssignmentEntry = () => {
                                 : "Select Period"
                           }
                         />
+                        {fieldErrors.lectureId && (
+                          <small className="text-danger">{fieldErrors.lectureId}</small>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1240,11 +1252,14 @@ const StaffAssignmentEntry = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            subjectId: opt?.value || "",
-                            professorId: "",
-                          }))
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              subjectId: opt?.value || "",
+                              professorId: "",
+                            }));
+                            setFieldErrors((prev) => ({ ...prev, subjectId: "" }));
+                          }
                         }
                         placeholder={
                           loadingSubjects
@@ -1254,6 +1269,9 @@ const StaffAssignmentEntry = () => {
                               : "Select Subject"
                         }
                       />
+                      {fieldErrors.subjectId && (
+                        <small className="text-danger">{fieldErrors.subjectId}</small>
+                      )}
                     </div>
                     {/* Lecture (Professor) Dropdown - Auto-selected for staff */}
                     <div className="col-12 col-md-3 mb-1">
@@ -1286,10 +1304,13 @@ const StaffAssignmentEntry = () => {
                             : null
                         }
                         onChange={(opt) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            professorId: opt?.value || "",
-                          }))
+                          {
+                            setFormData((prev) => ({
+                              ...prev,
+                              professorId: opt?.value || "",
+                            }));
+                            setFieldErrors((prev) => ({ ...prev, professorId: "" }));
+                          }
                         }
                         placeholder={
                           loadingProfessors
@@ -1299,6 +1320,9 @@ const StaffAssignmentEntry = () => {
                               : "Select Professor"
                         }
                       />
+                      {fieldErrors.professorId && (
+                        <small className="text-danger">{fieldErrors.professorId}</small>
+                      )}
                     </div>
                     <div className="col-12 col-md-3 mb-0">
                       <label htmlFor="upload" className="form-label">
@@ -1312,6 +1336,9 @@ const StaffAssignmentEntry = () => {
                         className="form-control detail"
                       />
                     </div>
+                        {fieldErrors.assignmentDate && (
+                          <small className="text-danger">{fieldErrors.assignmentDate}</small>
+                        )}
 
                     <div className="row mb-3 me-2">
                       <div className="col-12">
@@ -1438,6 +1465,9 @@ const StaffAssignmentEntry = () => {
                             boxSizing: "border-box",
                           }}
                         ></textarea>
+                        {fieldErrors.assignmentDetails && (
+                          <small className="text-danger">{fieldErrors.assignmentDetails}</small>
+                        )}
                         <div className="d-flex justify-content-middle mt-1">
                           <small className="text-muted">
                             Remaining characters:{" "}
@@ -1462,7 +1492,7 @@ const StaffAssignmentEntry = () => {
 
               <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table">
+                  <table className="table table-bordered ">
                     <thead>
                       <tr>
                         <th>Sr.No</th>

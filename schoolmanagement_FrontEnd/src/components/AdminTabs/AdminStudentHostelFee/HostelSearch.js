@@ -619,31 +619,6 @@ const AdmAttendanceEntry = () => {
     selectedSemester,
   ]);
 
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections]);
-
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -945,16 +920,8 @@ const AdmAttendanceEntry = () => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester?.value
-                              ? "Select Semester first"
-                              : sections?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
+                          onChange={setSelectedSection}
+                          placeholder="Select Section"
                         />
                       </div>
                     </div>
@@ -971,7 +938,7 @@ const AdmAttendanceEntry = () => {
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
                         <th>Admission No.</th>
-                        {/* <th>Barcode</th> */}
+                        <th>Roll no</th>
                         <th>Session</th>
                         <th>Course</th>
                         <th>Department</th>
@@ -993,7 +960,7 @@ const AdmAttendanceEntry = () => {
                             <td>{student.student_name}</td>
                             <td>{student.registration_no}</td>
                             <td>{student.college_admission_no}</td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
                             <td>{student.batch_code}</td>
                             <td>{student.course_name}</td>
                             <td>{student.department_code}</td>

@@ -30,7 +30,7 @@ const StudentProfileCard = ({ studentData, onClose }) => {
         } ${basicDetails.last_name || ""}`.trim(),
       admissionNo: basicDetails.admission_no || "-",
       classSection:
-        `${basicDetails.course_name || ""} ${basicDetails.department_description || ""
+        `${basicDetails.course_name || ""} ${basicDetails.section_name || ""
           }`.trim() || "-",
       rollNo:
         basicDetails.registration_no ||
@@ -318,10 +318,10 @@ const StudentProfileCard = ({ studentData, onClose }) => {
                                   display: "inline-block",
                                 }}
                               >
-                                Department:
+                                Section:
                               </strong>{" "}
                               <span style={{ color: "#333" }}>
-                                {basicDetails.department_description || "-"}
+                                {basicDetails.section_name || "-"}
                               </span>
                             </div>
                             <div
@@ -442,7 +442,7 @@ const StudentProfileCard = ({ studentData, onClose }) => {
                           value={basicDetails.branch_name}
                         />
                         <SimpleRowItem
-                          label="Batch"
+                          label="Session"
                           value={basicDetails.batch_name}
                         />
                       </Col>

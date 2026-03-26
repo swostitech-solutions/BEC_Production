@@ -73,9 +73,15 @@ const AdmAttendanceEntry = () => {
   };
 
   // Calculate paginated data
-  const offset = currentPage * itemsPerPage;
-  const currentPartyList = partyList.slice(offset, offset + itemsPerPage);
-  const pageCount = Math.ceil(partyList.length / itemsPerPage);
+// Pagination calculations
+const offset = currentPage * itemsPerPage;
+
+const currentPartyList = partyList.slice(
+  offset,
+  offset + itemsPerPage
+);
+
+const pageCount = Math.ceil(partyList.length / itemsPerPage);
 
   // Run once when the component mounts
 

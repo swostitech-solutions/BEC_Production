@@ -8,6 +8,7 @@ import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import Select from "react-select";
 import ReactPaginate from "react-paginate";
+import { jsPDF } from "jspdf";
 import useFetchSessionList from "../../hooks/fetchSessionList";
 import useFetchCourseByFilter from "../../hooks/useFetchCourses";
 import useFetchBranch from "../../hooks/useFetchBranch";
@@ -36,8 +37,8 @@ const AdmAttendanceEntry = () => {
   });
   const [showModal, setShowModal] = useState(false);
   const [selectedClassId, setSelectedClassId] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState(null);
   const [selectedDocumentType, setSelectedDocumentType] = useState(null);
+  const [selectedStudentData, setSelectedStudentData] = useState(null);
 
   const [showStudentSelectionModal, setShowStudentSelectionModal] =
     useState(false);
@@ -89,35 +90,9 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(selectedSection)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
-    );
-  }, [selectedSemester, SectionList]);
-
-  const dateToRef = useRef(null);
-  const dateFromRef = useRef(null);
+  // const dateToRef = useRef(null);
+  // const dateFromRef = useRef(null);
   const fromClassRef = useRef(null);
-  const toStatusRef = useRef(null);
   const toDocumentRef = useRef(null);
   const studentNameRef = useRef(null);
   const admissionNoRef = useRef(null);
@@ -127,57 +102,41 @@ const AdmAttendanceEntry = () => {
   const [message, setMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10; // adjust rows per page
+  useEffect(() => {
+    // Clear filter values when module opens
+    localStorage.removeItem("selectedCertificateClassId");
+    localStorage.removeItem("selectedCertificateSectionId");
+    localStorage.removeItem("selectedDocumentType");
+    localStorage.removeItem("selectedCertificateStudentId");
+  }, []);
 
-  const handleClear = () => {
-    // Reset input refs
-    if (dateToRef.current) dateToRef.current.value = "";
-    if (dateFromRef.current) dateFromRef.current.value = "";
-    if (admissionNoRef.current) admissionNoRef.current.value = "";
-    if (barcodeRef.current) barcodeRef.current.value = "";
-    if (studentNameRef.current) studentNameRef.current.value = "";
+const handleClear = () => {
+  // Reset input refs
+  if (admissionNoRef.current) admissionNoRef.current.value = "";
+  if (barcodeRef.current) barcodeRef.current.value = "";
+  if (studentNameRef.current) studentNameRef.current.value = "";
 
-    // Reset formData fields
-    setFormData({
-      document_no: "",
-      school_admission_no: "",
-      barcode: "",
-      cancellationRemarks: "",
-      cancelledOn: "",
-      studentname: "",
-      father_name: "",
-      mother_name: "",
-      nationality: "",
-      category: "",
-      date_of_admission: "",
-      dob: "",
-      classId: "",
-      sectionId: "",
-      subjects_studied: "",
-      total_working_day: "",
-      total_present_day: "",
-    });
+  // Reset React states
+  setSelectedDocumentType(null);
+  setSelectedBatch(null);
+  setSelectedCourse(null);
+  setSelectedDepartment(null);
+  setSelectedAcademicYear(null);
+  setSelectedSemester(null);
+  setSelectedSection(null);
+  setSelectedStudentData(null);
 
-    // Reset React Selects
-    setSelectedStatus(null);
-    setSelectedDocumentType(null);
+  // ✅ Clear table data
+  setCertificates([]);
+  setMessage("");
+  setCurrentPage(0);
 
-    // Clear localStorage (except critical keys)
-    const keysToKeep = [
-      "academicSessionId",
-      "branchId",
-      "nextAcademicSessionId",
-      "orgId",
-    ];
-    const tempStorage = {};
-    keysToKeep.forEach((key) => {
-      const value = localStorage.getItem(key);
-      if (value !== null) tempStorage[key] = value;
-    });
-    localStorage.clear();
-    Object.entries(tempStorage).forEach(([key, value]) => {
-      localStorage.setItem(key, value);
-    });
-  };
+  // Remove localStorage filters
+  localStorage.removeItem("selectedCertificateClassId");
+  localStorage.removeItem("selectedCertificateSectionId");
+  localStorage.removeItem("selectedDocumentType");
+  localStorage.removeItem("selectedCertificateStudentId");
+};
 
 
   const handleCloseModal = () => {
@@ -198,20 +157,28 @@ const AdmAttendanceEntry = () => {
         const organizationId = sessionStorage.getItem("organization_id");
         const branchId = sessionStorage.getItem("branch_id");
         const response = await fetch(
-          `${ApiUrl.apiurl}STUDENT_CERTIFICATE/GetStudentCertificates/?branch_id=${branchId}&organization_id=${organizationId}`
+          `${ApiUrl.apiurl}StudentCertificate/list/?branch_id=${branchId}&organization_id=${organizationId}`
         );
+
+        if (response.status === 204) {
+          setCertificates([]);
+          setMessage("No records found.");
+          return;
+        }
 
         const result = await response.json();
 
-        if (result.message === "success") {
-          setCertificates(result.data);
+        if (Array.isArray(result)) {
+          setCertificates(result);
+          setMessage("");
         } else {
           setCertificates([]);
-          console.error("Failed:", result.message);
+          setMessage("No records found.");
         }
       } catch (error) {
         console.error("Error fetching certificates:", error);
         setCertificates([]);
+        setMessage("No records found.");
       } finally {
         setLoading(false);
       }
@@ -277,14 +244,58 @@ const AdmAttendanceEntry = () => {
     }
 
     const academicYearId = localStorage.getItem("academicSessionId");
-    const orgId = localStorage.getItem("orgId");
-    const branchId = localStorage.getItem("branchId");
+    const orgId =
+      localStorage.getItem("orgId") || sessionStorage.getItem("organization_id");
+    const branchId =
+      localStorage.getItem("branchId") || sessionStorage.getItem("branch_id");
     const studentId = localStorage.getItem("selectedCertificateStudentId");
 
+    if (!orgId || !branchId) {
+      alert(
+        "Your session seems to be expired or incomplete. Please login again and try once more.",
+      );
+      navigate("/login");
+      return;
+    }
+
     try {
-      const apiUrl = `${ApiUrl.apiurl}STUDENT_CERTIFICATE/GetStudentDetailsBasedOnDocumentTypeStudentId/?academic_year_id=${academicYearId}&orgId=${orgId}&branchId=${branchId}&document_type=${documentType}&studentId=${studentId}`;
+      const apiUrl = `${ApiUrl.apiurl}StudentCertificate/GetDetailsBasedOnDocumentTypeStudentId/?academic_year_id=${academicYearId}&organization_id=${orgId}&branch_id=${branchId}&document_type=${documentType}&student_id=${studentId}`;
 
       const response = await fetch(apiUrl, { method: "GET" });
+
+      if (response.status === 204) {
+        // No certificate exists yet. Proceed to create a new one with basic student data.
+        let stateData = {};
+        if (selectedStudentData) {
+            stateData = {
+                student_id: selectedStudentData.id,
+                studentname: `${selectedStudentData.first_name || ""} ${selectedStudentData.middle_name || ""} ${selectedStudentData.last_name || ""}`.trim().replace(/\s+/g, " "),
+                father_name: selectedStudentData.father_name,
+                mother_name: selectedStudentData.mother_name,
+                school_admission_no: selectedStudentData.admission_no || selectedStudentData.school_admission_no,
+                registration_no: selectedStudentData.rollno || selectedStudentData.registration_no,
+                course: selectedStudentData.classname,
+                section: selectedStudentData.sectionname,
+                barcode: selectedStudentData.barcode,
+            };
+        }
+
+        switch (documentType) {
+          case "TC":
+            navigate("/transfercertificateform", { state: stateData });
+            break;
+          case "CC":
+            navigate("/charactercertificate", { state: stateData });
+            break;
+          case "BC":
+            navigate("/bonafidecertificate", { state: stateData });
+            break;
+          default:
+            alert("Invalid document type.");
+            break;
+        }
+        return;
+      }
 
       if (!response.ok) {
         throw new Error("Failed to fetch student details.");
@@ -302,16 +313,13 @@ const AdmAttendanceEntry = () => {
 
         switch (documentType) {
           case "TC":
-            navigate("/transfercertificateform", { state: result.data });
+            navigate("/transfercertificateform", { state: { certificate: result.data } });
             break;
           case "CC":
-            navigate("/charactercertificate", { state: result.data });
+            navigate("/charactercertificate", { state: { certificate: result.data } });
             break;
           case "BC":
-            navigate("/bonafidecertificate", { state: result.data });
-            break;
-          case "FC":
-            navigate("/feecertificate", { state: result.data });
+            navigate("/bonafidecertificate", { state: { certificate: result.data } });
             break;
           default:
             alert("Invalid document type.");
@@ -351,30 +359,50 @@ const AdmAttendanceEntry = () => {
 
   const documentTypeMapping = {
     TC: "Transfer Certificate",
-    CC: "Character Certificate",
-    BC: "Bonified Certificate",
-    FC: "Fee Certificate",
+    BC: "Bonafide Certificate",
+    CC: "Conduct Certificate",
   };
 
   const handleSearch = () => {
     setLoading(true);
     const orgId = sessionStorage.getItem("organization_id") || 1;
     const brId = sessionStorage.getItem("branch_id") || 1;
-    fetch(`${ApiUrl.apiurl}STUDENT_CERTIFICATE/GetStudentCertificates/?organization_id=${orgId}&branch_id=${brId}`)
-      .then((response) => response.json())
+    
+    let url = `${ApiUrl.apiurl}StudentCertificate/list/?organization_id=${orgId}&branch_id=${brId}`;
+    
+    if (selectedStudentData && selectedStudentData.id) url += `&student_id=${selectedStudentData.id}`;
+    if (selectedBatch) url += `&batch_id=${selectedBatch}`;
+    if (selectedCourse) url += `&course_id=${selectedCourse}`;
+    if (selectedDepartment) url += `&department_id=${selectedDepartment}`;
+    if (selectedAcademicYear) url += `&academic_year_id=${selectedAcademicYear}`;
+    if (selectedSemester) url += `&semester_id=${selectedSemester}`;
+    if (selectedSection) url += `&section_id=${selectedSection}`;
+    if (selectedDocumentType?.value) url += `&document_type=${selectedDocumentType.value}`;
+
+    fetch(url)
+      .then((response) => {
+        if (response.status === 204) {
+          setCertificates([]);
+          setMessage("No records found.");
+          setLoading(false);
+          return null;
+        }
+        return response.json();
+      })
       .then((data) => {
-        if (data.message === "success") {
-          setCertificates(data.data);
+        if (!data) return;
+        if (Array.isArray(data)) {
+          setCertificates(data);
           setMessage("");
         } else {
           setCertificates([]);
-          setMessage("No data found");
+          setMessage("No records found.");
         }
         setLoading(false);
       })
       .catch(() => {
         setCertificates([]);
-        setMessage("Error fetching data");
+        setMessage("No records found.");
         setLoading(false);
       });
   };
@@ -384,69 +412,71 @@ const AdmAttendanceEntry = () => {
   }, []);
 
   const handleButtonClick = async (certificate, action) => {
-    localStorage.setItem("document_type", certificate.documentType);
-    localStorage.setItem("studentId", certificate.studentId);
+    localStorage.setItem("document_type", certificate.document_type);
+    localStorage.setItem("selectedCertificateStudentId", certificate.student_id);
+    localStorage.setItem("selectedDocumentType", certificate.document_type);
     localStorage.setItem(
       "transfer_certificate_id",
-      certificate.transfer_certificate_id
+      certificate.transfer_certificate_id || certificate.character_certificate_id || certificate.bonafide_certificate_id || certificate.fee_certificate_id || 0
     );
 
     const academicYearId = localStorage.getItem("academicSessionId");
     const orgId = localStorage.getItem("orgId");
     const branchId = localStorage.getItem("branchId");
     const documentType = localStorage.getItem("document_type");
-    const studentId = localStorage.getItem("studentId");
+    const studentId = localStorage.getItem("selectedCertificateStudentId");
     const transferCertificateId = localStorage.getItem(
       "transfer_certificate_id"
     );
 
-    const apiUrl = `${ApiUrl.apiurl}STUDENT_CERTIFICATE/GetStudentDetailsBasedOnDocumentTypeStudentId/?academic_year_id=${academicYearId}&orgId=${orgId}&branchId=${branchId}&document_type=${documentType}&studentId=${studentId}&transfer_certificate_id=${transferCertificateId}`;
+    const apiUrl = `${ApiUrl.apiurl}StudentCertificate/GetDetailsBasedOnDocumentTypeStudentId/?academic_year_id=${academicYearId}&organization_id=${orgId}&branch_id=${branchId}&document_type=${documentType}&student_id=${studentId}&transfer_certificate_id=${transferCertificateId}`;
 
     try {
       const response = await fetch(apiUrl);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error:", errorText);
+        alert("Failed to fetch certificate details. Please try again.");
+        return;
+      }
       const result = await response.json();
+      
+      if (!result.data) {
+        console.error("No data returned from API:", result);
+        alert(result.message || "No certificate data found.");
+        return;
+      }
 
       switch (documentType) {
         case "TC":
-          if (action === "view") {
-            navigate("/transfercertificateformview", {
-              state: { certificate: result.data },
+          if (action === "view" || action === "view-new") {
+            navigate("/transfercertificateform", {
+              state: { certificate: result.data, viewMode: true },
             });
           } else {
-            navigate("/transfercertificateformedit", {
+            navigate("/transfercertificateform", {
               state: { certificate: result.data },
             });
           }
           break;
         case "CC":
-          if (action === "view") {
-            navigate("/charactercertificateview", {
-              state: { certificate: result.data },
+          if (action === "view" || action === "view-new") {
+            navigate("/charactercertificate", {
+              state: { certificate: result.data, viewMode: true },
             });
           } else {
-            navigate("/charactercertificateedit", {
+            navigate("/charactercertificate", {
               state: { certificate: result.data },
             });
           }
           break;
         case "BC":
-          if (action === "view") {
-            navigate("/bonafidecertificateview", {
-              state: { certificate: result.data },
+          if (action === "view" || action === "view-new") {
+            navigate("/bonafidecertificate", {
+              state: { certificate: result.data, viewMode: true },
             });
           } else {
-            navigate("/bonafidecertificateedit", {
-              state: { certificate: result.data },
-            });
-          }
-          break;
-        case "FC":
-          if (action === "view") {
-            navigate("/feecertificateview", {
-              state: { certificate: result.data },
-            });
-          } else {
-            navigate("/feecertificateedit", {
+            navigate("/bonafidecertificate", {
               state: { certificate: result.data },
             });
           }
@@ -457,83 +487,174 @@ const AdmAttendanceEntry = () => {
       }
     } catch (error) {
       console.error("Error fetching student details:", error);
+      alert("An error occurred while fetching certificate details.");
+    }
+  };
+
+  const handleGenerateCertificatePDF = async (certificate) => {
+    const certId = certificate.transfer_certificate_id || certificate.character_certificate_id || certificate.bonafide_certificate_id || 0;
+    const studentId = certificate.student_id;
+    const documentType = certificate.document_type;
+    const orgId = sessionStorage.getItem("organization_id");
+    const branchId = sessionStorage.getItem("branch_id");
+
+    try {
+      // Fetch certificate details from API using correct parameters
+      const response = await fetch(
+        `${ApiUrl.apiurl}StudentCertificate/pdf/?organization_id=${orgId}&branch_id=${branchId}&student_id=${studentId}&document_type=${documentType}&student_certificate_id=${certId}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch certificate data");
+      }
+
+      const data = await response.json();
+
+      if (data?.message === "success" && data?.data) {
+        const cert = data.data;
+        const doc = new jsPDF();
+
+        // Add logo
+        try {
+          doc.addImage("/Assets/sparsh.jpeg", "JPEG", 10, 10, 30, 30);
+        } catch (e) {
+          console.warn("Logo not found, continuing without it");
+        }
+
+        // Header
+        doc.setFontSize(14);
+        doc.setFont("Helvetica", "bold");
+        doc.setTextColor(0, 0, 255);
+        doc.text("Sparsh College of Nursing and Allied Sciences", 50, 15);
+
+        doc.setFontSize(12);
+        doc.setFont("Helvetica", "normal");
+        doc.setTextColor(0, 0, 0);
+        doc.text("Affiliated to", 50, 21);
+        doc.text("Affiliation No.: School Code: SPARSH", 50, 27);
+        doc.text("Tel. No.:", 50, 33);
+        doc.text("https://sparshhospitals.com/nursing-college-admission/", 50, 39);
+
+        // Certificate title
+        doc.setFontSize(16);
+        doc.setFont("Helvetica", "bold");
+        const title = documentType === "TC" ? "School Leaving Certificate" : 
+                     documentType === "CC" ? "Character Certificate" : 
+                     "Bonafide Certificate";
+        doc.text(title, 105, 50, { align: "center" });
+
+        // Certificate number
+        doc.setFontSize(10);
+        doc.setFont("Helvetica", "normal");
+        const certNumber = documentType === "TC" ? cert.tc_number : 
+                          documentType === "CC" ? cert.cc_number : 
+                          documentType === "BC" ? cert.bc_number : 
+                          cert.fc_number || "";
+        
+        doc.text("Admission No.: " + (cert.admission_no || ""), 10, 60);
+        doc.text("SRN: ", 105, 60, { align: "center" });
+        doc.text(`Ref No.: ${certNumber}`, 200, 60, { align: "right" });
+
+        // Certificate details
+        const details = [
+          { key: "1. Name of Student", value: cert.student_name || "" },
+          { key: "2. Father's Name", value: cert.father_name || "" },
+          { key: "3. Mother's Name", value: cert.mother_name || "" },
+          { key: "4. Date of Birth", value: cert.date_of_birth ? cert.date_of_birth.split("T")[0] : "" },
+          { key: "5. Nationality", value: cert.nationality || "" },
+          { key: "6. Category", value: cert.category || "" },
+          { key: "7. Date of Admission", value: cert.date_of_admission ? cert.date_of_admission.split("T")[0] : "" },
+        ];
+
+        if (documentType === "TC" && cert.course_name) {
+          details.push(
+            { key: "8. Class/Course", value: cert.course_name || "" },
+            { key: "9. Subjects Studied", value: cert.subjects_studied || "" }
+          );
+        }
+
+        let yPosition = 70;
+        doc.setFontSize(10);
+        doc.setFont("Helvetica", "normal");
+
+        details.forEach((detail) => {
+          if (yPosition > 270) {
+            doc.addPage();
+            yPosition = 20;
+          }
+          doc.text(`${detail.key}: ${detail.value || "-"}`, 10, yPosition);
+          yPosition += 8;
+        });
+
+        // Generate PDF and open in new window
+        const pdfBlob = doc.output("blob");
+        window.open(URL.createObjectURL(pdfBlob), "_blank");
+      } else {
+        alert("Certificate data not found or invalid response from server.");
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("An error occurred while generating the PDF. Please try again.");
     }
   };
 
   const handleViewPDFClick = (certificate) => {
-    localStorage.setItem(
-      "transfer_certificate_id",
-      certificate.transfer_certificate_id
-    );
-    localStorage.setItem("studentId", certificate.studentId);
-    localStorage.setItem("documentType", certificate.documentType);
-
-    // Open PDF viewer in a new tab
-    switch (certificate.documentType) {
-      case "TC":
-        window.open("/transfercertificatepdf", "_blank");
-        break;
-      case "CC":
-        window.open("/charactercertificatepdf", "_blank");
-        break;
-      case "BC":
-        window.open("/bonafidecertificatepdf", "_blank");
-        break;
-      case "FC":
-        window.open("/feecertificatepdf", "_blank");
-        break;
-      default:
-        alert("Invalid document type.");
-        break;
-    }
+    // Navigate to certificate page in view mode instead of generating PDF
+    const documentType = certificate.document_type;
+    const routePath = documentType === "TC" ? "/transfercertificateform" : 
+                     documentType === "CC" ? "/charactercertificate" : 
+                     "/bonafidecertificate";
+    
+    navigate(routePath, { 
+      state: { 
+        certificate: certificate,
+        viewMode: true  // Flag to indicate this is view-only mode
+      } 
+    });
   };
 
   const handleExportToExcel = async () => {
     try {
       // Retrieve values from localStorage
-      const academicYearId = localStorage.getItem("academicSessionId");
-      const orgId = localStorage.getItem("orgId");
-      const branchId = localStorage.getItem("branchId");
+      const orgId = sessionStorage.getItem("organization_id") || localStorage.getItem("orgId");
+      const branchId = sessionStorage.getItem("branch_id") || localStorage.getItem("branchId");
 
       // API URL
-      const apiUrl = `${ApiUrl.apiurl}STUDENT_CERTIFICATE/GetStudentCertificates/?academic_year_id=${academicYearId}&orgId=${orgId}&branchId=${branchId}`;
+      let apiUrl = `${ApiUrl.apiurl}StudentCertificate/list/?organization_id=${orgId}&branch_id=${branchId}`;
+      if (selectedStudentData && selectedStudentData.id) apiUrl += `&student_id=${selectedStudentData.id}`;
+      if (selectedBatch) apiUrl += `&batch_id=${selectedBatch}`;
+      if (selectedCourse) apiUrl += `&course_id=${selectedCourse}`;
+      if (selectedDepartment) apiUrl += `&department_id=${selectedDepartment}`;
+      if (selectedAcademicYear) apiUrl += `&academic_year_id=${selectedAcademicYear}`;
+      if (selectedSemester) apiUrl += `&semester_id=${selectedSemester}`;
+      if (selectedSection) apiUrl += `&section_id=${selectedSection}`;
+      if (selectedDocumentType?.value) apiUrl += `&document_type=${selectedDocumentType.value}`;
 
       // Fetch API data
       const response = await fetch(apiUrl);
+      
+      if (response.status === 204) {
+        alert("No records found.");
+        return;
+      }
+      
       const result = await response.json();
 
-      if (result.message !== "success") {
+      let data = [];
+      if (Array.isArray(result)) {
+        data = result;
+      } else {
         throw new Error("Failed to fetch data");
       }
 
-      const data = result.data;
-
-      // Map documentType and status codes
-      const documentTypeMap = {
-        TC: "Transfer Certificate",
-        BC: "Bonafide Certificate",
-        CC: "Character Certificate",
-        FC: "Fee Certificate",
-      };
-
-      const statusMap = {
-        C: "Canceled",
-        A: "Approved",
-        N: "New",
-      };
-
       // Prepare data for Excel
       const excelData = data.map((item, index) => ({
-        "Sr.No": index + 1,
-        "Document Type": documentTypeMap[item.documentType] || "Unknown",
-        "Applied On": item.tc_applied_date,
-        "Issued On": item.tc_issued_date || "Not Issued",
-        "Document No": item.transfer_certificate_no,
-        "Student Name": item.studentname,
-        "School Admission No": item.school_admission_no,
-        Section: item.sectionname,
-        Reason: item.reason_for_tc || "N/A",
-        Status: statusMap[item.status] || "Unknown",
+        "Sl.No": index + 1,
+        "Document Type": documentTypeMapping[item.document_type] || item.document_type || "N/A",
+        "Student Name": item.student_name || "",
+        "Session": item.batch || "",
+        "Academic Year": item.academic_year || "",
+        "Course": item.course || "",
       }));
 
       // Create a new workbook and worksheet
@@ -654,7 +775,6 @@ const AdmAttendanceEntry = () => {
                             className="form-control detail"
                             placeholder="Enter student name"
                             ref={studentNameRef}
-                            disabled
                           />
 
                           <button
@@ -672,20 +792,27 @@ const AdmAttendanceEntry = () => {
                         show={showStudentSelectionModal}
                         handleClose={handleModalClose}
                         onSelectStudent={(student) => {
-                          const studentDetails = student.studentBasicDetails;
+                          const s = student.studentBasicDetails;
 
-                          admissionNoRef.current.value =
-                            studentDetails.admission_no;
-                          barcodeRef.current.value = studentDetails.barcode;
-                          studentNameRef.current.value = `${studentDetails.first_name
-                            } ${studentDetails.middle_name || ""} ${studentDetails.last_name
-                            }`;
+                          setSelectedStudentData(s);
 
-                          const classId = localStorage.getItem(
-                            "selectedCertificateClassId"
-                          );
-                          const sectionId = localStorage.getItem(
-                            "selectedCertificateSectionId"
+                          // ✅ Input fields
+                          admissionNoRef.current.value = s.admission_no || "";
+                          barcodeRef.current.value = s.rollno || "";
+                          studentNameRef.current.value = `${s.first_name || ""} ${s.middle_name || ""} ${s.last_name || ""}`;
+
+                          // ✅ IMPORTANT: Dropdown mapping
+                          setSelectedBatch(s.batch_id || null);
+                          setSelectedCourse(s.course_id || null);
+                          setSelectedDepartment(s.department_id || null);
+                          setSelectedAcademicYear(s.academic_year_id || null);
+                          setSelectedSemester(s.semester_id || null);
+                          setSelectedSection(s.section_id || null);
+
+                          // Remove stored filters
+                          localStorage.removeItem("selectedCertificateClassId");
+                          localStorage.removeItem(
+                            "selectedCertificateSectionId",
                           );
 
                           handleModalClose();
@@ -704,36 +831,47 @@ const AdmAttendanceEntry = () => {
                             className="form-control detail"
                             placeholder="Enter admission no"
                             ref={admissionNoRef}
-                            disabled
                           />
                         </div>
                       </div>
 
-                      {/* <div className="col-12 col-md-3 mb-1">
+                      <div className="col-12 col-md-3 mb-1">
                         <label htmlFor="student-barcode" className="form-label">
-                          Student BarCode<span style={{ color: "red" }}>*</span>
+                          Roll No<span style={{ color: "red" }}>*</span>
                         </label>
                         <div className="d-flex align-items-center">
                           <input
                             type="text"
                             id="student-barcode"
                             className="form-control detail"
-                            placeholder="Enter student BarCode"
+                            placeholder="Enter Roll No"
                             ref={barcodeRef}
-                            disabled
                           />
                         </div>
-                      </div> */}
+                      </div>
 
                       {/* Batch */}
                       <div className="col-12 col-md-3 mb-2">
-                        <label htmlFor="batch" className="form-label">Batch</label>
+                        <label htmlFor="batch" className="form-label">
+                          Session
+                        </label>
                         <Select
+                          className="detail"
                           isLoading={loadingBatch}
-                          options={BatchList?.map(b => ({ value: b.id, label: b.batch_description })) || []}
+                          options={
+                            BatchList?.map((b) => ({
+                              value: b.id,
+                              label: b.batch_description,
+                            })) || []
+                          }
                           value={
-                            BatchList?.find(b => b.id === selectedBatch)
-                              ? { value: selectedBatch, label: BatchList.find(b => b.id === selectedBatch)?.batch_description }
+                            BatchList?.find((b) => b.id === selectedBatch)
+                              ? {
+                                  value: selectedBatch,
+                                  label: BatchList.find(
+                                    (b) => b.id === selectedBatch,
+                                  )?.batch_description,
+                                }
                               : null
                           }
                           onChange={(opt) => {
@@ -753,16 +891,28 @@ const AdmAttendanceEntry = () => {
                 <div className="col-12">
                   <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                     <div className="row flex-grow-1">
-
                       {/* Course */}
                       <div className="col-12 col-md-3 mb-2">
-                        <label htmlFor="course" className="form-label">Course</label>
+                        <label htmlFor="course" className="form-label">
+                          Course
+                        </label>
                         <Select
+                          className="detail"
                           isLoading={loadingCourse}
-                          options={CourseList?.map(c => ({ value: c.id, label: c.course_name })) || []}
+                          options={
+                            CourseList?.map((c) => ({
+                              value: c.id,
+                              label: c.course_name,
+                            })) || []
+                          }
                           value={
-                            CourseList?.find(c => c.id === selectedCourse)
-                              ? { value: selectedCourse, label: CourseList.find(c => c.id === selectedCourse)?.course_name }
+                            CourseList?.find((c) => c.id === selectedCourse)
+                              ? {
+                                  value: selectedCourse,
+                                  label: CourseList.find(
+                                    (c) => c.id === selectedCourse,
+                                  )?.course_name,
+                                }
                               : null
                           }
                           onChange={(opt) => {
@@ -782,11 +932,22 @@ const AdmAttendanceEntry = () => {
                           Department <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
+                          className="detail"
                           isLoading={loadingDept}
-                          options={BranchList?.map(d => ({ value: d.id, label: d.department_description })) || []}
+                          options={
+                            BranchList?.map((d) => ({
+                              value: d.id,
+                              label: d.department_description,
+                            })) || []
+                          }
                           value={
-                            BranchList?.find(d => d.id === selectedDepartment)
-                              ? { value: selectedDepartment, label: BranchList.find(d => d.id === selectedDepartment)?.department_description }
+                            BranchList?.find((d) => d.id === selectedDepartment)
+                              ? {
+                                  value: selectedDepartment,
+                                  label: BranchList.find(
+                                    (d) => d.id === selectedDepartment,
+                                  )?.department_description,
+                                }
                               : null
                           }
                           onChange={(opt) => {
@@ -805,11 +966,24 @@ const AdmAttendanceEntry = () => {
                           Academic Year <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
+                          className="detail"
                           isLoading={loadingAY}
-                          options={AcademicYearList?.map(a => ({ value: a.id, label: a.academic_year_description })) || []}
+                          options={
+                            AcademicYearList?.map((a) => ({
+                              value: a.id,
+                              label: a.academic_year_description,
+                            })) || []
+                          }
                           value={
-                            AcademicYearList?.find(a => a.id === selectedAcademicYear)
-                              ? { value: selectedAcademicYear, label: AcademicYearList.find(a => a.id === selectedAcademicYear)?.academic_year_description }
+                            AcademicYearList?.find(
+                              (a) => a.id === selectedAcademicYear,
+                            )
+                              ? {
+                                  value: selectedAcademicYear,
+                                  label: AcademicYearList.find(
+                                    (a) => a.id === selectedAcademicYear,
+                                  )?.academic_year_description,
+                                }
                               : null
                           }
                           onChange={(opt) => {
@@ -827,11 +1001,22 @@ const AdmAttendanceEntry = () => {
                           Semester <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
+                          className="detail"
                           isLoading={loadingSem}
-                          options={SemesterList?.map(s => ({ value: s.id, label: s.semester_description })) || []}
+                          options={
+                            SemesterList?.map((s) => ({
+                              value: s.id,
+                              label: s.semester_description,
+                            })) || []
+                          }
                           value={
-                            SemesterList?.find(s => s.id === selectedSemester)
-                              ? { value: selectedSemester, label: SemesterList.find(s => s.id === selectedSemester)?.semester_description }
+                            SemesterList?.find((s) => s.id === selectedSemester)
+                              ? {
+                                  value: selectedSemester,
+                                  label: SemesterList.find(
+                                    (s) => s.id === selectedSemester,
+                                  )?.semester_description,
+                                }
                               : null
                           }
                           onChange={(opt) => {
@@ -848,61 +1033,28 @@ const AdmAttendanceEntry = () => {
                           Section <span style={{ color: "red" }}>*</span>
                         </label>
                         <Select
+                          className="detail"
                           isLoading={loadingSec}
-                          options={SectionList?.map(s => ({ value: s.id, label: s.section_name })) || []}
+                          options={
+                            SectionList?.map((s) => ({
+                              value: s.id,
+                              label: s.section_name,
+                            })) || []
+                          }
                           value={
-                            SectionList?.find((s) => Number(s.id) === Number(selectedSection))
-                              ? { value: selectedSection, label: SectionList.find((s) => Number(s.id) === Number(selectedSection))?.section_name }
+                            SectionList?.find((s) => s.id === selectedSection)
+                              ? {
+                                  value: selectedSection,
+                                  label: SectionList.find(
+                                    (s) => s.id === selectedSection,
+                                  )?.section_name,
+                                }
                               : null
                           }
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester
-                              ? "Select Semester first"
-                              : SectionList?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
+                          onChange={(opt) =>
+                            setSelectedSection(opt?.value || "")
                           }
-                        />
-                      </div>
-
-                      {/* Status */}
-                      <div className="col-12 col-md-3 mb-2">
-                        <label htmlFor="status" className="form-label">
-                          Status
-                        </label>
-                        <Select
-                          id="status"
-                          className="detail"
-                          classNamePrefix="react-select"
-                          options={[
-                            { value: "New", label: "New" },
-                            { value: "Approved", label: "Approved" },
-                            { value: "Cancelled", label: "Cancelled" },
-                          ]}
-                          value={selectedStatus}
-                          onChange={(selectedOption) => {
-                            setSelectedStatus(selectedOption);
-
-                            const statusValue = selectedOption?.value || "";
-                            const statusMapping = {
-                              New: "N",
-                              Approved: "A",
-                              Cancelled: "C",
-                            };
-
-                            if (statusValue) {
-                              localStorage.setItem(
-                                "status",
-                                statusMapping[statusValue] || ""
-                              );
-                            } else {
-                              localStorage.removeItem("status");
-                            }
-                          }}
-                          placeholder="Select"
+                          placeholder="Select Section"
                         />
                       </div>
 
@@ -917,9 +1069,8 @@ const AdmAttendanceEntry = () => {
                           classNamePrefix="react-select"
                           options={[
                             { value: "TC", label: "Transfer Certificate" },
-                            { value: "CC", label: "Character Certificate" },
                             { value: "BC", label: "Bonafide Certificate" },
-                            { value: "FC", label: "Fee Certificate" },
+                            { value: "CC", label: "Conduct Certificate" },
                           ]}
                           value={selectedDocumentType}
                           onChange={(selectedOption) => {
@@ -933,7 +1084,7 @@ const AdmAttendanceEntry = () => {
                       </div>
 
                       {/* Date From */}
-                      <div
+                      {/* <div
                         className="mb-2 me-md-2"
                         style={{ width: "100%", maxWidth: "150px" }}
                       >
@@ -946,9 +1097,9 @@ const AdmAttendanceEntry = () => {
                           className="form-control detail"
                           ref={dateFromRef}
                         />
-                      </div>
+                      </div> */}
                       {/* Date To */}
-                      <div
+                      {/* <div
                         className="mb-3 me-md-2"
                         style={{ width: "100%", maxWidth: "150px" }}
                       >
@@ -961,127 +1112,100 @@ const AdmAttendanceEntry = () => {
                           className="form-control detail"
                           ref={dateToRef}
                         />
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </div>
               </div>
               <div className="col-12">
                 <div className="table-responsive">
-                  <table className="table table-bordered table-striped">
+                  <table className="table table-bordered ">
                     <thead>
                       <tr>
                         <th>Sl.No</th>
                         <th>Document Type</th>
-                        <th>Applied On</th>
-                        <th>Issued On</th>
-                        <th>Document No</th>
                         <th>Student Name</th>
-                        <th>School Admission No</th>
+                        <th>Session</th>
+                        <th>Academic Year</th>
                         <th>Course</th>
-                        <th>Section</th>
-                        <th>Reason</th>
-                        <th>Status</th>
-                        <th>View/Edit</th>
+                        <th>Edit</th>
                         <th>View PDF</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loading ? (
                         <tr>
-                          <td colSpan="13" className="text-center">Loading...</td>
+                          <td colSpan="8" className="text-center">
+                            Loading...
+                          </td>
                         </tr>
                       ) : certificates.length > 0 ? (
                         currentPageData.map((certificate, index) => (
-                          <tr key={certificate.transfer_certificate_id}>
+                          <tr
+                            key={
+                              certificate.transfer_certificate_id ||
+                              certificate.character_certificate_id ||
+                              certificate.bonafide_certificate_id ||
+                              certificate.fee_certificate_id ||
+                              index
+                            }
+                          >
                             <td>{offset + index + 1}</td>
 
                             {/* Document Type */}
                             <td>
-                              {documentTypeMapping[certificate.documentType] || "N/A"}
-                            </td>
-
-                            {/* Applied On */}
-                            <td>{certificate.tc_applied_date || ""}</td>
-
-                            {/* Issued On */}
-                            <td>{certificate.tc_issued_date || ""}</td>
-
-                            {/* Document Number */}
-                            <td>
-                              {certificate.transfer_certificate_no_prefix &&
-                                certificate.transfer_certificate_no_postfix
-                                ? `${certificate.transfer_certificate_no_prefix}/${certificate.transfer_certificate_no_postfix}`
-                                : certificate.transfer_certificate_no || "N/A"}
+                              {documentTypeMapping[certificate.document_type] ||
+                                certificate.document_type ||
+                                "N/A"}
                             </td>
 
                             {/* Student Name */}
-                            <td>{certificate.studentname}</td>
+                            <td>{certificate.student_name || ""}</td>
 
-                            {/* School Admission No */}
-                            <td>{certificate.admission_no}</td>
+                            {/* Session */}
+                            <td>{certificate.batch || ""}</td>
+
+                            {/* Academic Year */}
+                            <td>{certificate.academic_year || ""}</td>
 
                             {/* Class / Course */}
-                            <td>{certificate.course_name}</td>
-
-                            {/* Section */}
-                            <td>{certificate.section_name}</td>
-
-                            {/* Reason */}
-                            <td>{certificate.reason_for_tc || ""}</td>
-
-                            {/* Status */}
-                            <td>
-                              {certificate.status === "A" && "Approved"}
-                              {certificate.status === "C" && "Cancelled"}
-                              {certificate.status === "N" && "New"}
-                              {!certificate.status && "N/A"}
-                            </td>
+                            <td>{certificate.course || ""}</td>
 
                             {/* View/Edit Button */}
                             <td>
-                              {certificate.status === "C" ? (
-                                <button
-                                  className="btn btn-sm btn-primary d-flex align-items-center"
-                                  onClick={() => handleButtonClick(certificate, "view")}
-                                >
-                                  <i className="fas fa-eye me-2"></i>
-                                  View
-                                </button>
-                              ) : (
-                                <button
-                                  className="btn btn-sm btn-primary d-flex align-items-center"
-                                  onClick={() => handleButtonClick(certificate, "edit")}
-                                >
-                                  <i className="fas fa-edit me-2"></i>
-                                  Edit
-                                </button>
-                              )}
+                              <button
+                                className="btn btn-sm btn-primary d-flex align-items-center"
+                                onClick={() =>
+                                  handleButtonClick(certificate, "edit")
+                                }
+                              >
+                                <i className="fas fa-edit me-2"></i>
+                                Edit
+                              </button>
                             </td>
 
                             {/* View PDF */}
                             <td>
-                              {certificate.status === "A" && (
-                                <button
-                                  className="btn btn-sm btn-secondary d-flex align-items-center"
-                                  onClick={() => handleViewPDFClick(certificate)}
-                                >
-                                  <i className="fas fa-file-pdf me-2"></i>
-                                  View PDF
-                                </button>
-                              )}
+                              <a
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleButtonClick(certificate, "view-new");
+                                }}
+                              >
+                                View
+                              </a>
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="13" className="text-center text-muted">
+                          <td colSpan="8" className="text-center text-muted">
                             {message || "No records found."}
                           </td>
                         </tr>
                       )}
                     </tbody>
-
                   </table>
                   <ReactPaginate
                     previousLabel={"Previous"}
@@ -1091,7 +1215,9 @@ const AdmAttendanceEntry = () => {
                     marginPagesDisplayed={2}
                     pageRangeDisplayed={3}
                     onPageChange={handlePageClick}
-                    containerClassName={"pagination justify-content-center mt-3"}
+                    containerClassName={
+                      "pagination justify-content-center mt-3"
+                    }
                     pageClassName={"page-item"}
                     pageLinkClassName={"page-link"}
                     previousClassName={"page-item"}

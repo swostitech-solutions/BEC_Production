@@ -79,7 +79,7 @@ class GetTopicBasedOnSubjectWiseSerializer(serializers.Serializer):
 class LectureDetailSerializer(serializers.Serializer):
     lecture_no = serializers.IntegerField(required=True,allow_null=False)
     module_no = serializers.CharField(max_length=100,allow_null=True,allow_blank=True)
-    topic_id= serializers.IntegerField(required=True,allow_null=False)
+    topic_name = serializers.CharField(max_length=1000, required=True, allow_null=False, allow_blank=False)
     propose_date = serializers.DateField(required=True,allow_null=False)
 
 class LecturePeriod_Serializer(serializers.ModelSerializer):

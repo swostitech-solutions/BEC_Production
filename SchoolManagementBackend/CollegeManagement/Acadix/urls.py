@@ -36,6 +36,8 @@ urlpatterns = [
     path('api/RegisterEmployee/Login/', views.RegisterUserLoginAPIView.as_view(), name='Login'),
     path('api/RegisterEmployee/ChangePassword/', views.RegisterUserChangePasswordAPIView.as_view(),
          name='UserChangePassword'),
+    path('api/RegisterEmployee/GetUserStaffName/', views.GetUserStaffNameAPIView.as_view(),
+         name='GetUserStaffName'),
     path('api/AdminUser/Create/', views.CreateAdminUserAPIView.as_view(), name='CreateAdminUser'),
     path('api/AdminUser/List/', views.ListAdminUserAPIView.as_view(), name='ListAdminUser'),
     path('api/AdminUser/Update/<int:pk>/', views.UpdateAdminUserAPIView.as_view(), name='UpdateAdminUser'),
@@ -242,29 +244,17 @@ urlpatterns = [
     path('api/StudentAddress/DeleteStudentAddress/<int:pk>/', views.StudentAddressDestroyAPIView.as_view(),
          name='studentaddressdelete'),
 
-  path(
-    'api/StudentDetails/GetStudentDetails/<int:academic_id>/<int:student_id>/',
-    views.StudentDetailsGetListAPIView.as_view(),
-    name='studentdetailsGet'
-),
-    path
-    ('api/StudentDetails/GetStudentFullDetails/', views.StudentFullDetailsAPIView.as_view(),
-         name='student-full-details'
-         ),
+    path('api/StudentDetails/GetStudentDetails/<int:academic_id>/<int:student_id>',
+         views.StudentDetailsGetListAPIView.as_view(), name='studentdetailsGet'),
+    path('api/StudentDetails/GetStudentFullDetails/', views.StudentFullDetailsAPIView.as_view(),
+         name='student-full-details'),
+    path('api/StudentFeeDetail/GetStudentFeeDetail/<int:academic_id>/<int:student_id>',
+         views.StudentFeeDetailGetListAPIView.as_view(), name='studentfeedetailsGet'),
+    path('api/FeeElementType/GetAllFeeElements/<str:elementType>', views.FeeElementTypeListAPIView.as_view(),
+         name='fee_element_typelist'),
 
-  path
-  ('api/StudentFeeDetail/GetStudentFeeDetail/<int:academic_id>/<int:student_id>/',
-         views.StudentFeeDetailGetListAPIView.as_view(), name='studentfeedetailsGet'
-         ),
-    path
-    ('api/FeeElementType/GetAllFeeElements/<str:elementType>', views.FeeElementTypeListAPIView.as_view(),
-         name='fee_element_typelist'
-         ),
-
-    path
-    ('api/Filter/GetStudentBasedCourseSection/', views.GetStudentBasedOnCourseSection.as_view(),
-         name='students-by-course-section'
-         ),
+    path('api/Filter/GetStudentBasedCourseSection/', views.GetStudentBasedOnCourseSection.as_view(),
+         name='students-by-course-section'),
     # path('api/Filter/GetstudentBasedClassSection/<str:classlist>/<str:sectionlist>/',views.StudentGetBasedOnClassSection.as_view(), name='students-by-class-section'), #pass class id & section id in comaseparate value like /api/students/class/[1,2,3]/section/[a,b,c]/
 
     path('api/Filter/GetFeeDetailsBasedOnFeeStructureAcademicSession/<int:academic_id>/<int:fee_structure>',
@@ -302,7 +292,7 @@ urlpatterns = [
 
     path('api/LANGUAGE/GetAllLanguageList/', views.LanguageListAPIView.as_view(), name='findlanguagelist'),
 
-    path('api/MOTHERTONGUE/GetAllMotherTongueList/', views.MotherTongueListAPIView.as_view(), name='find_mothertongue_list'),
+    path('api/MOTHERTONGUE/GetAllMotherTongueList/', views.MotherTongueListAPIView.as_view(), name='find mothertong uelist'),
 
     path('api/BLOODGROUP/GetAllBloodGroupList/', views.BloodGroupListAPIView.as_view(), name='findbloodlist'),
 
@@ -348,6 +338,8 @@ urlpatterns = [
          name='feestructureDetailsList'),
     path('api/FeeStructure/GetFeeStructureBasedOnAcademicYear/<int:academic_year_id>/',
          views.GetFeeStructureMasterBasedOnAcademicYear.as_view(), name='findfeestructuretlistBasedOnAcademic'),
+    path('api/FeeStructure/GetFeeStructureBySession/', views.GetFeeStructureBySessionAPIView.as_view(), name='GetFeeStructureBySession'),
+    path('api/FeeStructure/SoftDelete/<int:pk>/', views.SoftDeleteFeeStructureMasterAPIView.as_view(), name='SoftDeleteFeeStructure'),
     # path('api/Filter/GetFilterSTUDENTList/<int:student_id>/<int:school_admission_no>/<str:barcodeno>', views.StudentFilterListAPIView.as_view(), name='studentGetlist'),
 
     path('api/FeeStructureDetails/GetFeeStructureBasedOnStudent/', views.GetStudentFeeDetailListAPIView.as_view(),

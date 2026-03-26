@@ -12,6 +12,7 @@ import { useLocation } from "react-router-dom";
 import { ApiUrl } from "../../../ApiUrl";
 import html2pdf from "html2pdf.js";
 import { useNavigate } from "react-router-dom";
+import { openFeeReceiptPdf } from "../AdminFeeSearch/feeReceiptPdf";
 
 
 
@@ -470,10 +471,16 @@ const FeeDetails = () => {
   };
 
 
-  const handlePrint = () => {
-    window.print();
-  };
+ const handlePrint = () => {
+   const originalTitle = document.title;
+   document.title = "Fee Report"; // 👈 change title
 
+   window.print();
+
+   setTimeout(() => {
+     document.title = originalTitle; // restore after print
+   }, 500);
+ };
   // Calculate totals for display
   const totalReceiptAmt = filteredFeeData.reduce(
     (total, row) => total + (parseFloat(row.amount) || 0),
@@ -486,39 +493,44 @@ const FeeDetails = () => {
 
 
 
-  const handleReceiptLinkClick = async (receiptNo) => {
-    const academicSessionId = localStorage.getItem("academicSessionId");
+const handleReceiptLinkClick = async (receiptNo) => {
+  const academicSessionId = localStorage.getItem("academicSessionId");
 
-    if (!academicSessionId) {
-      alert("Academic session ID not found.");
+  if (!academicSessionId) {
+    alert("Academic session ID not found.");
+    return;
+  }
+
+  try {
+    // Fetch receipt data from API
+    const response = await fetch(
+      `${ApiUrl.apiurl}FeeReceipt/GetFeeReceiptsBasedOnReceiptNo/?organization_id=${orgId}&branch_id=${branchId}&receipt_no=${receiptNo}`,
+    );
+    const result = await response.json();
+
+    if (response.ok && result.receipt_data) {
+      openFeeReceiptPdf(result.receipt_data);
       return;
-    }
 
-    try {
-      const response = await fetch(
-        `${ApiUrl.apiurl}FeeReceipt/GetFeeReceiptsBasedOnReceiptNo/?organization_id=${orgId}&branch_id=${branchId}&receipt_no=${receiptNo}`
-      );
-      const result = await response.json();
+      // Helper function to format date
+      const formatReceiptDate = (isoDate) => {
+        if (!isoDate) return "";
+        const date = new Date(isoDate);
+        return date.toLocaleDateString("en-GB"); // DD/MM/YYYY
+      };
 
-      if (response.ok && result.receipt_data) {
-        // Format the date from ISO to readable format
-        const formatReceiptDate = (isoDate) => {
-          if (!isoDate) return "";
-          const date = new Date(isoDate);
-          return date.toLocaleDateString("en-GB"); // DD/MM/YYYY format
-        };
+      // Handle student_name array
+      const studentName = Array.isArray(result.receipt_data.student_name)
+        ? result.receipt_data.student_name.join(" ")
+        : result.receipt_data.student_name || "";
 
-        // Handle student_name array
-        const studentName = Array.isArray(result.receipt_data.student_name)
-          ? result.receipt_data.student_name.join(" ")
-          : result.receipt_data.student_name || "";
+      // Handle fee_semesters array
+      const feeSemesters = Array.isArray(result.receipt_data.fee_semesters)
+        ? result.receipt_data.fee_semesters.join(", ")
+        : result.receipt_data.fee_semesters || "";
 
-        // Handle fee_semesters array
-        const feeSemesters = Array.isArray(result.receipt_data.fee_semesters)
-          ? result.receipt_data.fee_semesters.join(", ")
-          : result.receipt_data.fee_semesters || "";
-
-        const receiptHtml = `
+      // Generate HTML for receipt
+      const receiptHtml = `
         <div id="pdf-content">
           <div style="width: 70%; border: 1px solid black; padding: 8px; font-family: Arial, sans-serif; font-size: 12px; margin: auto;">
             
@@ -575,15 +587,15 @@ const FeeDetails = () => {
               </thead>
               <tbody>
                 ${Object.values(result.receipt_data.payment_element_list || {})
-            .map(
-              (element, index) => `
+                  .map(
+                    (element, index) => `
                   <tr>
                     <td style="border: 1px solid black; padding: 8px; text-align: center;">${index + 1}</td>
-                    <td style="border: 1px solid black; padding: 8px;">${element.element_name}</td>
+                    <td style="border: 1px solid black; padding: 8px;">${element.element_name || "-"}</td>
                     <td style="border: 1px solid black; padding: 8px; text-align: right;">${Number(element.amount || 0).toFixed(2)}</td>
-                  </tr>`
-            )
-            .join("")}
+                  </tr>`,
+                  )
+                  .join("")}
                 <tr style="background-color: #f0f0f0;">
                   <td colspan="2" style="border: 1px solid black; padding: 8px; text-align: right;"><strong>Total Amount Paid:</strong></td>
                   <td style="border: 1px solid black; padding: 8px; text-align: right;"><strong>₹${Number(result.receipt_data.amount || 0).toFixed(2)}</strong></td>
@@ -641,37 +653,35 @@ const FeeDetails = () => {
         </div>
       `;
 
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = receiptHtml;
-        document.body.appendChild(tempDiv);
+      // Create temporary div and append to body
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = receiptHtml;
+      document.body.appendChild(tempDiv);
 
-        const opt = {
-          margin: 0.5,
-          filename: `Receipt_${result.receipt_data.receipt_no}.pdf`,
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-        };
+      // PDF options
+      const opt = {
+        margin: 0.5,
+        filename: `Receipt_${result.receipt_data.receipt_no}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+      };
 
-
-        const worker = html2pdf().from(tempDiv).set(opt);
-
-        const blob = await worker.outputPdf("blob");
-
-        // Open PDF in a new tab
-        const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
-
-        // Clean up
-        document.body.removeChild(tempDiv);
-      } else {
-        alert(result.message || "Failed to fetch receipt details.");
-      }
-    } catch (error) {
-      console.error("Error fetching receipt details:", error);
-      alert("An error occurred. Please try again.");
+      // Generate and download PDF directly
+      html2pdf()
+        .from(tempDiv)
+        .set(opt)
+        .save()
+        .finally(() => {
+          document.body.removeChild(tempDiv); // Clean up temporary div
+        });
+    } else {
+      alert(result.message || "Failed to fetch receipt details.");
     }
-  };
-
+  } catch (error) {
+    console.error("Error fetching receipt details:", error);
+    alert("An error occurred. Please try again.");
+  }
+};
 
 
   return (
@@ -799,14 +809,6 @@ const FeeDetails = () => {
                   </div>
                 </div>
 
-                {/* Debug Info: Show record count */}
-                <div className="row mx-1">
-                  <div className="col-12">
-                    <div className="alert alert-info py-1">
-                      Records found: {filteredFeeData ? filteredFeeData.length : 0}
-                    </div>
-                  </div>
-                </div>
                 <div id="feeTable" className="col-12">
                   <div className="table-responsive">
                     <table className="table table-bordered">
@@ -892,7 +894,7 @@ const FeeDetails = () => {
                               </div>
 
                               <div className="col-md-6">
-                                <table className="table">
+                                <table className="table table-bordered ">
                                   <tbody>
                                     <tr>
                                       <td className="text-end fw-bold">

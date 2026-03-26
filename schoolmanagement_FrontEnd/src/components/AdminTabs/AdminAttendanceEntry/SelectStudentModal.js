@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Select from "react-select";
 import ReactPaginate from "react-paginate";
 import "./SelectStudentModal.css";
+import useFetchSessionList from "../../hooks/fetchSessionList";
+import useFetchCourseByFilter from "../../hooks/useFetchCourses";
 
 import { ApiUrl } from "../../../ApiUrl";
 
 const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
-  const [selectedSemester, setSelectedSemester] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [studentLoading, setStudentLoading] = useState(false);
   const [studentError, setStudentError] = useState("");
   const [studentData, setStudentData] = useState([]);
@@ -36,97 +38,19 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     setCurrentPage(selected);
   };
 
+  // Session & Course from hooks (same pattern as registration page)
+  const organizationId = sessionStorage.getItem("organization_id");
+  const branchId = sessionStorage.getItem("branch_id");
+  const { BatchList, loading: sessionLoading } = useFetchSessionList(organizationId, branchId);
+  const { CourseList, loading: courseLoading } = useFetchCourseByFilter(
+    organizationId,
+    selectedSession?.value || null
+  );
+
   // Reset to first page when student data changes
   useEffect(() => {
     setCurrentPage(0);
   }, [studentData]);
-
-  // Extract unique semesters from student data - no API call needed!
-  const SemesterList = useMemo(() => {
-    if (!fullStudentData || fullStudentData.length === 0) return [];
-
-    const semestersMap = new Map();
-
-    fullStudentData.forEach((student) => {
-      const details = student.studentBasicDetails || student;
-      // The API returns 'semester' field (not semester_id)
-      const semesterId = details.semester || details.semester_id || details.addmitted_semester;
-      // Check multiple possible field names for semester name
-      const semesterName = details.semester_name || details.semester_description ||
-        details.semester_code || `Semester ${semesterId}`;
-
-      if (semesterId && !semestersMap.has(semesterId)) {
-        semestersMap.set(semesterId, {
-          value: semesterId,
-          label: semesterName,
-        });
-      }
-    });
-
-    return Array.from(semestersMap.values()).sort((a, b) =>
-      a.label.localeCompare(b.label)
-    );
-  }, [fullStudentData]);
-
-  const semesterLoading = false; // No API call needed
-
-  // Extract unique sections from student data based on selected semester
-  // This avoids needing to call the Section API which requires all cascading parameters
-  const SectionList = useMemo(() => {
-    if (!fullStudentData || fullStudentData.length === 0) return [];
-
-    const sectionsMap = new Map();
-
-    fullStudentData.forEach((student) => {
-      const details = student.studentBasicDetails || student;
-      // The API returns 'semester' field (not semester_id)
-      const studentSemesterId = details.semester || details.semester_id || details.addmitted_semester;
-
-      // Filter by semester if selected
-      if (selectedSemester && studentSemesterId?.toString() !== selectedSemester.toString()) {
-        return;
-      }
-
-      // The API returns 'section' field (not section_id)
-      const sectionId = details.section || details.section_id || details.addmitted_section;
-      // Check multiple possible field names for section name
-      const sectionName = details.section_name || details.section_description || `Section ${sectionId}`;
-
-      if (sectionId && !sectionsMap.has(sectionId)) {
-        sectionsMap.set(sectionId, {
-          value: sectionId,
-          label: sectionName,
-        });
-      }
-    });
-
-    return Array.from(sectionsMap.values()).sort((a, b) =>
-      a.label.localeCompare(b.label)
-    );
-  }, [fullStudentData, selectedSemester]);
-
-  const sectionLoading = false; // No API call needed
-
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection("");
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const hasSelected = SectionList.some(
-      (sec) => sec.value?.toString() === selectedSection?.toString()
-    );
-
-    if (hasSelected) {
-      return;
-    }
-
-    setSelectedSection(SectionList[0].value);
-  }, [selectedSemester, SectionList]);
 
   // Fetch Students Data when modal is shown
   useEffect(() => {
@@ -139,7 +63,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
         const academicSessionId = localStorage.getItem("academicSessionId");
 
         if (!academicSessionId) {
-          console.error("No academic session ID found in local storage");
+          console.error("No academic session ID found");
           setStudentError("No academic session ID found");
           setStudentLoading(false);
           return;
@@ -191,69 +115,77 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     }));
   };
 
-  const handleSearch = () => {
-    const filteredData = fullStudentData.filter((student) => {
-      const studentDetails = student.studentBasicDetails || student;
-      const fullName = `${studentDetails.first_name || studentDetails.student_name || ""} ${studentDetails.middle_name || ""
-        } ${studentDetails.last_name || ""}`
-        .trim()
-        .toLowerCase();
-      const searchParts = filters.studentName
-        .toLowerCase()
-        .split(" ")
-        .filter(Boolean);
-      const nameMatches = searchParts.every((part) => fullName.includes(part));
+  const handleSearch = async () => {
+    // If session is selected, course must also be selected
+    if (selectedSession && !selectedCourse) {
+      alert("Please select a Course before searching.");
+      return;
+    }
 
-      // Check admission number - it should match college_admission_no or admission_no
-      const admissionNoMatch = !filters.admissionNo ||
-        (studentDetails.college_admission_no?.toString().includes(filters.admissionNo)) ||
-        (studentDetails.admission_no?.toString().includes(filters.admissionNo));
+    setStudentLoading(true);
+    setStudentError("");
 
-      // Check school admission number (College Admission No field)
-      const schoolAdmissionNoMatch = !filters.schoolAdmissionNo ||
-        (studentDetails.college_admission_no?.toString().includes(filters.schoolAdmissionNo));
+    try {
+      const academicSessionId = selectedSession?.value || localStorage.getItem("academicSessionId");
 
-      // Check semester - the API returns 'semester' field
-      const studentSemesterId = studentDetails.semester || studentDetails.semester_id || studentDetails.addmitted_semester;
-      const semesterMatch = !selectedSemester ||
-        studentSemesterId?.toString() === selectedSemester.toString();
+      if (!academicSessionId) {
+        setStudentError("No session found.");
+        setStudentLoading(false);
+        return;
+      }
 
-      // Check section - the API returns 'section' field
-      const studentSectionId = studentDetails.section || studentDetails.section_id || studentDetails.addmitted_section;
-      const sectionMatch = !selectedSection ||
-        studentSectionId?.toString() === selectedSection.toString();
+      // Build URL — pass course_id to backend for server-side filtering
+      let url = `${ApiUrl.apiurl}StudentCourseApi/GetAllSTUDENTList/${academicSessionId}/`;
+      if (selectedCourse?.value) {
+        url += `?course_id=${selectedCourse.value}`;
+      }
 
-      // Only Semester and Section filter the data (along with text fields)
-      return (
-        (!filters.studentName || nameMatches) &&
-        admissionNoMatch &&
-        (!filters.barcode ||
-          studentDetails.barcode?.toString().includes(filters.barcode)) &&
-        schoolAdmissionNoMatch &&
-        semesterMatch &&
-        sectionMatch &&
-        (!filters.fatherName ||
-          studentDetails.father_name
-            ?.toLowerCase()
-            .includes(filters.fatherName.toLowerCase())) &&
-        (!filters.motherName ||
-          studentDetails.mother_name
-            ?.toLowerCase()
-            .includes(filters.motherName.toLowerCase()))
-      );
-    });
-    setStudentData(filteredData);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Error fetching student data");
+      const data = await response.json();
+
+      const allFetched = data.data || [];
+
+      // Apply client-side text filters on the API result
+      const filteredData = allFetched.filter((student) => {
+        const studentDetails = student.studentBasicDetails || student;
+
+        const fullName = `${studentDetails.first_name || ""} ${studentDetails.middle_name || ""} ${studentDetails.last_name || ""}`
+          .trim()
+          .toLowerCase();
+        const searchParts = filters.studentName.toLowerCase().split(" ").filter(Boolean);
+        const nameMatches = !filters.studentName || searchParts.every((part) => fullName.includes(part));
+
+        const admissionNoMatch = !filters.admissionNo ||
+          studentDetails.college_admission_no?.toString().includes(filters.admissionNo) ||
+          studentDetails.admission_no?.toString().includes(filters.admissionNo);
+
+        const schoolAdmissionNoMatch = !filters.schoolAdmissionNo ||
+          studentDetails.college_admission_no?.toString().includes(filters.schoolAdmissionNo);
+
+        const barcodeMatch = !filters.barcode ||
+          studentDetails.barcode?.toString().includes(filters.barcode);
+
+        const fatherMatch = !filters.fatherName ||
+          studentDetails.father_name?.toLowerCase().includes(filters.fatherName.toLowerCase());
+
+        const motherMatch = !filters.motherName ||
+          studentDetails.mother_name?.toLowerCase().includes(filters.motherName.toLowerCase());
+
+        return nameMatches && admissionNoMatch && schoolAdmissionNoMatch && barcodeMatch && fatherMatch && motherMatch;
+      });
+
+      setFullStudentData(allFetched);
+      setStudentData(filteredData);
+    } catch (error) {
+      console.error("Search fetch error:", error);
+      setStudentError(error.message);
+    } finally {
+      setStudentLoading(false);
+    }
   };
 
-  const getSemesterName = (semesterId) => {
-    const semesterObj = SemesterList?.find((sem) => sem.value?.toString() === semesterId?.toString());
-    return semesterObj ? semesterObj.label : "N/A";
-  };
-
-  const getSectionName = (sectionId) => {
-    const sectionObj = SectionList?.find((sec) => sec.value?.toString() === sectionId?.toString());
-    return sectionObj ? sectionObj.label : "N/A";
-  };
+  const getCourseName = (course) => course?.label || "N/A";
 
   const handleSelectStudent = (student) => {
     if (onSelectStudent) {
@@ -275,8 +207,8 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
       schoolAdmissionNo: "",
     });
 
-    setSelectedSemester(""); // Clear the selected semester
-    setSelectedSection(""); // Clear the selected section
+    setSelectedSession(null); // Clear session
+    setSelectedCourse(null); // Clear course
     setStudentData(fullStudentData); // Reset the student data to the full list
   };
 
@@ -362,68 +294,54 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                             style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                           />
                         </div>
-                        {/* <div className="col-12 col-md-3 mb-2">
-                          <label className="form-label">Student Barcode</label>
+                        <div className="col-12 col-md-3 mb-2">
+                          <label className="form-label">Roll No</label>
                           <input
                             type="text"
                             name="barcode"
                             value={filters.barcode}
                             onChange={handleInputChange}
                             className="form-control detail"
-                            placeholder="Student Barcode"
+                            placeholder="Student Roll No"
                             style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                           />
-                        </div> */}
+                        </div>
                         <div className="col-12 col-md-3 mb-2">
-                          <label className="form-label">Semester</label>
+                          <label className="form-label">Session</label>
                           <Select
                             className="detail"
                             classNamePrefix="detail"
-                            options={SemesterList || []}
+                            options={BatchList?.map((b) => ({
+                              value: b.id,
+                              label: b.batch_description || b.batch_code || b.name,
+                            })) || []}
                             onChange={(selectedOption) => {
-                              setSelectedSemester(selectedOption?.value || "");
-                              setSelectedSection(""); // Reset section when semester changes
+                              setSelectedSession(selectedOption || null);
+                              setSelectedCourse(null);
                             }}
-                            placeholder="Select Semester"
-                            isLoading={semesterLoading}
-                            value={
-                              selectedSemester
-                                ? {
-                                  label: getSemesterName(selectedSemester),
-                                  value: selectedSemester,
-                                }
-                                : null
-                            }
+                            placeholder="Select Session"
+                            isLoading={sessionLoading}
+                            value={selectedSession}
                             isClearable
                           />
                         </div>
-
-                        {/* Row 2 */}
                         <div className="col-12 col-md-3 mb-2">
-                          <label className="form-label">Section</label>
+                          <label className="form-label">Course</label>
                           <Select
                             className="detail"
                             classNamePrefix="detail"
-                            options={SectionList || []}
-                            onChange={() => {}}
-                            placeholder={
-                              !selectedSemester
-                                ? "Select Semester first"
-                                : SectionList.length > 0
-                                  ? "Section auto selected"
-                                  : "Loading Section..."
+                            options={CourseList?.map((c) => ({
+                              value: c.id,
+                              label: c.course_name,
+                            })) || []}
+                            onChange={(selectedOption) =>
+                              setSelectedCourse(selectedOption || null)
                             }
-                            isLoading={sectionLoading}
-                            value={
-                              selectedSection
-                                ? {
-                                  label: getSectionName(selectedSection),
-                                  value: selectedSection,
-                                }
-                                : null
-                            }
-                            isDisabled={true}
-                            isClearable={false}
+                            placeholder="Select Course"
+                            isLoading={courseLoading}
+                            isDisabled={!selectedSession}
+                            value={selectedCourse}
+                            isClearable
                           />
                         </div>
                         <div className="col-12 col-md-3 mb-2">
@@ -477,7 +395,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Roll No</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -519,7 +437,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                                 </td>
                                 <td>{studentDetails.father_name}</td>
                                 <td>{studentDetails.mother_name}</td>
-                                {/* <td>{studentDetails.barcode}</td> */}
+                                <td>{studentDetails.barcode}</td>
                                 <td>
                                   <input
                                     type="radio"

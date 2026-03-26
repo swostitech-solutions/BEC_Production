@@ -623,31 +623,6 @@ const AdmAttendanceEntry = () => {
     selectedSemester,
   ]);
 
-  useEffect(() => {
-    if (!selectedSemester?.value) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sections) || sections.length === 0) {
-      setSelectedSection(null);
-      return;
-    }
-
-    const matchedSection = sections.find(
-      (section) => Number(section.value) === Number(selectedSection?.value)
-    );
-    const nextSection = matchedSection || sections[0];
-
-    if (!nextSection?.value) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev?.value) === Number(nextSection.value) ? prev : nextSection
-    );
-  }, [selectedSemester, sections]);
-
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -1457,16 +1432,8 @@ const AdmAttendanceEntry = () => {
                           className="detail"
                           options={sections}
                           value={selectedSection}
-                          isDisabled={true}
-                          isClearable={false}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester?.value
-                              ? "Select Semester first"
-                              : sections?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
-                          }
+                          onChange={setSelectedSection}
+                          placeholder="Select Section"
                         />
                       </div>
                     </div>
@@ -1484,7 +1451,7 @@ const AdmAttendanceEntry = () => {
                         <th>Academic Year</th>
                         <th>Semester</th>
                         <th>Student Name</th>
-                        {/* <th>Barcode</th> */}
+                        <th>Roll no</th>
                         <th>Father Name</th>
                         <th>Mother Name</th>
                         <th>House</th>
@@ -1501,7 +1468,7 @@ const AdmAttendanceEntry = () => {
                             <td>{student.academicYear || "N/A"}</td>
                             <td>{student.semester || "N/A"}</td>
                             <td>{student.studentName || "N/A"}</td>
-                            {/* <td>{student.barcode || "N/A"}</td> */}
+                            <td>{student.barcode || "N/A"}</td>
                             <td>{student.fatherName || "N/A"}</td>
                             <td>{student.motherName || "N/A"}</td>
                             <td>{student.houseName || "N/A"}</td>{" "}

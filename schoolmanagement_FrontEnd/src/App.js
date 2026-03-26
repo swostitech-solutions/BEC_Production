@@ -26,6 +26,7 @@ import ViewStudentAttendance from "./pages/StaffPannel/ViewStudentAttendance";
 import UploadAssignment from "./pages/StaffPannel/UploadAssignment";
 import HolidayCalender from "./pages/StaffPannel/HolidayCalender";
 import StaffDocumentUpload from "./pages/StaffPannel/DocumentUpload";
+import StaffCourseCompletionPage from "./pages/StaffPannel/StaffCourseCompletion";
 import HolidayList from "./pages/StudentPannel/HolidayList";
 import Assignment from "./pages/StudentPannel/Assignment";
 import LoginPage from "./pages/Login/LoginPage";
@@ -55,6 +56,7 @@ import EmployeeSearch from "./pages/AdminPanel/EmployeeSearch";
 
 import CircularEntry from "./pages/AdminPanel/CircularEntry";
 import FeeSearch from "./pages/AdminPanel/FeeSearch";
+import FeeReport from "./pages/AdminPanel/FeeReport";
 import Circular from "./pages/StudentPannel/Circular";
 import Events from "./pages/StudentPannel/Events";
 import OnlineClass from "./pages/StudentPannel/OnlineClass";
@@ -66,6 +68,7 @@ import StudentTransportFee from "./pages/AdminPanel/StudentTransportFee";
 import BookCategory from "./pages/AdminPanel/BookCategory";
 import BookSearch from "./pages/AdminPanel/BookSearch";
 import AdmBookMaster from "./components/AdminTabs/AdminBookSearch/AdmBookMaster";
+import BulkBookUpload from "./components/AdminTabs/AdminBookSearch/BulkBookUpload";
 import BookMovements from "./pages/AdminPanel/BookMovements";
 import IssuePage from "./components/AdminTabs/AdminBookMovements/IssuePage ";
 import PaymentDetails from "./components/AdminTabs/AdminFeeDashBoard/PaymentDetails";
@@ -133,6 +136,7 @@ import VisitorList from "./pages/AdminPanel/VisitorList";
 import AssignStudentMentor from "./components/AdminTabs/AdminAssignMentor/AssignStudentMentor";
 import LessonPlan from "./pages/AdminPanel/LessonPlan";
 import TeacherLessonPlan from "./pages/AdminPanel/TeacherLessonPlan";
+import LessonPlanCompletionReport from "./pages/AdminPanel/LessonPlanCompletionReport";
 import IncomeDetail from "./components/AdminTabs/AdminSearchIncome/IncomeDetail";
 import Training from "./pages/AdminPanel/Trainings";
 // import MOU from "./pages/AdminPanel/MOU";
@@ -334,6 +338,10 @@ function App() {
                 element={<StaffNewFollowUp />}
               />
               <Route
+                path="/staff/course-completion"
+                element={<StaffCourseCompletionPage />}
+              />
+              <Route
                 path="/staff/change-password"
                 element={<StaffChangePassword />}
               />
@@ -419,6 +427,7 @@ function App() {
                 element={<AdmStudentRegistration />}
               />
               <Route path="/admbookMaster" element={<AdmBookMaster />} />
+              <Route path="/adm-bulk-book-upload" element={<BulkBookUpload />} />
               <Route
                 path="/admin/assignment-entry"
                 element={<AdmAssignmentEntry />}
@@ -448,6 +457,7 @@ function App() {
 
               <Route path="/admin/circular-entry" element={<CircularEntry />} />
               <Route path="/admin/fee-search" element={<FeeSearch />} />
+              <Route path="/admin/fee-report" element={<FeeReport />} />
               <Route path="/admin/fee-structure" element={<FeeStructure />} />
               <Route path="/admin/book-dashboard" element={<BookDashboard />} />
               <Route
@@ -582,6 +592,7 @@ function App() {
               />
               <Route path="/admin/visitors-list" element={<VisitorList />} />
               <Route path="/admin/lesson-plan" element={<LessonPlan />} />
+              <Route path="/admin/lesson-plan-completion-report" element={<LessonPlanCompletionReport />} />
               <Route path="/admin/income-detail" element={<IncomeDetail />} />
               {/* <Route path="/admin/mou-list" element={<MOU />} /> */}
               <Route path="/admin/mou-list" element={<AdmMOUList />} />

@@ -59,19 +59,19 @@ const CharacterCertificate = () => {
     const doc = new jsPDF();
 
     // Logo
-    if ("/Assets/logobec.png") {
-      doc.addImage("/Assets/logobec.png", "JPEG", 10, 10, 30, 30);
+    if ("/Assets/sparsh.jpeg") {
+      doc.addImage("/Assets/sparsh.jpeg", "JPEG", 10, 10, 30, 30);
     }
 
     // Heading
     doc.setFontSize(14).setTextColor(0, 0, 255).setFont("Helvetica", "bold");
-    doc.text("Bhubaneswar Engineering College", 50, 15);
+    doc.text("Sparsh College of Nursing and Allied Sciences", 50, 15);
 
     doc.setFontSize(12).setTextColor(0, 0, 0).setFont("Helvetica", "normal");
     doc.text("Affiliated to", 50, 21);
-    doc.text("Affiliation No.:  School Code: BEC", 50, 27);
+    doc.text("Affiliation No.:  School Code: SPARSH", 50, 27);
     doc.text("Tel. No.:", 50, 33);
-    doc.text("", 50, 39);
+    doc.text("https://sparshhospitals.com/nursing-college-admission/", 50, 39);
 
     // Title
     doc.setFontSize(16).setFont("Helvetica", "bold").setTextColor(0, 0, 0);

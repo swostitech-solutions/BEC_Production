@@ -11,7 +11,7 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
+const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
   const { countries, loadingCountries, errorCountries } = useFetchCountries();
   const { cities, loadingCities, errorCities } = useFetchCities(
     formData.present_country,
@@ -216,10 +216,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                       onChange={handleInputChange}
                       required
                     />
-                    {submitErrors.present_address && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.present_address}
-                      </small>
+                    {requiredErrors.present_address && (
+                      <small style={{ color: "red" }}>{requiredErrors.present_address}</small>
                     )}
                   </div>
                   <div className="col-6 mb-2">
@@ -268,10 +266,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                         })
                       }
                     />
-                    {submitErrors.present_country && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.present_country}
-                      </small>
+                    {requiredErrors.present_country && (
+                      <small style={{ color: "red" }}>{requiredErrors.present_country}</small>
                     )}
                   </div>
 
@@ -314,16 +310,14 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                         })
                       }
                     />
-                    {submitErrors.present_state && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.present_state}
-                      </small>
+                    {requiredErrors.present_state && (
+                      <small style={{ color: "red" }}>{requiredErrors.present_state}</small>
                     )}
                   </div>
 
                   <div className="col-6 mb-2">
                     <label htmlFor="present_city" className="form-label">
-                      City / District<span style={{ color: "red" }}>*</span>
+                      District<span style={{ color: "red" }}>*</span>
                     </label>
                     <Select
                       id="present_city"
@@ -335,7 +329,7 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                           ? "Loading cities..."
                           : errorCities
                             ? "Error loading cities"
-                            : "Select City / District"
+                            : "Select District"
                       }
                       isLoading={loadingCities}
                       options={
@@ -360,10 +354,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                         })
                       }
                     />
-                    {submitErrors.present_city && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.present_city}
-                      </small>
+                    {requiredErrors.present_city && (
+                      <small style={{ color: "red" }}>{requiredErrors.present_city}</small>
                     )}
                   </div>
 
@@ -388,10 +380,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                       maxLength={6}
                       required
                     />
-                    {submitErrors.present_pincode && (
-                      <small style={{ color: "red" }}>
-                        {submitErrors.present_pincode}
-                      </small>
+                    {requiredErrors.present_pincode && (
+                      <small style={{ color: "red" }}>{requiredErrors.present_pincode}</small>
                     )}
                   </div>
                   <div className="col-6 mb-2">
@@ -466,10 +456,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                   onChange={handleInputChange}
                   required
                 />
-                {submitErrors.permanent_address && (
-                  <small style={{ color: "red" }}>
-                    {submitErrors.permanent_address}
-                  </small>
+                {requiredErrors.permanent_address && (
+                  <small style={{ color: "red" }}>{requiredErrors.permanent_address}</small>
                 )}
               </div>
               <div className="col-6 mb-2">
@@ -518,10 +506,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                     })
                   }
                 />
-                {submitErrors.permanent_country && (
-                  <small style={{ color: "red" }}>
-                    {submitErrors.permanent_country}
-                  </small>
+                {requiredErrors.permanent_country && (
+                  <small style={{ color: "red" }}>{requiredErrors.permanent_country}</small>
                 )}
               </div>
               <div className="col-6 mb-2">
@@ -563,16 +549,14 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                     })
                   }
                 />
-                {submitErrors.permanent_state && (
-                  <small style={{ color: "red" }}>
-                    {submitErrors.permanent_state}
-                  </small>
+                {requiredErrors.permanent_state && (
+                  <small style={{ color: "red" }}>{requiredErrors.permanent_state}</small>
                 )}
               </div>
 
               <div className="col-6 mb-2">
                 <label htmlFor="permanent_city" className="form-label">
-                  City / District<span style={{ color: "red" }}>*</span>
+                  District<span style={{ color: "red" }}>*</span>
                 </label>
                 <Select
                   id="permanent_city"
@@ -584,7 +568,7 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                       ? "Loading cities..."
                       : errorCities
                         ? "Error loading cities"
-                        : "Select City / District"
+                        : "Select District"
                   }
                   isLoading={loadingCities}
                   options={
@@ -609,10 +593,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                     })
                   }
                 />
-                {submitErrors.permanent_city && (
-                  <small style={{ color: "red" }}>
-                    {submitErrors.permanent_city}
-                  </small>
+                {requiredErrors.permanent_city && (
+                  <small style={{ color: "red" }}>{requiredErrors.permanent_city}</small>
                 )}
               </div>
 
@@ -638,10 +620,8 @@ const ParentDetailsForm = ({ formData, setFormData, submitErrors = {} }) => {
                   maxLength={6}
                   required
                 />
-                {submitErrors.permanent_pincode && (
-                  <small style={{ color: "red" }}>
-                    {submitErrors.permanent_pincode}
-                  </small>
+                {requiredErrors.permanent_pincode && (
+                  <small style={{ color: "red" }}>{requiredErrors.permanent_pincode}</small>
                 )}
               </div>
               <div className="col-6 mb-2">

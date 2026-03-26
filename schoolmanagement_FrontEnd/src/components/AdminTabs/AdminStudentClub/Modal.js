@@ -366,13 +366,13 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
-                    {/* <div className="col-12 col-md-3 mb-2">
+                    <div className="col-12 col-md-3 mb-2">
                       <label
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
                         {" "}
-                        Student Barcode{" "}
+                        Roll No{" "}
                       </label>
                       <input
                         type="text"
@@ -380,10 +380,10 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.barcode}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="Student Barcode"
+                        placeholder="Roll No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
-                    </div> */}
+                    </div>
                     {/* Batch */}
                     <div className="col-12 col-md-3 mb-2">
                       <label className="form-label">Session</label>
@@ -634,7 +634,7 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                           <th>Section</th>
                           <th>Father Name</th>
                           <th>Mother Name</th>
-                          {/* <th>Student Barcode</th> */}
+                          <th>Roll No</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -653,7 +653,7 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                               <td>{student.section_name}</td>
                               <td>{student.father_name}</td>
                               <td>{student.mother_name}</td>
-                              {/* <td>{student.barcode}</td> */}
+                              <td>{student.barcode}</td>
                               <td>
                                 <button
                                   className="btn btn-success"

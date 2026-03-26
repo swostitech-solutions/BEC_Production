@@ -174,29 +174,6 @@ const StfLessonPlan = () => {
     }
   }, [SectionList]);
 
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) {
-      return;
-    }
-
-    const hasSelected = selectedSection?.value
-      ? sectionOptions.some(
-          (section) => Number(section.value) === Number(selectedSection.value)
-        )
-      : false;
-
-    if (hasSelected) {
-      return;
-    }
-
-    setSelectedSection(sectionOptions[0]);
-  }, [selectedSemester, sectionOptions]);
-
   // Fetch Teachers and auto-select the logged-in teacher
   useEffect(() => {
     const fetchMentors = async () => {
@@ -391,6 +368,12 @@ const StfLessonPlan = () => {
 
     if (!taught_date || !percentage_completed || !remarks) {
       alert("Please fill in all fields (Taught Date, % Course Coverage, Remarks) before updating.");
+      return;
+    }
+
+    const pct = parseFloat(percentage_completed);
+    if (isNaN(pct) || pct < 0 || pct > 100) {
+      alert("% Course Coverage must be a number between 0 and 100.");
       return;
     }
 
@@ -693,17 +676,9 @@ const StfLessonPlan = () => {
                           options={sectionOptions}
                           className="detail"
                           value={selectedSection}
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester
-                              ? "Select Semester first"
-                              : sectionOptions.length > 0
-                                ? "Section auto selected"
-                                : "Loading Section..."
-                          }
+                          onChange={handleSectionChange}
+                          placeholder="Select Section"
                           classNamePrefix="section-dropdown"
-                          isDisabled={true}
-                          isClearable={false}
                         />
                       </div>
 
@@ -766,16 +741,17 @@ const StfLessonPlan = () => {
                             </td>
                             <td>
                               <input
-                                type="text"
+                                type="number"
+                                min="0"
+                                max="100"
                                 className="form-control"
                                 value={updatedData[index]?.percentage_completed || ""}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    index,
-                                    "percentage_completed",
-                                    e.target.value
-                                  )
-                                }
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "" || (parseFloat(val) >= 0 && parseFloat(val) <= 100)) {
+                                    handleInputChange(index, "percentage_completed", val);
+                                  }
+                                }}
                               />
                             </td>
                             <td>
@@ -796,7 +772,6 @@ const StfLessonPlan = () => {
                               <input
                                 type="file"
                                 className="form-control"
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                                 onChange={(e) => handleFileChange(index, e.target.files[0])}
                               />
                             </td>

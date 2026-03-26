@@ -83,30 +83,6 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
-  useEffect(() => {
-    if (!selectedSemester) {
-      setSelectedSection(null);
-      return;
-    }
-
-    if (!Array.isArray(SectionList) || SectionList.length === 0) {
-      return;
-    }
-
-    const matchedSection = SectionList.find(
-      (s) => Number(s.id) === Number(selectedSection)
-    );
-    const nextSectionId = matchedSection?.id || SectionList[0]?.id;
-
-    if (!nextSectionId) {
-      return;
-    }
-
-    setSelectedSection((prev) =>
-      Number(prev) === Number(nextSectionId) ? prev : Number(nextSectionId)
-    );
-  }, [selectedSemester, SectionList]);
-
   const [studentsData, setStudentsData] = useState([]);
 
   const [amount, setAmount] = useState("");
@@ -352,7 +328,7 @@ const AdmAttendanceEntry = () => {
           studentname: s.student_name,
           admission_no: s.admission_no,
           college_admission_no: s.college_admission_no,
-          // barcode: s.barcode,
+          barcode: s.barcode,
           fatherName: s.fatherName,
           motherName: s.motherName,
           student_status: s.student_status,
@@ -477,7 +453,7 @@ const AdmAttendanceEntry = () => {
             studentname: s.student_name,
             admission_no: s.admission_no,
             college_admission_no: s.college_admission_no,
-            // barcode: s.barcode,
+            barcode: s.barcode,
             fatherName: s.fatherName,
             motherName: s.motherName,
             student_status: s.student_status,
@@ -551,7 +527,7 @@ const AdmAttendanceEntry = () => {
       student_name: data.student_name,
       admission_no: data.admission_no,
       college_admission_no: data.college_admission_no,
-      // barcode: data.barcode,
+      barcode: data.barcode,
       batch: data.batch_code,
       course: data.course_name,
       department: data.department_description,
@@ -879,7 +855,7 @@ const AdmAttendanceEntry = () => {
       student_name: basic.first_name,
       admission_no: basic.admission_no,
       college_admission_no: basic.school_admission_no,
-      // barcode: basic.barcode,
+      barcode: basic.barcode,
       batch: academic.batch_id,
       course: academic.course_id,
       department: academic.department_id,
@@ -1262,7 +1238,7 @@ const AdmAttendanceEntry = () => {
                             studentId: student.studentId,
                             student_name: student.studentname,
                             admission_no: student.admission_no,
-                            // barcode: student.barcode,
+                            barcode: student.barcode,
                             batch: student.batch_code,
                             course: student.course_name,
                             department: student.department_description,
@@ -1453,7 +1429,6 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className="detail"
-                          isDisabled={true}
                           isLoading={loadingSec}
                           options={
                             SectionList?.map((s) => ({
@@ -1466,20 +1441,15 @@ const AdmAttendanceEntry = () => {
                               ? {
                                   value: selectedSection,
                                   label: SectionList.find(
-                                    (s) => Number(s.id) === Number(selectedSection)
+                                    (s) => s.id === selectedSection
                                   )?.section_name,
                                 }
                               : null
                           }
-                          onChange={() => {}}
-                          placeholder={
-                            !selectedSemester
-                              ? "Select Semester first"
-                              : SectionList?.length > 0
-                              ? "Section auto selected"
-                              : "Loading Section..."
+                          onChange={(opt) =>
+                            setSelectedSection(opt?.value || "")
                           }
-                          isClearable={false}
+                          placeholder="Select Section"
                         />
                       </div>
 
@@ -1545,7 +1515,7 @@ const AdmAttendanceEntry = () => {
                         <th>Student Name</th>
                         <th>ONMRC Registration No</th>
                         <th>Admission No</th>
-                        {/* <th>Barcode</th> */}
+                        <th>Roll no</th>
                         <th>Session</th>
                         <th>Course</th>
                         <th>Department</th>
@@ -1566,7 +1536,7 @@ const AdmAttendanceEntry = () => {
                             <td>{student.student_name}</td>
                             <td>{student.registration_no}</td>
                             <td>{student.college_admission_no}</td>
-                            {/* <td>{student.barcode}</td> */}
+                            <td>{student.barcode}</td>
                             <td>{student.batch_code}</td>
                             <td>{student.course_name}</td>
                             <td>{student.department_description}</td>
@@ -1672,15 +1642,15 @@ const AdmAttendanceEntry = () => {
                       disabled
                     />
                   </div>
-                  {/* <div className="col-12 col-md-3 mb-2">
-                    <label className="form-label">Student Barcode</label>
+                  <div className="col-12 col-md-3 mb-2">
+                    <label className="form-label">Roll No</label>
                     <input
                       type="text"
                       className="form-control detail"
                       value={selectedStudent.barcode}
                       disabled
                     />
-                  </div> */}
+                  </div>
                   <div className="col-12 col-md-3 mb-2">
                     <label className="form-label">Father Name</label>
                     <input
@@ -1995,20 +1965,9 @@ const AdmAttendanceEntry = () => {
                           type="text"
                           id="amount"
                           value={formData.amount || ""}
-                          onChange={(e) =>
-                            setFormData({ ...formData, amount: e.target.value })
-                          }
-                          disabled={!isTransportAvailed || isDisabled}
                           className="form-control detail"
                           placeholder="Enter amount"
-                          onInput={(e) => {
-                            const numericValue = e.target.value.replace(
-                              /[^0-9.]/g,
-                              ""
-                            );
-                            setAmount(numericValue);
-                          }}
-                          Disabled
+                          disabled
                         />
                       </div>
                       <div className="col-12 col-md-3 mb-2">

@@ -26,7 +26,18 @@ const App = ({ goToTab, educationData, setCourseDetailsInParent, setEducationDat
   });
 
   const [isInitialized, setIsInitialized] = useState(false);
-
+const qualificationOptions = [
+  { value: "PhD", label: "Ph.D." },
+  { value: "PDF", label: "Post-Doctoral Fellowship (PDF)" },
+  { value: "UGC_NET", label: "UGC-NET / CSIR-NET" },
+  { value: "SET_SLET", label: "SET / SLET" },
+  { value: "MPhil", label: "M.Phil." },
+  { value: "Postgraduate", label: "Postgraduate" },
+  { value: "4yr_bachelor_research", label: "4-Year Bachelor’s with Research" },
+  { value: "Undergraduate", label: "Undergraduate" },
+  { value: "Professor_of_Practice", label: "Professor of Practice" },
+  { value: "Other_Certification", label: "Other Professional Certification" },
+];
   // Simple handleChange - just update local form state, NO parent sync
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -86,6 +97,31 @@ const App = ({ goToTab, educationData, setCourseDetailsInParent, setEducationDat
     // Optional: Check that yearTo >= yearFrom
     if (parseInt(formData.yearTo) < parseInt(formData.yearFrom)) {
       alert("Year To cannot be earlier than Year From.");
+      return;
+    }
+
+    if (!formData.university.trim()) {
+      alert("Please enter University.");
+      return;
+    }
+
+    if (!formData.institution.trim()) {
+      alert("Please enter Institution.");
+      return;
+    }
+
+    if (formData.div === "" || formData.div === null || formData.div === undefined) {
+      alert("Please enter Div%.");
+      return;
+    }
+    const divVal = parseFloat(formData.div);
+    if (isNaN(divVal) || divVal < 0 || divVal > 100) {
+      alert("Div% must be a number between 0 and 100.");
+      return;
+    }
+
+    if (!formData.highestQualification) {
+      alert("Please select Highest Qualification.");
       return;
     }
 
@@ -199,11 +235,11 @@ const App = ({ goToTab, educationData, setCourseDetailsInParent, setEducationDat
             <tr>
               <th>Sr.No</th>
               <th>Qualification</th>
-              <th>Year From</th>
-              <th>Year To</th>
+              <th style={{ minWidth: "100px" }}>Year From</th>
+              <th style={{ minWidth: "100px" }}>Year To</th>
               <th>University</th>
               <th>Institution</th>
-              <th>Div%</th>
+              <th style={{ minWidth: "85px" }}>Div%</th>
               <th>Highest Qualification</th>
               <th></th>
             </tr>
@@ -239,34 +275,47 @@ const App = ({ goToTab, educationData, setCourseDetailsInParent, setEducationDat
                   onChange={handleChange}
                 >
                   <option value="">Select</option>
-                  <option value="B.Sc">Ph.D.</option>
-                  <option value="M.Sc">Post-Doctoral Fellowship (PDF)</option>
-                  <option value="PhD">UGC-NET / CSIR-NET</option>
-                  <option value="PhD">SET / SLET</option>
-                  <option value="PhD">M.Phil.</option>
-                  <option value="PhD">Postgraduate</option>
-                  <option value="PhD">4-Year Bachelor’s with Research</option>
-                  <option value="PhD">Undergraduate</option>
-                  <option value="PhD">Professor of Practice</option>
-                  <option value="PhD">Other Professional Certification</option>
+                  {qualificationOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </td>
               <td>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
                   name="yearFrom"
                   value={formData.yearFrom}
-                  onChange={handleChange}
+                  min="1900"
+                  max="9999"
+                  placeholder="e.g. 2020"
+                  style={{ minWidth: "90px" }}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (val.length <= 4 && /^\d+$/.test(val))) {
+                      handleChange(e);
+                    }
+                  }}
                 />
               </td>
               <td>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
                   name="yearTo"
                   value={formData.yearTo}
-                  onChange={handleChange}
+                  min="1900"
+                  max="9999"
+                  placeholder="e.g. 2024"
+                  style={{ minWidth: "90px" }}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "" || (val.length <= 4 && /^\d+$/.test(val))) {
+                      handleChange(e);
+                    }
+                  }}
                 />
               </td>
               <td>
@@ -289,11 +338,23 @@ const App = ({ goToTab, educationData, setCourseDetailsInParent, setEducationDat
               </td>
               <td>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
                   name="div"
                   value={formData.div}
-                  onChange={handleChange}
+                  min="0"
+                  max="100"
+                  placeholder="0-100"
+                  style={{ minWidth: "75px" }}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (
+                      val === "" ||
+                      (parseFloat(val) >= 0 && parseFloat(val) <= 100)
+                    ) {
+                      handleChange(e);
+                    }
+                  }}
                 />
               </td>
               <td>
@@ -304,16 +365,11 @@ const App = ({ goToTab, educationData, setCourseDetailsInParent, setEducationDat
                   onChange={handleChange}
                 >
                   <option value="">Select</option>
-                  <option value="B.Sc">Ph.D.</option>
-                  <option value="M.Sc">Post-Doctoral Fellowship (PDF)</option>
-                  <option value="PhD">UGC-NET / CSIR-NET</option>
-                  <option value="PhD">SET / SLET</option>
-                  <option value="PhD">M.Phil.</option>
-                  <option value="PhD">Postgraduate</option>
-                  <option value="PhD">4-Year Bachelor’s with Research</option>
-                  <option value="PhD">Undergraduate</option>
-                  <option value="PhD">Professor of Practice</option>
-                  <option value="PhD">Other Professional Certification</option>
+                  {qualificationOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
                 </select>
               </td>
               <td>
