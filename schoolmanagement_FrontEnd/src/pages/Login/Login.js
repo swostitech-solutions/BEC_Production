@@ -411,7 +411,7 @@ const Login = ({ onLogin }) => {
   return (
     <div
       style={{
-        backgroundImage: "url('/img/becbackground.png')",
+        backgroundImage: "url('/img/backgroundimage.png')",
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "top center",
