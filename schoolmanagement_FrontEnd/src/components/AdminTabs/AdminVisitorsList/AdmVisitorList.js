@@ -5,10 +5,13 @@ import { ApiUrl } from "../../../ApiUrl";
 import "jspdf-autotable";
 import dayjs from "dayjs";
 import Select from "react-select";
+import { Modal } from "react-bootstrap";
 
 
 const AdmAttendanceEntry = () => {
   const [visitorData, setVisitorData] = useState([]);
+  const [previewImage, setPreviewImage] = useState("");
+  const [previewVisitorName, setPreviewVisitorName] = useState("");
   const [name, setName] = useState("");
   const [whomToMeet, setWhomToMeet] = useState("");
   const [phone, setPhone] = useState("");
@@ -51,6 +54,23 @@ const AdmAttendanceEntry = () => {
 
   const handleNewClick = () => {
     navigate("/admin/new-visitor");
+  };
+
+  const getVisitorImageSrc = (image) => {
+    if (!image) return "";
+    return image.startsWith("http") || image.startsWith("https")
+      ? image
+      : `data:image/jpeg;base64,${image}`;
+  };
+
+  const handlePreviewPhoto = (visitor) => {
+    setPreviewImage(getVisitorImageSrc(visitor.image));
+    setPreviewVisitorName(visitor.visitor_name || "Visitor");
+  };
+
+  const handleClosePreview = () => {
+    setPreviewImage("");
+    setPreviewVisitorName("");
   };
 
   const fetchVisitors = async (filters = {}) => {
@@ -490,13 +510,16 @@ const AdmAttendanceEntry = () => {
                               <td>
                                 {visitor.image ? (
                                   <img
-                                    src={
-                                      visitor.image.startsWith("http") || visitor.image.startsWith("https")
-                                        ? visitor.image
-                                        : `data:image/jpeg;base64,${visitor.image}`
-                                    }
+                                    src={getVisitorImageSrc(visitor.image)}
                                     alt="visitor"
-                                    style={{ width: "50px", height: "50px" }}
+                                    onClick={() => handlePreviewPhoto(visitor)}
+                                    style={{
+                                      width: "50px",
+                                      height: "50px",
+                                      objectFit: "cover",
+                                      borderRadius: "6px",
+                                      cursor: "pointer",
+                                    }}
                                   />
                                 ) : (
                                   "N/A"
@@ -541,6 +564,28 @@ const AdmAttendanceEntry = () => {
           </div>
         </div>
       </div>
+
+      <Modal show={Boolean(previewImage)} onHide={handleClosePreview} centered size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>{previewVisitorName} Photo Preview</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center">
+          {previewImage ? (
+            <img
+              src={previewImage}
+              alt={previewVisitorName || "Visitor"}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "70vh",
+                borderRadius: "10px",
+                objectFit: "contain",
+              }}
+            />
+          ) : (
+            <p className="mb-0 text-muted">Photo not available.</p>
+          )}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
