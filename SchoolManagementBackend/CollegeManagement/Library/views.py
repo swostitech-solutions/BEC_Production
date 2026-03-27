@@ -40,6 +40,40 @@ from Swostitech_Acadix import settings
 logger = logging.getLogger(__name__)
 
 
+def get_or_create_library_parameter(parameter_name, academic_year_instance, default_value):
+    parameter = ParameterValue.objects.filter(
+        parameter_name=parameter_name
+    ).first()
+
+    if parameter:
+        if not parameter.is_active:
+            parameter.is_active = True
+            if not parameter.org_value:
+                parameter.org_value = str(default_value)
+            parameter.save(update_fields=['is_active', 'org_value'])
+        return parameter
+
+    return ParameterValue.objects.create(
+        parameter_name=parameter_name,
+        organization=academic_year_instance.organization,
+        batch=academic_year_instance.batch,
+        org_value=str(default_value),
+        is_active=True
+    )
+
+
+def get_library_parameter_int_value(parameter_name, academic_year_instance, default_value):
+    parameter = get_or_create_library_parameter(
+        parameter_name=parameter_name,
+        academic_year_instance=academic_year_instance,
+        default_value=default_value
+    )
+    try:
+        return int(parameter.org_value)
+    except (TypeError, ValueError):
+        return int(default_value)
+
+
 def resolve_library_academic_year(academic_year_id, organization_id, branch_id, on_date=None):
     if on_date is None:
         on_date = date.today()
@@ -2440,9 +2474,11 @@ class BookIssuesCreateAPIView(CreateAPIView):
                         is_active=True
                     )
                     previous_assigned_books = studentBookInstance.count()
-                    MAX_BOOKS_ISSUED_STUDENT_INSTANCE = ParameterValue.objects.get(
-                        parameter_name="MAX_BOOKS_ISSUED_STUDENT", is_active=True)
-                    max_book_issue_allowed = int(MAX_BOOKS_ISSUED_STUDENT_INSTANCE.org_value)
+                    max_book_issue_allowed = get_library_parameter_int_value(
+                        parameter_name="MAX_BOOKS_ISSUED_STUDENT",
+                        academic_year_instance=academicyearInstance,
+                        default_value=5
+                    )
                     if previous_assigned_books >= max_book_issue_allowed:
                         return Response(
                             {'error': f'Student has reached the book issue limit ({max_book_issue_allowed} books).'},
@@ -2458,9 +2494,11 @@ class BookIssuesCreateAPIView(CreateAPIView):
                         is_active=True
                     )
                     previous_assigned_books = staffBookInstance.count()
-                    MAX_BOOKS_ISSUED_TEACHER_INSTANCE = ParameterValue.objects.get(
-                        parameter_name="MAX_BOOKS_ISSUED_TEACHER", is_active=True)
-                    max_book_issue_allowed = int(MAX_BOOKS_ISSUED_TEACHER_INSTANCE.org_value)
+                    max_book_issue_allowed = get_library_parameter_int_value(
+                        parameter_name="MAX_BOOKS_ISSUED_TEACHER",
+                        academic_year_instance=academicyearInstance,
+                        default_value=10
+                    )
                     if previous_assigned_books >= max_book_issue_allowed:
                         return Response(
                             {'error': f'Teacher has reached the book issue limit ({max_book_issue_allowed} books).'},
