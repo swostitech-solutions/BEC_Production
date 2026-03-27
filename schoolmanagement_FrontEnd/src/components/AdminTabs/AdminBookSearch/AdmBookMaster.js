@@ -4632,6 +4632,7 @@ const BookForm = () => {
   const [error, setError] = useState("");
   const [errors, setErrors] = useState({});
   const [saveMsg, setSaveMsg] = useState({ type: "", text: "" });
+  const [isSaving, setIsSaving] = useState(false);
   const [purchaseRowErrors, setPurchaseRowErrors] = useState({});
   const [accessionRowErrors, setAccessionRowErrors] = useState({});
 
@@ -5344,10 +5345,53 @@ const BookForm = () => {
 
 
   const handleSave = async () => {
+    if (isSaving) return;
+
     const orgId = parseInt(localStorage.getItem("orgId"));
     const branchId = parseInt(localStorage.getItem("branchId"));
-    const academicYearId = parseInt(localStorage.getItem("academicSessionId"));
     const loginId = parseInt(sessionStorage.getItem("userId"));
+    const today = new Date().toISOString().split("T")[0];
+
+    const resolveAcademicYearId = async () => {
+      const storedAcademicYearId = parseInt(localStorage.getItem("academicSessionId"));
+
+      try {
+        const response = await fetch(
+          `${ApiUrl.apiurl}AcademicYear/GetAcademicYearByOrgBranch/?organization_id=${orgId}&branch_id=${branchId}`
+        );
+        const result = await response.json();
+
+        if (!response.ok || !Array.isArray(result?.data) || result.data.length === 0) {
+          return Number.isFinite(storedAcademicYearId) ? storedAcademicYearId : null;
+        }
+
+        const matchingStoredYear = result.data.find(
+          (item) => item.id === storedAcademicYearId
+        );
+        if (matchingStoredYear) {
+          return matchingStoredYear.id;
+        }
+
+        const currentAcademicYear = result.data.find((item) => {
+          if (!item.date_from || !item.date_to) return false;
+          return item.date_from <= today && today <= item.date_to;
+        });
+        if (currentAcademicYear) {
+          return currentAcademicYear.id;
+        }
+
+        return result.data[result.data.length - 1]?.id || null;
+      } catch (error) {
+        console.error("Failed to resolve academic year:", error);
+        return Number.isFinite(storedAcademicYearId) ? storedAcademicYearId : null;
+      }
+    };
+
+    const academicYearId = await resolveAcademicYearId();
+    if (!academicYearId) {
+      setSaveMsg({ type: "danger", text: "No valid academic year found for this branch." });
+      return;
+    }
 
     const fieldErrors = {};
     if (!bookDetails?.type) fieldErrors.type = "Book/Journal is required.";
@@ -5446,7 +5490,7 @@ const BookForm = () => {
       volume: bookDetails.volume ? parseInt(bookDetails.volume) : null,
       pages: bookDetails.pages ? parseInt(bookDetails.pages) : null,
       ISBN: bookDetails.ISBN,
-      createdDate: new Date().toISOString().split("T")[0],
+      createdDate: today,
       IssueNo: bookDetails.IssueNo || "ISS123",
       Period: bookDetails.Period || "Annual",
       org_id: orgId,
@@ -5489,7 +5533,7 @@ const BookForm = () => {
         book_category_Id: bookCategory || 1,
         created_by: loginId,
         purchase_date:
-          row.dateOfPurchase || new Date().toISOString().split("T")[0],
+          row.dateOfPurchase || today,
         purchase_from: row.purchasedFrom || "",
         bill_no: row.billNo || "",
         bill_value: row.cost && !isNaN(parseFloat(row.cost)) ? row.cost.toString() : "0",
@@ -5533,6 +5577,7 @@ const BookForm = () => {
     const method = isUpdate ? "PUT" : "POST";
 
     try {
+      setIsSaving(true);
       const response = await fetch(apiUrl, {
         method,
         body: formData,
@@ -5545,12 +5590,23 @@ const BookForm = () => {
         handleClear();
         setSaveMsg({ type: "success", text: isUpdate ? "Book updated successfully!" : "Book saved successfully!" });
       } else {
-        setSaveMsg({ type: "danger", text: isUpdate ? "Failed to update the book." : "Failed to save the book." });
+        const serverMessage =
+          data?.error ||
+          data?.message ||
+          (typeof data === "string" ? data : "");
+        setSaveMsg({
+          type: "danger",
+          text:
+            serverMessage ||
+            (isUpdate ? "Failed to update the book." : "Failed to save the book."),
+        });
         console.error("Error response from server:", data);
       }
     } catch (error) {
       console.error("Error submitting book:", error);
       setSaveMsg({ type: "danger", text: "An error occurred while saving the book." });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -5593,8 +5649,9 @@ const BookForm = () => {
                       width: "150px",
                     }}
                     onClick={handleSave}
+                    disabled={isSaving}
                   >
-                    Save
+                    {isSaving ? "Saving..." : "Save"}
                   </button>
                   <button
                     type="button"

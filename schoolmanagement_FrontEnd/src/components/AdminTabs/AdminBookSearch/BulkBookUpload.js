@@ -909,6 +909,45 @@ const BulkBookUpload = () => {
     }
   };
 
+  const resolveAcademicYearId = async (orgId, branchId) => {
+    const storedAcademicYearId = parseInt(
+      localStorage.getItem("academicSessionId"),
+      10,
+    );
+    const today = new Date().toISOString().split("T")[0];
+
+    try {
+      const response = await fetch(
+        `${ApiUrl.apiurl}AcademicYear/GetAcademicYearByOrgBranch/?organization_id=${orgId}&branch_id=${branchId}`,
+      );
+      const result = await response.json();
+
+      if (!response.ok || !Array.isArray(result?.data) || result.data.length === 0) {
+        return Number.isFinite(storedAcademicYearId) ? storedAcademicYearId : null;
+      }
+
+      const matchingStoredYear = result.data.find(
+        (item) => item.id === storedAcademicYearId,
+      );
+      if (matchingStoredYear) {
+        return matchingStoredYear.id;
+      }
+
+      const currentAcademicYear = result.data.find((item) => {
+        if (!item.date_from || !item.date_to) return false;
+        return item.date_from <= today && today <= item.date_to;
+      });
+      if (currentAcademicYear) {
+        return currentAcademicYear.id;
+      }
+
+      return result.data[result.data.length - 1]?.id || null;
+    } catch (error) {
+      console.error("Failed to resolve academic year for bulk upload:", error);
+      return Number.isFinite(storedAcademicYearId) ? storedAcademicYearId : null;
+    }
+  };
+
   const uploadSingleRow = async (
     row,
     orgId,
@@ -1014,8 +1053,6 @@ const BulkBookUpload = () => {
 
     const orgId = parseInt(localStorage.getItem("orgId"), 10);
     const branchId = parseInt(localStorage.getItem("branchId"), 10);
-    const academicYearId =
-      parseInt(localStorage.getItem("academicSessionId"), 10) || null;
     // userId: try sessionStorage first (normal flow), fall back to localStorage (new-tab scenario)
     const loginId = parseInt(
       sessionStorage.getItem("userId") || localStorage.getItem("userId"),
@@ -1028,6 +1065,12 @@ const BulkBookUpload = () => {
         "Session data is incomplete (orgId or userId is missing).\n" +
           "Please log out, log back in, and try again.",
       );
+      return;
+    }
+
+    const academicYearId = await resolveAcademicYearId(orgId, branchId);
+    if (!academicYearId) {
+      alert("No valid academic year found for this branch.");
       return;
     }
 

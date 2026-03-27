@@ -42,6 +42,57 @@ const formatMoneyParts = (value) => {
   };
 };
 
+const renderWrappedField = (
+  doc,
+  label,
+  value,
+  x,
+  y,
+  width,
+  options = {},
+) => {
+  const {
+    boldValue = false,
+    gap = 1.5,
+    lineHeight = 4.5,
+    minLabelWidth = 12,
+  } = options;
+
+  const safeValue = safeText(value);
+  const labelText = `${label}:`;
+  const labelWidth = Math.max(doc.getTextWidth(labelText) + gap, minLabelWidth);
+  const valueWidth = Math.max(width - labelWidth, 8);
+  const valueLines = doc.splitTextToSize(safeValue || "-", valueWidth);
+
+  doc.setFont("Helvetica", "normal");
+  doc.text(labelText, x, y);
+  doc.setFont("Helvetica", boldValue ? "bold" : "normal");
+  doc.text(valueLines, x + labelWidth, y);
+  doc.setFont("Helvetica", "normal");
+
+  return Math.max(1, valueLines.length) * lineHeight;
+};
+
+const renderFieldRow = (doc, fields, y, options = {}) => {
+  const { lineHeight = 4.5 } = options;
+
+  const rowHeight = fields.reduce((maxHeight, field) => {
+    const height = renderWrappedField(
+      doc,
+      field.label,
+      field.value,
+      field.x,
+      y,
+      field.width,
+      field.options,
+    );
+
+    return Math.max(maxHeight, height);
+  }, lineHeight);
+
+  return y + rowHeight;
+};
+
 const toWordsUnderThousand = (number) => {
   const ones = [
     "",
@@ -258,11 +309,6 @@ export const openFeeReceiptPdf = (receiptData) => {
   const studentName = safeText(data.student_name);
   const receiptItems = getReceiptItems(data);
   const receiptDate = formatReceiptDate(data.receipt_date);
-  const tableTop = 72;
-  const footerTop = 246;
-  const rowStart = tableTop + 14;
-  const maxRows = Math.max(receiptItems.length, 18);
-  const rowStep = Math.min(8, 156 / maxRows);
 
   doc.setLineWidth(0.5);
   doc.rect(5, 5, 200, 287);
@@ -304,20 +350,60 @@ export const openFeeReceiptPdf = (receiptData) => {
   doc.text(`Receipt No. ${safeText(data.receipt_no)}`, 140, 32);
   doc.text(`Date: ${receiptDate}`, 140, 38);
 
-  doc.text(`Course: ${safeText(data.course_name)}`, 10, 45);
-  doc.text(`Year: ${safeText(data.academic_year_code)}`, 80, 45);
-  doc.text(`Adm No.: ${safeText(data.admission_no)}`, 130, 45);
+  let detailsY = 45;
+  detailsY = renderFieldRow(
+    doc,
+    [
+      { label: "Course", value: data.course_name, x: 10, width: 58 },
+      { label: "Year", value: data.academic_year_code, x: 80, width: 38 },
+      { label: "Adm No.", value: data.admission_no, x: 130, width: 60 },
+    ],
+    detailsY,
+  );
 
-  doc.text(`Department: ${safeText(data.department_name)}`, 10, 52);
-  doc.text(`Semester: ${safeText(data.semester_name)}`, 80, 52);
-  doc.text(`Section: ${safeText(data.section_name)}`, 140, 52);
+  detailsY = renderFieldRow(
+    doc,
+    [
+      { label: "Department", value: data.department_name, x: 10, width: 58 },
+      { label: "Semester", value: data.semester_name, x: 80, width: 48 },
+      { label: "Section", value: data.section_name, x: 140, width: 50 },
+    ],
+    detailsY + 2,
+  );
 
-  doc.text("Received from Ms./ Mr.:", 10, 59);
-  doc.setFont("Helvetica", "bold");
-  doc.text(studentName, 50, 59);
-  doc.setFont("Helvetica", "normal");
-  doc.text(`Father Name: ${safeText(data.father_name)}`, 10, 66);
-  doc.text(`Payment Mode: ${safeText(data.payment_method)}`, 110, 66);
+  detailsY = renderFieldRow(
+    doc,
+    [
+      {
+        label: "Received from Ms./ Mr.",
+        value: studentName,
+        x: 10,
+        width: 180,
+        options: { boldValue: true, minLabelWidth: 38 },
+      },
+    ],
+    detailsY + 2,
+  );
+
+  detailsY = renderFieldRow(
+    doc,
+    [
+      { label: "Father Name", value: data.father_name, x: 10, width: 90 },
+      {
+        label: "Payment Mode",
+        value: data.payment_method,
+        x: 110,
+        width: 80,
+      },
+    ],
+    detailsY + 2,
+  );
+
+  const tableTop = Math.max(detailsY + 6, 76);
+  const footerTop = 246;
+  const rowStart = tableTop + 14;
+  const maxRows = Math.max(receiptItems.length, 18);
+  const rowStep = Math.min(8, 156 / maxRows);
 
   doc.setFont("Helvetica", "bold");
   doc.line(10, tableTop, 200, tableTop);

@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import mimetypes
 import os.path
 import uuid
@@ -35,6 +36,46 @@ from Swostitech_Acadix import settings
 
 
 # Create your views here.
+
+logger = logging.getLogger(__name__)
+
+
+def resolve_library_academic_year(academic_year_id, organization_id, branch_id, on_date=None):
+    if on_date is None:
+        on_date = date.today()
+    elif isinstance(on_date, str):
+        try:
+            on_date = datetime.strptime(on_date, '%Y-%m-%d').date()
+        except ValueError:
+            on_date = date.today()
+
+    if academic_year_id:
+        academic_year = AcademicYear.objects.filter(
+            id=academic_year_id,
+            is_active=True
+        ).first()
+        if academic_year:
+            return academic_year, None
+
+    scoped_years = AcademicYear.objects.filter(
+        organization_id=organization_id,
+        branch_id=branch_id,
+        is_active=True
+    ).order_by('display_order', 'id')
+
+    current_years = scoped_years.filter(date_from__lte=on_date, date_to__gte=on_date)
+    if current_years.count() == 1:
+        return current_years.first(), None
+
+    if scoped_years.count() == 1:
+        return scoped_years.first(), None
+
+    available_year_ids = list(scoped_years.values_list('id', flat=True))
+    message = (
+        f"Academic year {academic_year_id} was not found for org {organization_id} "
+        f"and branch {branch_id}. Available academic year ids: {available_year_ids}"
+    )
+    return None, message
 
 class BookCategoryCreateAPIView(CreateAPIView):
     queryset = BookCategory.objects.all()
@@ -1278,7 +1319,9 @@ class LibraryBookCreateAPIView(CreateAPIView):
                 back_cover = data['libraryBookdetails']['back_cover']
             # Validate data
             serializer = self.get_serializer(data=data)
-            serializer.is_valid(raise_exception=True)
+            if not serializer.is_valid():
+                logger.warning("Library book create validation failed: %s", serializer.errors)
+                return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
             # Extract validated data
             libraryBookdetails = serializer.validated_data.get('libraryBookdetails')
@@ -1296,8 +1339,14 @@ class LibraryBookCreateAPIView(CreateAPIView):
                                                              is_active=True)
             
             # Fetch AcademicYear first to derive the correct Batch
-            AcademicYearinstance = AcademicYear.objects.get(id=libraryBookdetails['academicyearId'],
-                                                            is_active=True)
+            AcademicYearinstance, academic_year_error = resolve_library_academic_year(
+                libraryBookdetails.get('academicyearId'),
+                libraryBookdetails.get('org_id'),
+                libraryBookdetails.get('branch_id'),
+                libraryBookdetails.get('createdDate')
+            )
+            if academic_year_error:
+                return Response({'error': academic_year_error}, status=status.HTTP_400_BAD_REQUEST)
             
             # Use the Batch associated with the Academic Year
             branch_instance = AcademicYearinstance.batch
@@ -1402,6 +1451,9 @@ class LibraryBookCreateAPIView(CreateAPIView):
 
         except ObjectDoesNotExist as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            logger.warning("Library book create request rejected: %s", e.detail)
+            return Response({'error': e.detail}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': 'An unexpected error occurred: ' + str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -2049,11 +2101,14 @@ class LibraryBookUpdateAPIView(APIView):
             except ObjectDoesNotExist:
                 return Response({'message': 'provided book subcategory not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-            try:
-                academicyearInstance = AcademicYear.objects.get(id=libraryBookdetails.get('academicyearId'),
-                                                                is_active=True)
-            except ObjectDoesNotExist:
-                return Response({'message': 'provided academic year Id not exist'}, status=status.HTTP_404_NOT_FOUND)
+            academicyearInstance, academic_year_error = resolve_library_academic_year(
+                libraryBookdetails.get('academicyearId'),
+                libraryBookdetails.get('org_id'),
+                libraryBookdetails.get('branch_id'),
+                libraryBookdetails.get('createdDate')
+            )
+            if academic_year_error:
+                return Response({'message': academic_year_error}, status=status.HTTP_400_BAD_REQUEST)
 
             # Derive branchInstance (Batch) from AcademicYear
             branchInstance = academicyearInstance.batch
