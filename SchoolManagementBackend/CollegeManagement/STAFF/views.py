@@ -20,7 +20,7 @@ from django.core.files.base import ContentFile
 # from utils import months_dict
 
 from Acadix.models import ExceptionTrack, EmployeeMaster, Address, UserType, EmployeeType, State, City, Country, \
-    Organization, Branch, Batch, Gender, UserLogin, Designation
+    Organization, Branch, Batch, Gender, UserLogin, Designation, Department
 from STAFF.models import EmployeeDocument, EmployeeFamilyDetail, EmployeeQualification, EmployeeCourse, \
     EmployeeLanguage, EmployeeExperience
 from STAFF.serializers import staffRegistrationserializer, staffRegistrationAddressSerializer, \
@@ -70,6 +70,47 @@ def sanitize_uploaded_filename(filename):
         name = 'profile_' + str(uuid.uuid4())[:8]
     
     return f"{name}{ext}"
+
+
+def get_or_create_default_designation(organization, branch, created_by):
+    """
+    Ensure staff registration always has a designation to attach.
+    Reuse the first active designation for the same org/branch when present.
+    Otherwise create a minimal fallback designation under the first active department.
+    """
+    designation_instance = Designation.objects.filter(
+        organization=organization,
+        branch=branch,
+        is_active=True,
+    ).order_by('id').first()
+    if designation_instance:
+        return designation_instance
+
+    department_instance = Department.objects.filter(
+        organization=organization,
+        branch=branch,
+        is_active=True,
+    ).order_by('id').first()
+    if not department_instance:
+        raise ValidationError({
+            'designation': 'No active designation or department found for this organization and branch.'
+        })
+
+    created_by_value = created_by if created_by is not None else 1
+    designation_instance, _ = Designation.objects.get_or_create(
+        organization=organization,
+        branch=branch,
+        department=department_instance,
+        designation_name='Default',
+        defaults={
+            'designation_description': 'Default staff designation',
+            'enabled': 'Y',
+            'is_active': True,
+            'created_by': created_by_value,
+            'updated_by': created_by_value,
+        }
+    )
+    return designation_instance
 
 class StaffRegistrationBasicInfoCreateAPIView1(APIView):
     def post(self, request, *args, **kwargs):
@@ -159,8 +200,11 @@ class StaffRegistrationBasicInfoCreateAPIView(CreateAPIView):
             # Map existing Emplyee by employee_id for fast lookup
             employee_map = {doc.id: doc for doc in EmployeeMaster_Records}
             
-            # Get the first available designation (user has already set it up in DB)
-            designation_instance = Designation.objects.filter(is_active=True).first()
+            designation_instance = get_or_create_default_designation(
+                serializer.validated_data.get('organization'),
+                serializer.validated_data.get('branch'),
+                serializer.validated_data.get('created_by'),
+            )
             
             # create staff
             if EmployeeMaster_Records:

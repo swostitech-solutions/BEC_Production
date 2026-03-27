@@ -505,6 +505,7 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
                     <div className="col-12 col-md-1 mb-3">
                       <label htmlFor="select" className="form-label">
                         Select
+                        <span style={{ color: "red" }}>*</span>
                       </label>
                       <Select
                         inputId="select"
@@ -518,10 +519,14 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
                               formData.title.toLowerCase(),
                           ) || null
                         }
-                        onChange={(selected) =>
-                          setFormData({ ...formData, title: selected.value })
-                        }
+                        onChange={(selected) => {
+                          setFormData({ ...formData, title: selected?.value || "" });
+                          clearRequiredError("title");
+                        }}
                       />
+                      {requiredErrors.title && (
+                        <small className="text-danger">{requiredErrors.title}</small>
+                      )}
                     </div>
 
                     <div className="col-12 col-md-5 mb-3 ">

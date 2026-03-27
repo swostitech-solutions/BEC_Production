@@ -259,6 +259,9 @@ export default function BasicTabs() {
     if (!b.employeeCode || !String(b.employeeCode).trim()) {
       errors.employeeCode = "Employee Code is required.";
     }
+    if (!b.title || !String(b.title).trim()) {
+      errors.title = "Title is required.";
+    }
     if (!b.firstName || !String(b.firstName).trim()) {
       errors.firstName = "Employee First Name is required.";
     }
