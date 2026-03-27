@@ -1161,7 +1161,7 @@ const AdmAttendanceEntry = () => {
 
     // ====== INSTITUTION HEADER (CENTERED) ======
     const pageWidth = doc.internal.pageSize.getWidth();
-    const headerText = "Sparsh College of Nursing and Allied Sciences";
+    const headerText = "Bhubaneswar Engineering College";
 
     doc.setFontSize(14);
     doc.setFont("Helvetica", "bold");

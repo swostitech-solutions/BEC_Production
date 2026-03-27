@@ -525,7 +525,7 @@ const handleClear = () => {
         doc.setFontSize(14);
         doc.setFont("Helvetica", "bold");
         doc.setTextColor(0, 0, 255);
-        doc.text("Sparsh College of Nursing and Allied Sciences", 50, 15);
+        doc.text("Bhubaneswar Engineering College", 50, 15);
 
         doc.setFontSize(12);
         doc.setFont("Helvetica", "normal");

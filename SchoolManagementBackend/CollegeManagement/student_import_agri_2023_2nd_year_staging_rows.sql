@@ -1,0 +1,9 @@
+TRUNCATE TABLE public.stg_student_import;
+INSERT INTO public.stg_student_import (
+    session_batch, course, department, academic_year, semester, section, onmrc_registration_no, first_name, middle_name, last_name, gender, date_of_birth, religion, category, nationality, blood_group, mother_tongue, admission_type, student_phone_number, student_email_id, student_aadhar_number, father_name, father_profession, father_phone_number, father_email_id, father_aadhar_number, mother_name, mother_profession, mother_phone_number, mother_email_id, mother_aadhar_number, address_in_details
+) VALUES
+('2023-2027', 'BTECH', 'Agriculture', '2nd year', 'Semester 4', ' Section A', '2301316020', 'RAHUL MANJUMDAR', NULL, NULL, 'Male', NULL, NULL, 'SC', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'PRADIP MAJUMDAR', NULL, '9861772001', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('2023-2027', 'BTECH', 'Agriculture', '2nd year', 'Semester 4', ' Section A', '2301316015', 'LALITA BHATRA', NULL, NULL, 'Female', NULL, NULL, 'ST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'JHITRU BHATRA', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('2023-2027', 'BTECH', 'Agriculture', '2nd year', 'Semester 4', ' Section A', '2301316010', 'CHANDAN MANDAL', NULL, NULL, 'Male', NULL, NULL, 'SC', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'KAMAL MANDAL', NULL, '6370085728', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('2023-2027', 'BTECH', 'Agriculture', '2nd year', 'Semester 4', ' Section A', '2301316012', 'JAGANNATH HALBA', NULL, NULL, 'Male', NULL, NULL, 'ST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'DASARATH HALBA', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('2023-2027', 'BTECH', 'Agriculture', '2nd year', 'Semester 4', ' Section A', '2301316016', 'MOULI BISWAS', NULL, NULL, 'Female', NULL, NULL, 'SC', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MADHUMANGAL BISWAS', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);

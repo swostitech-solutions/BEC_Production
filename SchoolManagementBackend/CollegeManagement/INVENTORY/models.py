@@ -46,7 +46,7 @@ class InventoryItem(models.Model):
     INVENTORY_LOCATION_CHOICES = [
         ('Medical', 'Medical'),
         ('Hostel', 'Hostel'),
-        ('Nursing College', 'Nursing College'),
+        ('Bhubaneswar Engineering College', 'Bhubaneswar Engineering College'),
     ]
     
     STATUS_CHOICES = [

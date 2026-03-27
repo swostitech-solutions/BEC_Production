@@ -402,7 +402,7 @@ const ConductCertificate = () => {
                   textTransform: "uppercase",
                   letterSpacing: "0.5px",
                 }}>
-                  Sparsh College of Nursing &amp; Allied Sciences: Kantabada : BBSR.
+                  Bhubaneswar Engineering College: Kantabada : BBSR.
                 </p>
 
                 {/* Ref No and Date Row */}

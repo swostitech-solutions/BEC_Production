@@ -198,7 +198,7 @@ const AdmAttendanceEntry = () => {
     const doc = new jsPDF();
     const logoPath = "/Assets/sparsh.jpeg";
     doc.setFontSize(16);
-    doc.text("Sparsh College of Nursing and Allied Sciences", 80, 20);
+    doc.text("Bhubaneswar Engineering College", 80, 20);
     const img = new Image();
     img.src = logoPath;
     img.onload = () => {
@@ -301,7 +301,7 @@ const AdmAttendanceEntry = () => {
 //     doc.text("Expense Receipt", 105, 20, null, null, "center");
 
 //     doc.setFontSize(14);
-//     doc.text("Sparsh College of Nursing and Allied Sciences", 105, 30, null, null, "center");
+//     doc.text("Bhubaneswar Engineering College", 105, 30, null, null, "center");
 
 //     doc.setFontSize(12);
 //     doc.text(`Expense No: ${selectedExpense.expense_no}`, 15, 45);
@@ -374,7 +374,7 @@ const generateAndOpenPDF = (selectedExpense) => {
 
   doc.setFontSize(14);
   doc.text(
-    "Sparsh College of Nursing and Allied Sciences",
+    "Bhubaneswar Engineering College",
     105,
     30,
     null,

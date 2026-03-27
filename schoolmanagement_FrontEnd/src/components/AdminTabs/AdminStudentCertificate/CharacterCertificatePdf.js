@@ -65,7 +65,7 @@ const CharacterCertificate = () => {
 
     // Heading
     doc.setFontSize(14).setTextColor(0, 0, 255).setFont("Helvetica", "bold");
-    doc.text("Sparsh College of Nursing and Allied Sciences", 50, 15);
+    doc.text("Bhubaneswar Engineering College", 50, 15);
 
     doc.setFontSize(12).setTextColor(0, 0, 0).setFont("Helvetica", "normal");
     doc.text("Affiliated to", 50, 21);

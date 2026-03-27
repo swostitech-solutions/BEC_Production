@@ -414,7 +414,7 @@ const BonafideCertificateForm = () => {
                   <span>This is to certify that&nbsp;(&nbsp;</span>
                   <input type="text" disabled value={formData.studentname || ""}
                     style={inputInline({ minWidth: "180px", textAlign: "center" })} />
-                  <span>&nbsp;) is a Bonafide student of&nbsp;<strong>Sparsh College of Nursing and Allied Sciences, Kantabada, Bhubaneswar.</strong>
+                  <span>&nbsp;) is a Bonafide student of&nbsp;<strong>Bhubaneswar Engineering College, Kantabada, Bhubaneswar.</strong>
                   &nbsp;She/he is taken admission in our College in&nbsp;</span>
                   <span style={{ display: "inline-block", verticalAlign: "top" }}>
                     <input type="text" disabled value={formData.course_name || formData.coursename || ""}
@@ -499,7 +499,7 @@ const BonafideCertificateForm = () => {
                   <table style={{ fontSize: "13px", borderSpacing: "0 4px" }}>
                     <tbody>
                       {[
-                        ["ACCOUNT NAME",   "SPARSH COLLEGE OF NURSING & ALLIED SCIENCES"],
+                        ["ACCOUNT NAME", "BHUBANESWAR ENGINEERING COLLEGE"],
                         ["ACCOUNT NUMBER", "242305002528"],
                         ["BANK",           "ICICI BANK"],
                         ["BRANCH NAME",    "SAHEED NAGAR, BHUBANESWAR"],

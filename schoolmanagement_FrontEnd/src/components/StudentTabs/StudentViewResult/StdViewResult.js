@@ -110,7 +110,7 @@ const StdResults = () => {
       const pageWidth = doc.internal.pageSize.getWidth();
       doc.setFont("Helvetica", "bold");
       doc.setFontSize(16);
-      const headerText = "Sparsh College of Nursing and Allied Sciences";
+      const headerText = "Bhubaneswar Engineering College";
       const textWidth =
         (doc.getStringUnitWidth(headerText) * doc.internal.getFontSize()) /
         doc.internal.scaleFactor;

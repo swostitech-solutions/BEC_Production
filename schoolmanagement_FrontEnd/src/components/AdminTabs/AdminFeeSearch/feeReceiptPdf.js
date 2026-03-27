@@ -270,7 +270,7 @@ export const openFeeReceiptPdf = (receiptData) => {
   doc.setTextColor(0, 100, 80);
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("SPARSH COLLEGE OF NURSING & ALLIED SCIENCES", pageWidth / 2, 12, {
+  doc.text("BHUBANESWAR ENGINEERING COLLEGE", pageWidth / 2, 12, {
     align: "center",
   });
 

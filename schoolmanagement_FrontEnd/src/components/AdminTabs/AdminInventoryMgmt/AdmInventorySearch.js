@@ -50,7 +50,7 @@ const AdmInventorySearch = () => {
     { value: "", label: "All Locations" },
     { value: "Medical", label: "Medical" },
     { value: "Hostel", label: "Hostel" },
-    { value: "Nursing College", label: "Nursing College" },
+    { value: "Bhubaneswar Engineering College", label: "Bhubaneswar Engineering College" },
   ];
 
   const statusOptions = [

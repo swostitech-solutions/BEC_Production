@@ -1,0 +1,7 @@
+TRUNCATE TABLE public.stg_student_import;
+INSERT INTO public.stg_student_import (
+    session_batch, course, department, academic_year, semester, section, onmrc_registration_no, first_name, middle_name, last_name, gender, date_of_birth, religion, category, nationality, blood_group, mother_tongue, admission_type, student_phone_number, student_email_id, student_aadhar_number, father_name, father_profession, father_phone_number, father_email_id, father_aadhar_number, mother_name, mother_profession, mother_phone_number, mother_email_id, mother_aadhar_number, address_in_details
+) VALUES
+('2022-2026', 'BTECH', 'Agriculture', '3rd year', 'Semester 6', ' Section A', '2201316048', 'PITAMBARA', NULL, ' MAJHI', 'Male', '24-02-2005', 'Hindu', 'ST', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'HARIBANDHU MAJHI', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('2022-2026', 'BTECH', 'Agriculture', '3rd year', 'Semester 6', ' Section A', '2201316047', 'MAINA', NULL, 'MALLICK', 'Female', NULL, NULL, 'SC', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'GOUR MALLICK', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('2022-2026', 'BTECH', 'Agriculture', '3rd year', 'Semester 6', ' Section A', '2201316046', 'ANJANA', NULL, 'BEHERA', 'Female', NULL, NULL, NULL, 'Indian', 'O+', 'Odia', 'Regular', '8480502513', 'anjanabehera237@gmail.com ', '806846000000', 'TRINATH BEHERA', NULL, NULL, NULL, NULL, 'HEMALATA BEHERA ', NULL, '8480502513', NULL, '330589000000', 'At/po: Anagha,Dist:Gajapati,Pin:761016');

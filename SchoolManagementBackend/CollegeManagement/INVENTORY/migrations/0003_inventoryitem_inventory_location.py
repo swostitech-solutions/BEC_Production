@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='inventoryitem',
             name='inventory_location',
-            field=models.CharField(blank=True, choices=[('Medical', 'Medical'), ('Hostel', 'Hostel'), ('Nursing College', 'Nursing College')], max_length=50, null=True),
+                field=models.CharField(blank=True, choices=[('Medical', 'Medical'), ('Hostel', 'Hostel'), ('Bhubaneswar Engineering College', 'Bhubaneswar Engineering College')], max_length=50, null=True),
         ),
     ]

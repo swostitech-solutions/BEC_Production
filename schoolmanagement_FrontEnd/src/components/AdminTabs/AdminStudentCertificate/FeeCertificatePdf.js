@@ -65,7 +65,7 @@ const FeeCertificatePDF = () => {
      doc.setTextColor(0, 0, 255); // Blue
      doc.setFont("Helvetica", "bold");
      doc.text(
-       "Sparsh College of Nursing and Allied Sciences", //  Updated heading
+       "Bhubaneswar Engineering College", //  Updated heading
        headingX,
        headingY
      );
