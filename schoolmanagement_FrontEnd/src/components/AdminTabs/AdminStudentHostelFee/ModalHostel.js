@@ -131,7 +131,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
           student_id: s.student_id,
           studentname: s.student_name,
           // ✅ Correct fields from API
-          registration_no: s.registration_no, // ONMRC Registration No
+          registration_no: s.registration_no, // BPUT Registration No
           college_admission_no: s.college_admission_no, // Admission No
           rollno: s.enrollment_no,
           batch_code: s.batch_code,
@@ -565,7 +565,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
-                        ONMRC Registration No
+                        BPUT Registration No
                       </label>
                       <input
                         type="text"
@@ -573,7 +573,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.schoolAdmissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="ONMRC Registration No"
+                        placeholder="BPUT Registration No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -584,7 +584,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                       <thead>
                         <tr>
                           <th>Student Name</th>
-                          <th>ONMRC Registration No</th>
+                          <th>BPUT Registration No</th>
                           <th>Admission No</th>
                           <th>Session</th>
                           <th>Course</th>

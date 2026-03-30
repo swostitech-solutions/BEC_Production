@@ -1018,7 +1018,7 @@ const StudentPromotion = () => {
                                     }
                                   />
                                 </th>
-                                <th>ONMRC Registration No</th>
+                                <th>BPUT Registration No</th>
                                 <th>Admission No</th>
                                 <th>Name</th>
                               </tr>
@@ -1204,7 +1204,7 @@ const StudentPromotion = () => {
                                     }
                                   />
                                 </th>
-                                <th>ONMRC Registration No</th>
+                                <th>BPUT Registration No</th>
                                 <th>Admission No</th>
                                 <th>Name</th>
                               </tr>

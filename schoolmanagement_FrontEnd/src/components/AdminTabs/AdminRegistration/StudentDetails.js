@@ -1234,13 +1234,13 @@ const AdmAttendanceEntry = ({
 
                     <div className="col-12 col-md-4 mb-2">
                       <label htmlFor="registration-no" className="form-label">
-                        ONMRC Registration No
+                        BPUT Registration No
                       </label>
                       <input
                         type="text"
                         id="registration-no"
                         className="form-control detail"
-                        placeholder="Enter ONMRC registration no"
+                        placeholder="Enter BPUT Registration No"
                         name="registration_no"
                         value={formData.registration_no}
                         onChange={handleInputChange}

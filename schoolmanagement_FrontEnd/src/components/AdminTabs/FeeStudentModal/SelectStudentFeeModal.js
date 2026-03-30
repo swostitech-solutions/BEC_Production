@@ -965,7 +965,7 @@ const handleClearFilters = () => {
                           <thead>
                             <tr>
                               <th>Student Name</th>
-                              <th>ONMRC Registration No</th>
+                              <th>BPUT Registration No</th>
                               <th>Admission No</th>
                               <th>Session</th>
                               <th>Course</th>

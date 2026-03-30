@@ -1310,7 +1310,7 @@ const AdmAttendanceEntry = () => {
                         <th>Academic Year</th>
                         <th>Semester</th>
                         <th>Section</th>
-                        <th>ONMRC Registration No</th>
+                        <th>BPUT Registration No</th>
                         <th>Admission No</th>
                         <th>Student Name</th>
                         <th>Mark Attendance</th>

@@ -3346,29 +3346,29 @@ const generatePDF = async (data) => {
     align: "center",
   });
 
-  doc.setFontSize(8);
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("Helvetica", "normal");
-  doc.text("(A unit of Nirmala Trust)", pageWidth / 2, 16, { align: "center" });
-  doc.text(
-    "Plot No: 154/1683/2194 & 177/2195, Kantabada, Bhubaneswar-752054",
-    pageWidth / 2,
-    20,
-    { align: "center" },
-  );
-  doc.text(
-    "Ph.: +91 7735504783, Email: info@sparshnursing.edu.in",
-    pageWidth / 2,
-    24,
-    { align: "center" },
-  );
+  // doc.setFontSize(8);
+  // doc.setTextColor(0, 0, 0);
+  // doc.setFont("Helvetica", "normal");
+  // doc.text("(A unit of Nirmala Trust)", pageWidth / 2, 16, { align: "center" });
+  // doc.text(
+  //   "Plot No: 154/1683/2194 & 177/2195, Kantabada, Bhubaneswar-752054",
+  //   pageWidth / 2,
+  //   20,
+  //   { align: "center" },
+  // );
+  // doc.text(
+  //   "Ph.: +91 7735504783, Email: info@sparshnursing.edu.in",
+  //   pageWidth / 2,
+  //   24,
+  //   { align: "center" },
+  // );
 
   // --- 2. CASH RECEIPT LABEL ---
   doc.setFillColor(0, 100, 80);
   doc.rect(85, 27, 40, 7, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
-  doc.text("RECEIPT", 105, 32, { align: "center" });
+  doc.text(" FEE RECEIPT", 105, 32, { align: "center" });
 
   // --- 3. TOP INFO ---
   doc.setTextColor(0, 0, 0);

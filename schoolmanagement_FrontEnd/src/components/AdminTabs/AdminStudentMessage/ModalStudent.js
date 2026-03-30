@@ -598,7 +598,7 @@ setCurrentPage(0);
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
-                        ONMRC Registration No
+                        BPUT Registration No
                       </label>
                       {/* <input
                         type="text"
@@ -613,7 +613,7 @@ setCurrentPage(0);
                         value={filters.registration_no}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="ONMRC Registration No"
+                        placeholder="BPUT Registration No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -628,7 +628,7 @@ setCurrentPage(0);
                         <tr>
                           <th>Sr No</th>
                           <th>Student Name</th>
-                          <th>ONMRC Registration No</th>
+                          <th>BPUT Registration No</th>
                           <th>Admission No</th>
                           <th>Session</th>
                           <th>Course</th>

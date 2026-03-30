@@ -621,7 +621,7 @@ const AdmAttendanceEntry = () => {
                         <th>Session</th>
                         <th>Course</th>
                         <th>Student Name</th>
-                        <th>ONMRC Registration No</th>
+                        <th>BPUT Registration No</th>
                         <th>Admission No</th>
                         <th>Roll no</th>
                         <th>Father Name</th>

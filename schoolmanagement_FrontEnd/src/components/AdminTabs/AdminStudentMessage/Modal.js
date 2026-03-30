@@ -594,7 +594,7 @@ const handlePageClick = (event) => {
                         className="form-label"
                       >
                         {" "}
-                        ONMRC Registration No{" "}
+                        BPUT Registration No{" "}
                       </label>
                       <input
                         type="text"
@@ -602,7 +602,7 @@ const handlePageClick = (event) => {
                         name="schoolAdmissionNo"
                         value={filters.schoolAdmissionNo}
                         onChange={handleInputChange}
-                        placeholder="ONMRC Registration No"
+                        placeholder="BPUT Registration No"
                       />
                     </div>
                   </div>
@@ -624,7 +624,7 @@ const handlePageClick = (event) => {
                             />
                           </th>
                           <th>Student Name</th>
-                          <th>ONMRC Registration No</th>
+                          <th>BPUT Registration No</th>
                           <th>Admission No</th>
                           <th>Session</th>
                           <th>Course</th>

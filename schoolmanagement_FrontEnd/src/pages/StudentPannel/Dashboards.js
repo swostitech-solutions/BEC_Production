@@ -411,7 +411,7 @@ function Dashboard() {
                           <span style={{ color: "#333" }}>{basicDetails.admission_no || "-"}</span>
                         </div>
                         <div style={{ marginBottom: "12px", fontSize: "14px" }}>
-                          <strong style={{ color: "#555", minWidth: "140px", display: "inline-block" }}> ONMRC Registration No:</strong>{" "}
+                          <strong style={{ color: "#555", minWidth: "140px", display: "inline-block" }}> BPUT Registration No:</strong>{" "}
                           <span style={{ color: "#333" }}>{basicDetails.registration_no || "-"}</span>
                         </div>
                         <div style={{ marginBottom: "12px", fontSize: "14px" }}>
