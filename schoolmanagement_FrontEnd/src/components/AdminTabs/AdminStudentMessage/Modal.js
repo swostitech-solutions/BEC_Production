@@ -63,6 +63,23 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (section) => Number(section.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(SectionList[0].id);
+    }
+  }, [selectedSemester, selectedSection, SectionList]);
+
   const [filters, setFilters] = useState({
     studentName: "",
     admissionNo: "",
@@ -534,6 +551,7 @@ const handlePageClick = (event) => {
                       <label className="form-label">Section</label>
                       <Select
                         className=" detail"
+                        isDisabled={true}
                         options={
                           SectionList?.map((s) => ({
                             value: s.id,

@@ -291,6 +291,23 @@ const handleChange = (index, field, value) => {
   }, [SectionList]);
 
   useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) return;
+
+    const hasValidSelectedSection = sectionOptions.some(
+      (option) => Number(option.value) === Number(selectedSection?.value)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(sectionOptions[0]);
+    }
+  }, [selectedSemester, selectedSection, sectionOptions]);
+
+  useEffect(() => {
     const fetchMentors = async () => {
       try {
         const orgId = sessionStorage.getItem("organization_id");
@@ -777,6 +794,7 @@ const handleChange = (index, field, value) => {
                           }}
                           placeholder="Select Section"
                           classNamePrefix="section-dropdown"
+                          isDisabled={true}
                         />
                         {errors.selectedSection && (
                           <small className="text-danger">

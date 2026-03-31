@@ -83,6 +83,23 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (sec) => Number(sec.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(SectionList[0].id);
+    }
+  }, [selectedSemester, selectedSection, SectionList]);
+
   const [studentsData, setStudentsData] = useState([]);
 
   const [amount, setAmount] = useState("");
@@ -1429,6 +1446,7 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className="detail"
+                          isDisabled={true}
                           isLoading={loadingSec}
                           options={
                             SectionList?.map((s) => ({

@@ -557,6 +557,23 @@ useEffect(() => {
   ]);
 
   useEffect(() => {
+    if (!selectedSemester?.value) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sections) || sections.length === 0) return;
+
+    const hasValidSelectedSection = sections.some(
+      (section) => Number(section.value) === Number(selectedSection?.value)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(sections[0]);
+    }
+  }, [selectedSemester, selectedSection, sections]);
+
+  useEffect(() => {
     const fetchFrequencyOptions = async () => {
       // Guard clauses - need at least Batch and Course to filter Frequency properly
       if (isResetting) return;
@@ -1284,6 +1301,7 @@ if (!response.ok) {
                   setErrors((prev) => ({ ...prev, section: "" }));
                 }}
                 placeholder="Select Section"
+                isDisabled={true}
               />
               {errors.section && (
                 <small className="text-danger">{errors.section}</small>

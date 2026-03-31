@@ -789,7 +789,7 @@ const StudentSearch = () => {
                           value={selectedSection}
                           placeholder="Select Section"
                           onChange={setSelectedSection}
-                          isDisabled={!selectedSemester}
+                          isDisabled={true}
                           isClearable
                         />
                       </div>

@@ -377,6 +377,26 @@ const CircularEntry = () => {
     label: x.section_name,
   }));
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      setSectionSelections({});
+      setSelectedSection(null);
+      setSelectAllSection(false);
+      return;
+    }
+
+    if (!Array.isArray(sectionMapped) || sectionMapped.length === 0) return;
+
+    const autoSelectedSections = {};
+    sectionMapped.forEach((sec) => {
+      autoSelectedSections[sec.id] = true;
+    });
+
+    setSectionSelections(autoSelectedSections);
+    setSelectAllSection(true);
+    setSelectedSection(sectionMapped[0].id);
+  }, [selectedSemester, SectionList]);
+
   const resetForm = () => {
     // Clear dropdown selections
     setSelectedBatch(null);
@@ -1281,6 +1301,7 @@ const CircularEntry = () => {
                       <input
                         type="checkbox"
                         checked={selectAllSection}
+                        disabled={true}
                         onChange={handleSelectAllSection}
                       />
                       <label
@@ -1300,6 +1321,7 @@ const CircularEntry = () => {
                           <input
                             type="checkbox"
                             checked={sectionSelections[item.id] || false}
+                            disabled={true}
                             onChange={() =>
                               setSectionSelections((prev) => ({
                                 ...prev,

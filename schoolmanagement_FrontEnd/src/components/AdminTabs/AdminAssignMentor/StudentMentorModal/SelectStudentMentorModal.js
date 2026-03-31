@@ -357,6 +357,23 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     fetchSections();
   }, [selectedSession, selectedCourse, selectedDepartment, selectedAcademicYear, selectedSemester]);
 
+  useEffect(() => {
+    if (!selectedSemester?.value) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sections) || sections.length === 0) return;
+
+    const hasValidSelectedSection = sections.some(
+      (section) => Number(section.value) === Number(selectedSection?.value)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(sections[0]);
+    }
+  }, [selectedSemester, selectedSection, sections]);
+
   // Search Students
   const handleSearch = async () => {
     try {
@@ -642,6 +659,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
                         value={selectedSection}
                         onChange={setSelectedSection}
                         placeholder="Select Section"
+                        isDisabled={true}
                       />
                     </div>
 

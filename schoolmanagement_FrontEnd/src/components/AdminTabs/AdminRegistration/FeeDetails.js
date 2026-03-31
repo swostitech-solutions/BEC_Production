@@ -234,6 +234,17 @@ const DesignComponent = ({
     }));
   };
 
+  // 🔄 Auto-set feeappfrom based on admission_type when periods are loaded
+  useEffect(() => {
+    if (!periods || periods.length === 0) return;
+    const admType = formData.admission_type;
+    if (admType === "Regular" && periods[0]) {
+      setFormData((prev) => ({ ...prev, feeappfrom: periods[0].id }));
+    } else if (admType === "Lateral" && periods[2]) {
+      setFormData((prev) => ({ ...prev, feeappfrom: periods[2].id }));
+    }
+  }, [periods, formData.admission_type]);
+
   // 🔄 Watch category changes
   useEffect(() => {
     if (formData.category) {
@@ -286,7 +297,11 @@ const DesignComponent = ({
                           },
                         })
                       }
-                      isDisabled={isDisabled}
+                      isDisabled={
+                        isDisabled ||
+                        formData.admission_type === "Regular" ||
+                        formData.admission_type === "Lateral"
+                      }
                     />
                     {requiredErrors.feeappfrom && (
                       <small style={{ color: "red" }}>{requiredErrors.feeappfrom}</small>

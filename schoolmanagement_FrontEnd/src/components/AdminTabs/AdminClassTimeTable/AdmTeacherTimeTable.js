@@ -162,6 +162,27 @@ const AdmTeacherTimeTable = () => {
     }
   }, [SectionList]);
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    const availableSectionOptions = Array.isArray(sectionOptions)
+      ? sectionOptions.filter((option) => option?.value !== "" && option?.value != null)
+      : [];
+
+    if (availableSectionOptions.length === 0) return;
+
+    const hasValidSelectedSection = availableSectionOptions.some(
+      (option) => Number(option.value) === Number(selectedSection?.value)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(availableSectionOptions[0]);
+    }
+  }, [selectedSemester, selectedSection, sectionOptions]);
+
   // Fetch Teachers/Mentors
   useEffect(() => {
     const fetchMentors = async () => {
@@ -499,7 +520,7 @@ const AdmTeacherTimeTable = () => {
                           className="detail"
                           classNamePrefix="section-dropdown"
                           placeholder="Select Section"
-                          isDisabled={!selectedSemester}
+                          isDisabled={true}
                           value={selectedSection}
                           onChange={setSelectedSection}
                           isClearable

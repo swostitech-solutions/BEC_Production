@@ -210,6 +210,7 @@ const ResultPublishs = () => {
                         <select
                           id="section"
                           className="form-select"
+                          disabled
                         >
                           <option value="">Select Section</option>
                         </select>

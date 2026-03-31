@@ -679,6 +679,7 @@ const StfLessonPlan = () => {
                           onChange={handleSectionChange}
                           placeholder="Select Section"
                           classNamePrefix="section-dropdown"
+                          isDisabled={true}
                         />
                       </div>
 

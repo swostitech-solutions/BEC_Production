@@ -178,6 +178,40 @@ const StudentPromotion = () => {
     toSemester
   );
 
+  useEffect(() => {
+    if (!fromSemester) {
+      if (fromSection) setFromSection(null);
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidFromSection = SectionList.some(
+      (sec) => Number(sec.id) === Number(fromSection)
+    );
+
+    if (!hasValidFromSection) {
+      setFromSection(SectionList[0].id);
+    }
+  }, [fromSemester, fromSection, SectionList]);
+
+  useEffect(() => {
+    if (!toSemester) {
+      if (toSection) setToSection(null);
+      return;
+    }
+
+    if (!Array.isArray(toSectionList) || toSectionList.length === 0) return;
+
+    const hasValidToSection = toSectionList.some(
+      (sec) => Number(sec.id) === Number(toSection)
+    );
+
+    if (!hasValidToSection) {
+      setToSection(Number(toSectionList[0].id));
+    }
+  }, [toSemester, toSection, toSectionList]);
+
   // ---------------------
 
   const [formData, setFormData] = useState({});
@@ -703,6 +737,7 @@ const StudentPromotion = () => {
                         </Label>
                         <Select
                           className="detail"
+                          isDisabled={true}
                           isLoading={loadingSec}
                           options={
                             SectionList?.map((s) => ({
@@ -954,6 +989,7 @@ const StudentPromotion = () => {
                         /> */}
                         <Select
                           className="detail"
+                          isDisabled={true}
                           isLoading={loadingSec}
                           options={
                             toSectionList?.map((s) => ({

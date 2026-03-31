@@ -1320,6 +1320,7 @@ const AdmStudentHostelCreate = () => {
                           value={selectedSection}
                           onChange={setSelectedSection}
                           placeholder="Select Section"
+                          isDisabled={true}
                         />
                       </div>
                       <div className="col-12 col-md-3 mb-2">
