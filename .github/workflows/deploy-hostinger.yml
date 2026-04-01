@@ -1,0 +1,111 @@
+name: Deploy to Hostinger VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: hostinger-production
+  cancel-in-progress: false
+
+env:
+  DEPLOY_PATH: /var/www/bec-production
+  FRONTEND_BUILD_TARGET: /var/www/bec-production-frontend/build
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: schoolmanagement_FrontEnd/package-lock.json
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Smoke test frontend build
+        working-directory: schoolmanagement_FrontEnd
+        env:
+          CI: "false"
+          GENERATE_SOURCEMAP: "false"
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Smoke test backend dependencies
+        working-directory: SchoolManagementBackend/CollegeManagement
+        run: |
+          python -m venv .ci-venv
+          source .ci-venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          python manage.py check || true
+
+      - name: Package release bundle
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=schoolmanagement_FrontEnd/node_modules \
+            --exclude=schoolmanagement_FrontEnd/build \
+            --exclude=SchoolManagementBackend/CollegeManagement/venv \
+            --exclude=SchoolManagementBackend/CollegeManagement/.ci-venv \
+            -czf release.tgz .
+
+      - name: Upload release bundle
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: release.tgz
+          target: /tmp/
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          FRONTEND_BUILD_TARGET: ${{ env.FRONTEND_BUILD_TARGET }}
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 120s
+          command_timeout: 20m
+          envs: DEPLOY_PATH,FRONTEND_BUILD_TARGET,REACT_APP_API_URL
+          script: |
+            set -e
+            RELEASE_DIR=/tmp/bec-production-release
+            mkdir -p "$DEPLOY_PATH"
+            rm -rf "$RELEASE_DIR"
+            mkdir -p "$RELEASE_DIR"
+            tar -xzf /tmp/release.tgz -C "$RELEASE_DIR"
+            rsync -a --delete \
+              --exclude 'SchoolManagementBackend/CollegeManagement/.env' \
+              --exclude 'SchoolManagementBackend/CollegeManagement/venv' \
+              --exclude 'SchoolManagementBackend/CollegeManagement/SWOSTITECH_CMS' \
+              "$RELEASE_DIR"/ "$DEPLOY_PATH"/
+            cd "$DEPLOY_PATH"
+            chmod +x deploy/hostinger-bec/deploy.sh
+            export APP_NAME='bec-production'
+            export DEPLOY_ROOT='/var/www/bec-production'
+            export FRONTEND_BUILD_TARGET='/var/www/bec-production-frontend/build'
+            export BACKEND_SERVICE='bec-production.service'
+            export BACKEND_PORT='8001'
+            export PUBLIC_PORT='3006'
+            ./deploy/hostinger-bec/deploy.sh
