@@ -570,6 +570,36 @@ const AdmAttendanceEntry = ({
     formData.academic_year,
   ]);
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection !== "") {
+        setSelectedSection("");
+        setFormData((prev) =>
+          prev.addmitted_section === ""
+            ? prev
+            : { ...prev, addmitted_section: "" }
+        );
+      }
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (sec) => Number(sec.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      const defaultSectionId = SectionList[0].id;
+      setSelectedSection(defaultSectionId);
+      setFormData((prev) =>
+        Number(prev.addmitted_section) === Number(defaultSectionId)
+          ? prev
+          : { ...prev, addmitted_section: defaultSectionId }
+      );
+    }
+  }, [selectedSemester, SectionList, selectedSection, setFormData]);
+
   const triggerFeeGroupReload = () => {
     window.dispatchEvent(new Event("feeGroupDependenciesChanged"));
   };
@@ -1068,9 +1098,11 @@ const AdmAttendanceEntry = ({
                         }
                         onChange={(opt) => {
                           setSelectedSemester(opt?.value || "");
+                          setSelectedSection("");
                           setFormData((prev) => ({
                             ...prev,
                             semester: opt?.value || "",
+                            addmitted_section: "",
                             feegroup: "",
                             feeappfrom: "",
                           }));
@@ -1097,7 +1129,7 @@ const AdmAttendanceEntry = ({
                       </label>
                       <Select
                         className=" detail"
-                        isDisabled={false}
+                        isDisabled={true}
                         value={
                           SectionList?.find((s) => s.id === selectedSection)
                             ? {
@@ -1165,9 +1197,8 @@ const AdmAttendanceEntry = ({
                         placeholder="Select Admission Type"
                         options={[
                           { value: "Regular", label: "Regular" },
-                          { value: "Irregular", label: "Irregular" },
-                          { value: "Government", label: "Government" },
-                          { value: "Management", label: "Management" },
+                          { value: "Lateral", label: "Lateral" },
+
                         ]}
                         value={
                           formData.admission_type
@@ -1234,13 +1265,13 @@ const AdmAttendanceEntry = ({
 
                     <div className="col-12 col-md-4 mb-2">
                       <label htmlFor="registration-no" className="form-label">
-                        ONMRC Registration No
+                        BPUT Registration No
                       </label>
                       <input
                         type="text"
                         id="registration-no"
                         className="form-control detail"
-                        placeholder="Enter ONMRC registration no"
+                        placeholder="Enter BPUT Registration No"
                         name="registration_no"
                         value={formData.registration_no}
                         onChange={handleInputChange}

@@ -74,6 +74,23 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (sec) => Number(sec.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(SectionList[0].id);
+    }
+  }, [selectedSemester, selectedSection, SectionList]);
+
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -556,6 +573,7 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className=" detail"
+                          isDisabled={true}
                           options={
                             SectionList?.map((s) => ({
                               value: s.id,
@@ -621,7 +639,7 @@ const AdmAttendanceEntry = () => {
                         <th>Session</th>
                         <th>Course</th>
                         <th>Student Name</th>
-                        <th>ONMRC Registration No</th>
+                        <th>BPUT Registration No</th>
                         <th>Admission No</th>
                         <th>Roll no</th>
                         <th>Father Name</th>

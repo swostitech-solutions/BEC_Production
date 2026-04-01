@@ -65,6 +65,23 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (section) => Number(section.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(SectionList[0].id);
+    }
+  }, [selectedSemester, selectedSection, SectionList]);
+
   const [studentData, setStudentData] = useState([]);
   const [fullStudentData, setFullStudentData] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -522,6 +539,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                       <label className="form-label">Section</label>
                       <Select
                         className=" detail"
+                        isDisabled={true}
                         options={
                           SectionList?.map((s) => ({
                             value: s.id,
@@ -583,7 +601,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         htmlFor="school-admission-no"
                         className="form-label"
                       >
-                        ONMRC Registration No
+                        BPUT Registration No
                       </label>
                       <input
                         type="text"
@@ -591,7 +609,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         value={filters.schoolAdmissionNo}
                         onChange={handleInputChange}
                         className="form-control detail"
-                        placeholder="ONMRC Registration No"
+                        placeholder="BPUT Registration No"
                         style={{ height: "38px", padding: "0.375rem 0.75rem" }}
                       />
                     </div>
@@ -606,7 +624,7 @@ const ModalClass = ({ show, onSelectStudent, handleClose }) => {
                         <tr>
                           <th>Sr No</th>
                           <th>Student Name</th>
-                          <th>ONMRC Registration No</th>
+                          <th>BPUT Registration No</th>
                           <th>Admission No</th>
                           <th>Session</th>
                           <th>Course</th>

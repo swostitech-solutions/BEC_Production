@@ -263,6 +263,17 @@ const ViewAttendance = () => {
     generateCalendar();
   }, []);
 
+  // 🔹 Auto-select first section when sections are loaded and semester is selected
+  useEffect(() => {
+    if (SectionList && SectionList.length > 0 && selectedSemester) {
+      const firstSection = SectionList[0];
+      setSelectedSection({
+        value: firstSection.id,
+        label: firstSection.section_description || firstSection.section_code || firstSection.section_name || firstSection.sectionname || firstSection.name,
+      });
+    }
+  }, [SectionList, selectedSemester]);
+
   const generateCalendar = () => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -479,7 +490,7 @@ const ViewAttendance = () => {
                           className="detail"
                           classNamePrefix="section-dropdown"
                           placeholder="Select Section"
-                          isDisabled={!selectedSemester}
+                            isDisabled={true}
                           value={selectedSection}
                           onChange={setSelectedSection}
                           isClearable

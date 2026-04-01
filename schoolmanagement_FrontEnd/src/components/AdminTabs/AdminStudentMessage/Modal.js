@@ -63,6 +63,23 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (section) => Number(section.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(SectionList[0].id);
+    }
+  }, [selectedSemester, selectedSection, SectionList]);
+
   const [filters, setFilters] = useState({
     studentName: "",
     admissionNo: "",
@@ -534,6 +551,7 @@ const handlePageClick = (event) => {
                       <label className="form-label">Section</label>
                       <Select
                         className=" detail"
+                        isDisabled={true}
                         options={
                           SectionList?.map((s) => ({
                             value: s.id,
@@ -594,7 +612,7 @@ const handlePageClick = (event) => {
                         className="form-label"
                       >
                         {" "}
-                        ONMRC Registration No{" "}
+                        BPUT Registration No{" "}
                       </label>
                       <input
                         type="text"
@@ -602,7 +620,7 @@ const handlePageClick = (event) => {
                         name="schoolAdmissionNo"
                         value={filters.schoolAdmissionNo}
                         onChange={handleInputChange}
-                        placeholder="ONMRC Registration No"
+                        placeholder="BPUT Registration No"
                       />
                     </div>
                   </div>
@@ -624,7 +642,7 @@ const handlePageClick = (event) => {
                             />
                           </th>
                           <th>Student Name</th>
-                          <th>ONMRC Registration No</th>
+                          <th>BPUT Registration No</th>
                           <th>Admission No</th>
                           <th>Session</th>
                           <th>Course</th>

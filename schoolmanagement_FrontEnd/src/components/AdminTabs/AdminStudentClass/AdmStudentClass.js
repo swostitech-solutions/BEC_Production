@@ -86,6 +86,23 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection !== "") setSelectedSection("");
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (sec) => Number(sec.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(SectionList[0].id);
+    }
+  }, [selectedSemester, selectedSection, SectionList]);
+
   const [previousYearBalance, setPreviousYearBalance] = useState(0);
 
   // ✅ Clear stored filters on initial page load
@@ -1252,6 +1269,7 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className="detail"
+                          isDisabled={true}
                           isLoading={loadingSec}
                           options={
                             SectionList?.map((s) => ({
@@ -1287,7 +1305,7 @@ const AdmAttendanceEntry = () => {
                       <tr>
                         <th>Sr.No</th>
                         <th>Student Name</th>
-                        <th>ONMRC Registration No</th>
+                        <th>BPUT Registration No</th>
                         <th>Admission No</th>
                         <th>Roll no</th>
                         <th>Session</th>
@@ -1409,7 +1427,7 @@ const AdmAttendanceEntry = () => {
                     />
                   </div>
                   <div className="col-12 col-md-3 mb-2">
-                    <label className="form-label">ONMRC Registration No</label>
+                    <label className="form-label">BPUT Registration No</label>
                     <input
                       type="text"
                       className="form-control detail"

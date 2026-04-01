@@ -619,6 +619,23 @@ const AdmAttendanceEntry = () => {
     selectedSemester,
   ]);
 
+  useEffect(() => {
+    if (!selectedSemester?.value) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sections) || sections.length === 0) return;
+
+    const hasValidSelectedSection = sections.some(
+      (section) => Number(section.value) === Number(selectedSection?.value)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(sections[0]);
+    }
+  }, [selectedSemester, selectedSection, sections]);
+
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -922,6 +939,7 @@ const AdmAttendanceEntry = () => {
                           value={selectedSection}
                           onChange={setSelectedSection}
                           placeholder="Select Section"
+                          isDisabled={true}
                         />
                       </div>
                     </div>
@@ -936,7 +954,7 @@ const AdmAttendanceEntry = () => {
                       <tr>
                         <th>Sr.No</th>
                         <th>Student Name</th>
-                        <th>ONMRC Registration No</th>
+                        <th>BPUT Registration No</th>
                         <th>Admission No.</th>
                         <th>Roll no</th>
                         <th>Session</th>

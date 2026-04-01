@@ -144,6 +144,7 @@ const AdmAttendanceEntry = () => {
                           id="section"
                           className="form-select"
                           ref={sectionRef}
+                          disabled
                         >
                           <option value="">Select Section</option>
                           <option value="A">A</option>

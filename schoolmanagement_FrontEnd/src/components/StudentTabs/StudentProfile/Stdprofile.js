@@ -248,7 +248,7 @@ const StudentProfileCard = ({ studentData, onClose }) => {
                                   display: "inline-block",
                                 }}
                               >
-                                ONMRC Registration No:
+                                BPUT Registration No:
                               </strong>{" "}
                               <span style={{ color: "#333" }}>{data.rollNo}</span>
                             </div>

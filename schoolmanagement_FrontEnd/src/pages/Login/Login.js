@@ -16,6 +16,9 @@ import { ApiUrl } from "../../ApiUrl";
 import ForgotPasswordModal from "./ForgotPasswordModal";
 
 
+
+
+
 const Login = ({ onLogin }) => {
   // const [formData, setFormData] = useState({
   //   username: "",
@@ -276,7 +279,6 @@ const Login = ({ onLogin }) => {
   const handleLogin = async () => {
     try {
       setLoading(true);
-      const enteredPassword = formData.password;
 
       const selectedInstitute = formData.institute;
 
@@ -293,7 +295,7 @@ const Login = ({ onLogin }) => {
         },
         body: JSON.stringify({
           username: formData.username,
-          password: enteredPassword,
+          password: formData.password,
           organization_id: selectedInstitute.organization_id,
           branch_id: selectedInstitute.branch_id,
         }),
@@ -318,6 +320,8 @@ const Login = ({ onLogin }) => {
         branch_name,
         user_login_id,
         accessible_modules,
+        display_name,
+        role_name,
       } = loginData.data;
 
 
@@ -344,7 +348,13 @@ const Login = ({ onLogin }) => {
       localStorage.setItem("organizationName", organization_name);
       localStorage.setItem("branchName", branch_name);
 
+      // Store display_name and role_name
+      if (display_name) sessionStorage.setItem("display_name", display_name);
+      if (role_name) sessionStorage.setItem("role_name", role_name);
+
       // --- Step 2: Navigate based on role ---
+      setIsLoggedIn(true);
+
       switch (userRole) {
         case "staff":
           navigate("/staff/dashboard");
@@ -364,8 +374,6 @@ const Login = ({ onLogin }) => {
           break;
       }
 
-      setIsLoggedIn(true);
-
       // --- Step 3: Wait before token request ---
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -375,7 +383,7 @@ const Login = ({ onLogin }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_name: formData.username,
-          password: enteredPassword,
+          password: formData.password,
         }),
       });
 
@@ -408,6 +416,7 @@ const Login = ({ onLogin }) => {
       handleLogin();
     }
   };
+
   return (
     <div
       style={{
@@ -422,15 +431,47 @@ const Login = ({ onLogin }) => {
         paddingBottom: "50px",
       }}
     >
+      {/* <div>
+        <h1>Welcome to BEC ERP Management System</h1>
+      </div> */}
+      <div
+        style={{
+          position: "absolute",
+          top: "30px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          alignItems: "center",
+          gap: "15px",
+          zIndex: 10,
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "2.2rem",
+            fontWeight: "bold",
+            margin: 0,
+            fontFamily: "'Poppins', sans-serif",
+            letterSpacing: "1.5px",
+            color: "#000",
+            whiteSpace: "nowrap",
+            textTransform: "uppercase",
+          }}
+        >
+          Welcome to BEC ERP Management System
+        </h1>
+
+       
+      </div>
       <Container className="mt-5">
         <Row className="justify-content-center">
           <Col md={6}>
             <Card className="card bg-dark text-light" style={{ opacity: 0.9 }}>
               <Card.Img
                 variant="top"
-                src="/Assets/logobec.png"
+                src="/img/logobec.png"
                 className="beautiful-face mx-auto d-block"
-                style={{ width: "300px", height: "100px", marginTop: "10px" }}
+                style={{ width: "150px", height: "100px", marginTop: "10px" }}
               />
               <Card.Body>
                 <Card.Title className="text-center fw-bold">Login</Card.Title>
@@ -485,7 +526,7 @@ const Login = ({ onLogin }) => {
                         const selected = instituteOptions.find(
                           (inst) =>
                             inst.label === input ||
-                            inst.value.toString() === input
+                            inst.value.toString() === input,
                         );
                         setFormData({
                           ...formData,

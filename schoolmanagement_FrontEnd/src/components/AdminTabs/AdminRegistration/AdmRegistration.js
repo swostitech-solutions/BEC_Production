@@ -1154,15 +1154,8 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                           id="section"
                           className="detail"
                           classNamePrefix="detail"
-                          placeholder={!selectedSemester ? "Select Semester first" : "Select Section"}
-                          isDisabled={
-                            !selectedOrganization ||
-                            !selectedSession ||
-                            !selectedCourse ||
-                            !selectedDepartment ||
-                            !selectedAcademicYear ||
-                            !selectedSemester
-                          }
+                          placeholder="Select Section"
+                          isDisabled={true}
                           isLoading={sectionFilterLoading}
                           options={
                             SectionList.map((sec) => ({
@@ -1344,7 +1337,7 @@ const AdmAttendanceEntry = ({ formData, setFormData }) => {
                         <tr>
                           <th scope="col">Sl No.</th>
                           <th scope="col">Student Name</th>
-                          <th scope="col">ONMRC Registration No</th>
+                          <th scope="col">BPUT Registration No</th>
                           <th scope="col">Admission No</th>
                           <th scope="col">Session</th>
                           <th scope="col">Course</th>

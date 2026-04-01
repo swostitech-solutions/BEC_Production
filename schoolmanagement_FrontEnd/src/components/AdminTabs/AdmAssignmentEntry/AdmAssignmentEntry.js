@@ -125,6 +125,25 @@ const AdmAttendanceEntry = () => {
     semesterId
   );
 
+  useEffect(() => {
+    if (!formData.semester) {
+      if (formData.addmitted_section) {
+        setFormData((prev) => ({ ...prev, addmitted_section: "" }));
+      }
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (sec) => Number(sec.id) === Number(formData.addmitted_section)
+    );
+
+    if (!hasValidSelectedSection) {
+      setFormData((prev) => ({ ...prev, addmitted_section: SectionList[0].id }));
+    }
+  }, [formData.semester, formData.addmitted_section, SectionList]);
+
   // ---- Lecture, Subject, and Professor dependent dropdowns ----
   const lectureParams = {
     organizationId,
@@ -1441,7 +1460,7 @@ const AdmAttendanceEntry = () => {
                         </label>
                         <Select
                           className="detail"
-                          // isDisabled={!formData.semester}
+                          isDisabled={true}
                           isLoading={loadingSections}
                           options={
                             SectionList?.map((s) => ({

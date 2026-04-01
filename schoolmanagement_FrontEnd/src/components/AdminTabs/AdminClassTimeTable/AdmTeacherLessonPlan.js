@@ -166,6 +166,23 @@ const AdmTeacherLessonPlan = () => {
     }
   }, [SectionList]);
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sectionOptions) || sectionOptions.length === 0) return;
+
+    const hasValidSelectedSection = sectionOptions.some(
+      (option) => Number(option.value) === Number(selectedSection?.value)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(sectionOptions[0]);
+    }
+  }, [selectedSemester, selectedSection, sectionOptions]);
+
   // Fetch Teachers
   useEffect(() => {
     const fetchMentors = async () => {
@@ -679,6 +696,7 @@ const AdmTeacherLessonPlan = () => {
                           onChange={handleSectionChange}
                           placeholder="Select Section"
                           classNamePrefix="section-dropdown"
+                          isDisabled={true}
                         />
                       </div>
 

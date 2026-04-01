@@ -406,6 +406,23 @@ const StudentSearch = () => {
     fetchSections();
   }, [selectedSession, selectedCourse, selectedDepartment, selectedAcademicYear, selectedSemester]);
 
+  useEffect(() => {
+    if (!selectedSemester?.value) {
+      if (selectedSection) setSelectedSection(null);
+      return;
+    }
+
+    if (!Array.isArray(sections) || sections.length === 0) return;
+
+    const hasValidSelectedSection = sections.some(
+      (section) => Number(section.value) === Number(selectedSection?.value)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(sections[0]);
+    }
+  }, [selectedSemester, selectedSection, sections]);
+
   const getStudentCourseKey = (student) =>
     student?.student_course_id ?? student?.studentCourseId ?? student?.student_courseId ?? student?.id;
 
@@ -897,7 +914,7 @@ const StudentSearch = () => {
                           value={selectedSection}
                           placeholder="Select Section"
                           onChange={setSelectedSection}
-                          isDisabled={!selectedSemester}
+                          isDisabled={true}
                         />
                       </div>
 

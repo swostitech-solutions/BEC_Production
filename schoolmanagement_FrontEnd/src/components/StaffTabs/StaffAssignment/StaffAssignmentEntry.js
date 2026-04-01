@@ -212,6 +212,17 @@ const StaffAssignmentEntry = () => {
     }
   }, [ProfessorList, userId]);
 
+  // 🔹 Auto-select first section when sections are loaded and semester is selected
+  useEffect(() => {
+    if (SectionList && SectionList.length > 0 && formData.semester) {
+      const firstSection = SectionList[0];
+      setFormData((prev) => ({
+        ...prev,
+        addmitted_section: firstSection.id,
+      }));
+    }
+  }, [SectionList, formData.semester]);
+
   useEffect(() => {
     const currentDate = new Date().toISOString().split("T")[0];
     setFormData((prevData) => ({ ...prevData, assignmentDate: currentDate }));
@@ -1129,6 +1140,7 @@ const StaffAssignmentEntry = () => {
                         <Select
                           className="detail"
                           isLoading={loadingSections}
+                            isDisabled={true}
                           options={
                             SectionList?.map((s) => ({
                               value: s.id,

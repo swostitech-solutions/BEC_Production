@@ -128,6 +128,23 @@ const AdmAttendanceEntry = () => {
     selectedSemester
   );
 
+  useEffect(() => {
+    if (!selectedSemester) {
+      if (selectedSection !== "") setSelectedSection("");
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (section) => Number(section.id) === Number(selectedSection)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(SectionList[0].id);
+    }
+  }, [selectedSemester, selectedSection, SectionList]);
+
   const handleClear = () => {
     setStudentName("");
     setStudentId("");
@@ -725,6 +742,7 @@ const AdmAttendanceEntry = () => {
                         <Select
                           className="detail"
                           isLoading={loadingSec}
+                          isDisabled={true}
                           options={
                             SectionList?.map((s) => ({
                               value: s.id,

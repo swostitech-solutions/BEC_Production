@@ -537,6 +537,24 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     selectedSemester,
   ]);
 
+  useEffect(() => {
+    if (!selectedSemester?.value) {
+      if (selectedSection) setSelectedSection("");
+      return;
+    }
+
+    if (!Array.isArray(sections) || sections.length === 0) return;
+
+    const currentSectionValue = selectedSection?.value || selectedSection;
+    const hasValidSelectedSection = sections.some(
+      (section) => Number(section.value) === Number(currentSectionValue)
+    );
+
+    if (!hasValidSelectedSection) {
+      setSelectedSection(sections[0]);
+    }
+  }, [selectedSemester, selectedSection, sections]);
+
   const handleSessionChange = (selectedOption) => {
     setSelectedSessionId(selectedOption.value);
   };
@@ -953,6 +971,7 @@ const handleClearFilters = () => {
                         value={selectedSection}
                         onChange={setSelectedSection}
                         placeholder="Select Section"
+                        isDisabled={true}
                       />
                     </div>
                   </div>
@@ -965,7 +984,7 @@ const handleClearFilters = () => {
                           <thead>
                             <tr>
                               <th>Student Name</th>
-                              <th>ONMRC Registration No</th>
+                              <th>BPUT Registration No</th>
                               <th>Admission No</th>
                               <th>Session</th>
                               <th>Course</th>

@@ -106,6 +106,25 @@ const AdmAttendanceEntry = () => {
     semesterId
   );
 
+  useEffect(() => {
+    if (!formData.semester) {
+      if (formData.addmitted_section) {
+        setFormData((prev) => ({ ...prev, addmitted_section: "" }));
+      }
+      return;
+    }
+
+    if (!Array.isArray(SectionList) || SectionList.length === 0) return;
+
+    const hasValidSelectedSection = SectionList.some(
+      (sec) => Number(sec.id) === Number(formData.addmitted_section)
+    );
+
+    if (!hasValidSelectedSection) {
+      setFormData((prev) => ({ ...prev, addmitted_section: SectionList[0].id }));
+    }
+  }, [formData.semester, formData.addmitted_section, SectionList]);
+
   // ✅ Fetch Lecture List
   const {
     LectureList,
@@ -956,6 +975,7 @@ const AdmAttendanceEntry = () => {
                       </label>
                       <Select
                         className="detail"
+                        isDisabled={true}
                         isLoading={loadingSections}
                         options={
                           SectionList?.map((s) => ({
@@ -1310,7 +1330,7 @@ const AdmAttendanceEntry = () => {
                         <th>Academic Year</th>
                         <th>Semester</th>
                         <th>Section</th>
-                        <th>ONMRC Registration No</th>
+                        <th>BPUT Registration No</th>
                         <th>Admission No</th>
                         <th>Student Name</th>
                         <th>Mark Attendance</th>
