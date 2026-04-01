@@ -158,6 +158,17 @@ const StfAttendance = () => {
     }
   }, [ProfessorList, loggedInUserId]);
 
+  // 🔹 Auto-select first section when sections are loaded and semester is selected
+  useEffect(() => {
+    if (SectionList && SectionList.length > 0 && formData.semester) {
+      const firstSection = SectionList[0];
+      setFormData((prev) => ({
+        ...prev,
+        addmitted_section: firstSection.id,
+      }));
+    }
+  }, [SectionList, formData.semester]);
+
   const [selectedMonths, setSelectedMonths] = useState({});
   const [attendanceData, setAttendanceData] = useState([]);
   const [attendanceStatus, setAttendanceStatus] = useState("");
@@ -913,6 +924,7 @@ const StfAttendance = () => {
                       <Select
                         className="detail"
                         isLoading={loadingSections}
+                          isDisabled={true}
                         options={
                           SectionList?.map((s) => ({
                             value: s.id,

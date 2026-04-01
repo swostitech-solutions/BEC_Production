@@ -216,6 +216,17 @@ const StfLessonPlan = () => {
     fetchMentors();
   }, []);
 
+  // 🔹 Auto-select first section when sections are loaded and semester is selected
+  useEffect(() => {
+    if (SectionList && SectionList.length > 0 && selectedSemester) {
+      const firstSection = SectionList[0];
+      setSelectedSection({
+        value: firstSection.id,
+        label: firstSection.section_description || firstSection.section_code || firstSection.sectionname || firstSection.name,
+      });
+    }
+  }, [SectionList, selectedSemester]);
+
   // Fetch Subjects - requires all dropdown selections (matching Admin page)
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -679,7 +690,7 @@ const StfLessonPlan = () => {
                           onChange={handleSectionChange}
                           placeholder="Select Section"
                           classNamePrefix="section-dropdown"
-                          isDisabled={true}
+                            isDisabled={true}
                         />
                       </div>
 
