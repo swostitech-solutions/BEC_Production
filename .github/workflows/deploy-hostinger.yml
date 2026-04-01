@@ -57,11 +57,12 @@ jobs:
 
       - name: Package release bundle
         run: |
-          RELEASE_TGZ=/tmp/bec-production-release.tgz
+          RELEASE_TGZ=bec-production-release.tgz
           rm -f "$RELEASE_TGZ"
           tar \
             --exclude=.git \
             --exclude=.github \
+            --exclude=./bec-production-release.tgz \
             --exclude=schoolmanagement_FrontEnd/node_modules \
             --exclude=schoolmanagement_FrontEnd/build \
             --exclude=SchoolManagementBackend/CollegeManagement/venv \
@@ -74,7 +75,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: /tmp/bec-production-release.tgz
+          source: bec-production-release.tgz
           target: /tmp/
 
       - name: Deploy on VPS
