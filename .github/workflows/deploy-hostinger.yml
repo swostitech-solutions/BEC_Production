@@ -57,17 +57,21 @@ jobs:
 
       - name: Package release bundle
         run: |
+          STAGING_DIR=release-staging
           RELEASE_TGZ=bec-production-release.tgz
+          rm -rf "$STAGING_DIR"
           rm -f "$RELEASE_TGZ"
-          tar \
-            --exclude=.git \
-            --exclude=.github \
-            --exclude=./bec-production-release.tgz \
-            --exclude=schoolmanagement_FrontEnd/node_modules \
-            --exclude=schoolmanagement_FrontEnd/build \
-            --exclude=SchoolManagementBackend/CollegeManagement/venv \
-            --exclude=SchoolManagementBackend/CollegeManagement/.ci-venv \
-            -czf "$RELEASE_TGZ" .
+          mkdir -p "$STAGING_DIR"
+          rsync -a \
+            --exclude '.git' \
+            --exclude 'release-staging' \
+            --exclude 'bec-production-release.tgz' \
+            --exclude 'schoolmanagement_FrontEnd/node_modules' \
+            --exclude 'schoolmanagement_FrontEnd/build' \
+            --exclude 'SchoolManagementBackend/CollegeManagement/venv' \
+            --exclude 'SchoolManagementBackend/CollegeManagement/.ci-venv' \
+            ./ "$STAGING_DIR"/
+          tar -czf "$RELEASE_TGZ" -C "$STAGING_DIR" .
 
       - name: Upload release bundle
         uses: appleboy/scp-action@v0.1.7
