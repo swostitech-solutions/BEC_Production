@@ -575,14 +575,14 @@ useEffect(() => {
 
   useEffect(() => {
     const fetchFrequencyOptions = async () => {
-      // Guard clauses - need at least Batch and Course to filter Frequency properly
+      // Guard clauses - need Batch, Course, and Department before Frequency is usable
       if (isResetting) return;
       
       const batch_id = selectedSession?.value;
       const course_id = selectedCourse?.value;
+      const department_id = selectedDepartment?.value;
       
-      // If we don't have batch/course, we can't filter relevant frequencies
-      if (!batch_id || !course_id) {
+      if (!batch_id || !course_id || !department_id) {
           setFrequencyOptions([]);
           return;
       }
@@ -591,19 +591,13 @@ useEffect(() => {
         const token = localStorage.getItem("accessToken");
         const organization_id = sessionStorage.getItem("organization_id");
         const branch_id = sessionStorage.getItem("branch_id");
-        const department_id = selectedDepartment?.value || "";
 
         if (!token) {
           console.error("Access token not found");
           return;
         }
 
-        // Construct URL with filters
-        let url = `${ApiUrl.apiurl}FeeFrequency/GetAllFrequencyPeriodList/?organization=${organization_id}&branch=${branch_id}&batch=${batch_id}&course=${course_id}`;
-        
-        if (department_id) {
-            url += `&department=${department_id}`;
-        }
+        const url = `${ApiUrl.apiurl}FeeFrequency/GetAllFrequencyPeriodList/?organization=${organization_id}&branch=${branch_id}&batch=${batch_id}&course=${course_id}&department=${department_id}`;
 
         const response = await fetch(url, {
             method: "GET",
@@ -640,6 +634,15 @@ useEffect(() => {
 
     fetchFrequencyOptions();
   }, [selectedSession, selectedCourse, selectedDepartment, isResetting]);
+
+  useEffect(() => {
+    setFeeElement((prev) => ({
+      ...prev,
+      frequency: "",
+      semesters: Array(visibleSemesters).fill(""),
+    }));
+    setVisibleSemesters(0);
+  }, [selectedSession, selectedCourse, selectedDepartment]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -1410,7 +1413,7 @@ if (!response.ok) {
                       className="detail"
                       style={{ width: "180px" }}
                       value={feeElement.frequency || ""}
-                      disabled={!selectedSession || !selectedCourse}
+                      disabled={!selectedSession || !selectedCourse || !selectedDepartment}
                       onChange={(e) => {
                         const selectedOption = frequencyOptions.find(
                           (o) => String(o.value) === e.target.value

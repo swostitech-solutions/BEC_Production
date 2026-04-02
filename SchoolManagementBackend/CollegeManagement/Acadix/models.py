@@ -285,7 +285,7 @@ class Course(models.Model):   # done
 class Department(models.Model):    # done
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, default=1)
-    department_code = models.CharField(max_length=20,null=False,blank=False)
+    department_code = models.CharField(max_length=255,null=False,blank=False)
     department_description = models.CharField(max_length=255,null=False,blank=False)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
@@ -715,7 +715,7 @@ class FeeFrequency(models.Model):   # done
 
 
 class FeeStructureMaster(models.Model):   # done
-    fee_structure_code = models.CharField(max_length=50,null=False,blank=False)
+    fee_structure_code = models.CharField(max_length=255,null=False,blank=False)
     fee_structure_description = models.CharField(max_length=200,null=False,blank=False)
 
     organization = models.ForeignKey(Organization,on_delete=models.CASCADE)
