@@ -383,6 +383,26 @@ const FeeSearchPage = () => {
     );
   };
 
+  const getFriendlyUpdateErrorMessage = (data) => {
+    const paymentDetailErrors = data?.error?.payment_detail;
+
+    if (Array.isArray(paymentDetailErrors) && paymentDetailErrors.length > 0) {
+      const firstError = paymentDetailErrors[0];
+
+      if (firstError.includes("beneficiary_account_id")) {
+        return "Please select an account number for bank payment.";
+      }
+
+      if (firstError.includes("beneficiary_bank_id")) {
+        return "Please select a bank for bank payment.";
+      }
+
+      return firstError;
+    }
+
+    return data?.message || "Failed to update receipt.";
+  };
+
   useEffect(() => {
     const fetchBanks = async () => {
       try {
@@ -963,7 +983,7 @@ const FeeSearchPage = () => {
         setShowUpdateModal(false);
       } else {
         console.error("Update failed:", data);
-        alert(data.message || "Failed to update receipt.");
+        alert(getFriendlyUpdateErrorMessage(data));
       }
     } catch (error) {
       console.error("Error updating receipt:", error);
