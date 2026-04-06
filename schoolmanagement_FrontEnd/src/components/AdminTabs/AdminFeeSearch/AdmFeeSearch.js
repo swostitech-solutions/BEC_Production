@@ -367,6 +367,22 @@ const FeeSearchPage = () => {
     }));
   };
 
+  const getSelectedPaymentMethodLabel = () => {
+    if (!selectedReceipt?.paymentMethodId) {
+      return "";
+    }
+
+    const selectedMethod = paymentMethodOptions.find(
+      (option) => option.value === selectedReceipt.paymentMethodId,
+    );
+
+    return (
+      selectedReceipt.paymentMethodLabel ||
+      selectedMethod?.label?.toLowerCase() ||
+      ""
+    );
+  };
+
   useEffect(() => {
     const fetchBanks = async () => {
       try {
@@ -879,6 +895,7 @@ const FeeSearchPage = () => {
 
     // Ensure we have the payment method value (number)
     const paymentMethod = selectedReceipt.paymentMethodId ?? null;
+    const paymentMethodLabel = getSelectedPaymentMethodLabel();
 
     // Validate required fields before sending
     if (!selectedReceipt.receiptDate || !paymentMethod) {
@@ -887,6 +904,16 @@ const FeeSearchPage = () => {
         paymentMethod,
       });
       alert("Please fill receipt date and payment method before saving.");
+      return;
+    }
+
+    if (paymentMethodLabel === "bank" && !selectedReceipt.bankId) {
+      alert("Please select a bank before saving.");
+      return;
+    }
+
+    if (paymentMethodLabel === "bank" && !selectedReceipt.bankdetailsId) {
+      alert("Please select an account number before saving.");
       return;
     }
 
