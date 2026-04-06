@@ -2880,6 +2880,26 @@ const FeeCollection = () => {
 
   // ---------------- PDF GENERATION FUNCTION ----------------
 
+  const getFriendlyFeeReceiptErrorMessage = (result) => {
+    const paymentDetailErrors = result?.error?.payment_detail;
+
+    if (Array.isArray(paymentDetailErrors) && paymentDetailErrors.length > 0) {
+      const firstError = paymentDetailErrors[0];
+
+      if (firstError.includes("beneficiary_bank_id")) {
+        return "Please select a bank before saving the fee receipt.";
+      }
+
+      if (firstError.includes("beneficiary_account_id")) {
+        return "Please select an account number before saving the fee receipt.";
+      }
+
+      return firstError;
+    }
+
+    return result?.message || "Failed to create fee receipt.";
+  };
+
   const handleSave = async () => {
     const apiUrl = `${ApiUrl.apiurl}FeeReceipt/FeeReceiptCreate/`;
 
@@ -2977,10 +2997,20 @@ const FeeCollection = () => {
     }
     // Bank Transfer
     else if (selectedPaymentLabel === "bank") {
+      if (!selectedBankId) {
+        alert("Please select a bank before saving the fee receipt.");
+        return;
+      }
+
+      if (!selectedAccountId) {
+        alert("Please select an account number before saving the fee receipt.");
+        return;
+      }
+
       payment_detail = {
         payment_type: "Bank",
-        ...(selectedBankId && { beneficiary_bank_id: Number(selectedBankId) }),
-        ...(selectedAccountId && { beneficiary_account_id: Number(selectedAccountId) }),
+        beneficiary_bank_id: Number(selectedBankId),
+        beneficiary_account_id: Number(selectedAccountId),
         reference_date: reference_date,
         total_amount: Number(paidAmount) || 0,
         reference: remark || "",
@@ -3109,7 +3139,7 @@ const FeeCollection = () => {
         await generatePDF(receiptData);
         handleClear();
       } else {
-        alert(result?.message || JSON.stringify(result));
+        alert(getFriendlyFeeReceiptErrorMessage(result));
       }
     } catch (err) {
       alert("Something went wrong while saving receipt.");
