@@ -721,13 +721,13 @@ const AdmAttendanceEntry = ({
                   <div className="row flex-grow-1 mt-2 ">
                     <div className="col-12 col-md-4 mb-2 ">
                       <label htmlFor="admission-no" className="form-label">
-                        Admission No<span style={{ color: "red" }}>*</span>{" "}
+                        Application No<span style={{ color: "red" }}>*</span>{" "}
                       </label>
                       <input
                         type="text"
                         id="admission-no"
                         className="form-control detail"
-                        placeholder="Enter admission no"
+                        placeholder="Enter application no"
                         name="last_name"
                         value={formData.admission_no}
                         onChange={handleInputChange}
@@ -1286,13 +1286,13 @@ const AdmAttendanceEntry = ({
 
                     <div className="col-12 col-md-4 mb-2">
                       <label htmlFor="referred-by" className="form-label">
-                        Referred By
+                        Recommend By
                       </label>
                       <input
                         type="text"
                         id="referred-by"
                         className="form-control detail"
-                        placeholder="Enter Referred By"
+                        placeholder="Enter Recommend By"
                         name="referred_by"
                         value={formData.referred_by || ""}
                         onChange={handleInputChange}
