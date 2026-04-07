@@ -830,6 +830,8 @@ import { ApiUrl } from "../../../ApiUrl";
 const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable = false }) => {
   const [bookData, setBookData] = useState([]);
   const [fullBookData, setFullBookData] = useState([]); // Original data for filtering
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const { categories } = useFetchBookCategories();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const { subCategories } = useFetchBookSubCategories(selectedCategory?.value);
@@ -869,6 +871,90 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
   const bookNameRef = useRef();
   // const bookAccessionNoRef = useRef();
   const authorRef = useRef(); // ✅ ADD THIS
+  const fetchBooks = async ({
+    bookName = "",
+    bookAccessionNo = "",
+    categoryId = "",
+    subCategoryId = "",
+    author = "",
+  } = {}) => {
+    const params = new URLSearchParams();
+
+    if (categoryId) {
+      params.set("book_category", categoryId);
+    }
+    if (subCategoryId) {
+      params.set("book_sub_category", subCategoryId);
+    }
+
+    const apiUrl = `${ApiUrl.apiurl}LIBRARYBOOK/GetAllBooksDetails${params.toString() ? `?${params.toString()}` : ""}`;
+    const token =
+      sessionStorage.getItem("accessToken") ||
+      localStorage.getItem("token");
+
+    setIsLoading(true);
+    setSearchError("");
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = await response.json();
+
+      if (data.message === "success" && Array.isArray(data.data)) {
+        let nextData = data.data;
+
+        if (author.trim()) {
+          const authorQuery = author.trim().toLowerCase();
+          nextData = nextData.filter((book) =>
+            (book.author || "").toLowerCase().includes(authorQuery)
+          );
+        }
+
+        if (bookName.trim()) {
+          const nameQuery = bookName.trim().toLowerCase();
+          nextData = nextData.filter((book) =>
+            (book.bookName || "").toLowerCase().includes(nameQuery)
+          );
+        }
+
+        if (bookAccessionNo.trim()) {
+          const accessionQuery = bookAccessionNo.trim().toLowerCase();
+          nextData = nextData.filter((book) =>
+            String(book.barcode || "").toLowerCase().includes(accessionQuery)
+          );
+        }
+
+        if (onlyAvailable) {
+          nextData = nextData.filter(
+            (book) =>
+              book.isAvailable !== false &&
+              Number(book.availableCopies || 0) > 0
+          );
+        }
+
+        setFullBookData(nextData);
+        setBookData(nextData);
+        setCurrentPage(0);
+        return;
+      }
+
+      setFullBookData([]);
+      setBookData([]);
+      setSearchError(data.message || "No book data found.");
+    } catch (error) {
+      console.error("Error fetching book data:", error);
+      setFullBookData([]);
+      setBookData([]);
+      setSearchError("Error fetching library book data. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const handleSelectBook = (book) => {
     const bookId = book.id;
     localStorage.setItem("selectedBookId", bookId);
@@ -919,34 +1005,20 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
   // Fetch book data when modal opens, reset filters when modal closes
   useEffect(() => {
     if (show) {
-      // Modal opened - fetch fresh data and reset filters
-      // Use onlyAvailable prop to determine whether to show only available books or all books
-      fetch(
-        `${ApiUrl.apiurl}LIBRARYBOOK/GetAllBooksDetails?onlyAvailable=${onlyAvailable}`,
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("=== API Response in AdmBook ===", data);
-          if (data.message === "success" && Array.isArray(data.data)) {
-            console.log("First book object:", data.data[0]);
-            setBookData(data.data);
-            setFullBookData(data.data);
-          }
-        })
-        .catch((error) => console.error("Error fetching data:", error));
-
-      // Reset filter states when modal opens
       setSelectedCategory(null);
       setSelectedSubCategory(null);
       setSelectedBook(null);
+      setSearchError("");
 
-      // Clear refs (need to do this after render, so use timeout)
       setTimeout(() => {
         if (bookNameRef.current) bookNameRef.current.value = "";
         if (bookAccessionNoRef.current) bookAccessionNoRef.current.value = "";
+        if (authorRef.current) authorRef.current.value = "";
       }, 0);
+
+      fetchBooks();
     }
-  }, [show]);
+  }, [show, onlyAvailable]);
 
   // Search/Filter function
   const handleSearch = () => {
@@ -997,6 +1069,31 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
 
     setBookData(fullBookData);
   };
+  const handleRemoteSearch = async () => {
+    const bookName = bookNameRef.current?.value || "";
+    const bookAccessionNo = bookAccessionNoRef.current?.value || "";
+    const author = authorRef.current?.value || "";
+    const categoryId = selectedCategory?.value;
+    const subCategoryId = selectedSubCategory?.value;
+
+    await fetchBooks({
+      bookName,
+      bookAccessionNo,
+      categoryId,
+      subCategoryId,
+      author,
+    });
+  };
+  const handleResetSearch = () => {
+    if (bookNameRef.current) bookNameRef.current.value = "";
+    if (bookAccessionNoRef.current) bookAccessionNoRef.current.value = "";
+    if (authorRef.current) authorRef.current.value = "";
+
+    setSelectedCategory(null);
+    setSelectedSubCategory(null);
+    setSearchError("");
+    fetchBooks();
+  };
 
   //  Prevent modal from rendering twice
   //  Prevent modal from rendering twice check removed - let Modal handle it
@@ -1036,15 +1133,16 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
                         type="button"
                         className="btn btn-primary me-2"
                         style={{ width: "150px" }}
-                        onClick={handleSearch}
+                        onClick={handleRemoteSearch}
+                        disabled={isLoading}
                       >
-                        Search
+                        {isLoading ? "Searching..." : "Search"}
                       </button>
                       <button
                         type="button"
                         className="btn btn-secondary me-2"
                         style={{ width: "150px" }}
-                        onClick={handleClear}
+                        onClick={handleResetSearch}
                       >
                         Clear
                       </button>
@@ -1058,6 +1156,11 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
                       </button>
                     </div>
                   </div>
+                  {searchError && (
+                    <div className="alert alert-warning py-2" role="alert">
+                      {searchError}
+                    </div>
+                  )}
 
                   {/* Filter Fields */}
                   <div className="row mt-3 mx-2">
