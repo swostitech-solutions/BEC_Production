@@ -1065,7 +1065,17 @@ class LibraryBookSearchAPIView(ListAPIView):
             if not academicyearId:
                 return Response({'message': 'academic year Id need'}, status=status.HTTP_400_BAD_REQUEST)
 
-            filterdata = LibraryBook.objects.filter(academic_year_id=academicyearId, is_active=True)
+            filterdata = LibraryBook.objects.filter(
+                academic_year_id=academicyearId,
+                is_active=True
+            ).select_related(
+                'book_category',
+                'book_sub_category',
+                'library_branch',
+                'organization',
+                'batch',
+                'academic_year',
+            )
 
             finalresponsedata = []
             if filterdata:
@@ -1113,36 +1123,32 @@ class LibraryBookSearchAPIView(ListAPIView):
                 if library_branch_Id:
                     filterdata = filterdata.filter(library_branch_id=int(library_branch_Id))
 
-                if filterdata:
-                    for item in filterdata:
-                        barcodedata = LibraryBooksBarcode.objects.filter(book=item.id, is_active=True)
-                        if book_accession_no:
-                            barcodedata = barcodedata.filter(barcode=book_accession_no)
-                        if locationId:
-                            barcodedata = barcodedata.filter(location_id=locationId)
-                            
-                        for barcodes in barcodedata:
-                            # Safely get library branch info
-                            library_branch_id = None
-                            library_branch_name = None
-                            if item.library_branch_id:
-                                try:
-                                    library_branch_id = item.library_branch.library_branch_id
-                                    library_branch_name = item.library_branch.library_branch_name
-                                except LibraryBranch.DoesNotExist:
-                                    library_branch_id = None
-                                    library_branch_name = None
+                if filterdata.exists():
+                    book_ids = list(filterdata.values_list('id', flat=True))
+                    barcodedata = LibraryBooksBarcode.objects.filter(
+                        book_id__in=book_ids,
+                        is_active=True
+                    ).select_related('location_id')
+                    if book_accession_no:
+                        barcodedata = barcodedata.filter(barcode=book_accession_no)
+                    if locationId:
+                        barcodedata = barcodedata.filter(location_id=locationId)
 
-                            # Safely get location info
-                            location_id = None
-                            location_name = None
-                            if barcodes.location_id_id:
-                                try:
-                                    location_id = barcodes.location_id.id
-                                    location_name = barcodes.location_id.book_location
-                                except BookLocation.DoesNotExist:
-                                    location_id = None
-                                    location_name = None
+                    barcode_map = {}
+                    for barcode_item in barcodedata:
+                        barcode_map.setdefault(barcode_item.book_id, []).append(barcode_item)
+
+                    for item in filterdata:
+                        item_barcodes = barcode_map.get(item.id, [])
+                        if not item_barcodes:
+                            continue
+
+                        library_branch_id = item.library_branch.library_branch_id if item.library_branch_id else None
+                        library_branch_name = item.library_branch.library_branch_name if item.library_branch_id else None
+
+                        for barcodes in item_barcodes:
+                            location_id = barcodes.location_id.id if barcodes.location_id_id else None
+                            location_name = barcodes.location_id.book_location if barcodes.location_id_id else None
 
                             data = {
                                 'id': item.id,
@@ -1186,7 +1192,9 @@ class LibraryBookSearchAPIView(ListAPIView):
 
                             finalresponsedata.append(data)
 
-                    return Response({'message': 'success', 'data': finalresponsedata}, status=status.HTTP_200_OK)
+                    if finalresponsedata:
+                        return Response({'message': 'success', 'data': finalresponsedata}, status=status.HTTP_200_OK)
+                    return Response({'message': 'No Record Found'}, status=status.HTTP_200_OK)
 
                 else:
                     return Response({'message': 'No Record Found'}, status=status.HTTP_200_OK)
@@ -3245,29 +3253,91 @@ class AllBookBarcodeFilterListAPIView(ListAPIView):
             bookname = request.query_params.get('bookname')
             category = request.query_params.get('book_category')
             sub_category = request.query_params.get('book_sub_category')
+            author = request.query_params.get('author')
+            only_available = str(request.query_params.get('onlyAvailable', '')).lower() == 'true'
             # barcodeNo = self.request.query_params.get('barcodeNo')
 
-            try:
-                filterdata = LibraryBooksBarcode.objects.filter(is_active=True)
-            except:
-                filterdata = None
+            filterdata = LibraryBooksBarcode.objects.filter(is_active=True).select_related(
+                'book',
+                'book__book_category',
+                'book__book_sub_category'
+            )
 
             if filterdata:
                 if bookcode:
-                    filterdata = filterdata.filter(book__book_code=bookcode, is_active=True)
+                    filterdata = filterdata.filter(book__book_code__icontains=bookcode)
 
                 if barcode:
-                    filterdata = filterdata.filter(barcode=barcode, is_active=True)
+                    filterdata = filterdata.filter(barcode__icontains=barcode)
 
                 if category:
-                    filterdata = filterdata.filter(book__book_category__id=category, is_active=True)
+                    filterdata = filterdata.filter(book__book_category__id=category)
 
                 if sub_category:
-                    filterdata = filterdata.filter(book__book_sub_category__id=sub_category, is_active=True)
+                    filterdata = filterdata.filter(book__book_sub_category__id=sub_category)
 
                 if bookname:
-                    filterdata = (filterdata.filter(book__book_name=bookname, is_active=True))
+                    filterdata = filterdata.filter(book__book_name__icontains=bookname)
                     # LibraryBook.objects.filter(book_name=bookname, is_active = True)
+
+                if author:
+                    filterdata = filterdata.filter(book__author__icontains=author)
+
+                if filterdata.exists():
+                    book_ids = list(filterdata.values_list('book_id', flat=True).distinct())
+                    valid_statuses = ['Available', 'ACTIVE', 'Active', 'available']
+
+                    total_copies_by_book = {
+                        row['book_id']: row['total_copies']
+                        for row in LibraryBooksBarcode.objects.filter(
+                            is_active=True,
+                            book_id__in=book_ids
+                        ).values('book_id').annotate(total_copies=Count('id'))
+                    }
+                    active_issues = LibraryBooksIssues.objects.filter(
+                        book_detail__book_id__in=book_ids,
+                        return_date__isnull=True,
+                        is_active=True
+                    )
+                    issued_copies_by_book = {
+                        row['book_detail__book_id']: row['issued_copies']
+                        for row in active_issues.values('book_detail__book_id').annotate(
+                            issued_copies=Count('book_issue_id')
+                        )
+                    }
+                    issued_barcode_ids = set(active_issues.values_list('book_detail_id', flat=True))
+
+                    responsedata = []
+                    for item in filterdata:
+                        total_copies = total_copies_by_book.get(item.book_id, 0)
+                        issued_copies = issued_copies_by_book.get(item.book_id, 0)
+                        available_copies = max(total_copies - issued_copies, 0)
+                        is_this_barcode_issued = item.id in issued_barcode_ids
+                        is_available = (item.book_barcode_status in valid_statuses) and not is_this_barcode_issued
+
+                        if only_available and not is_available:
+                            continue
+
+                        responsedata.append({
+                            'id': item.id,
+                            'barcode': item.barcode,
+                            'bookName': item.book.book_name,
+                            'bookCode': item.book.book_code,
+                            'author': item.book.author,
+                            'categoryId': item.book.book_category.id,
+                            'categoryName': item.book.book_category.category_name,
+                            'subcategoryId': item.book.book_sub_category.id,
+                            'subcategoryName': item.book.book_sub_category.sub_category_name,
+                            'bookBarcodeStatus': item.book.book_barcode_status,
+                            'totalCopies': total_copies,
+                            'availableCopies': available_copies,
+                            'isAvailable': is_available,
+                        })
+
+                    if not responsedata:
+                        return Response({'message': 'No Record Found'}, status=status.HTTP_200_OK)
+
+                    return Response({'message': 'success', 'data': responsedata}, status=status.HTTP_200_OK)
 
                 # if
 

@@ -1015,8 +1015,6 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
         if (bookAccessionNoRef.current) bookAccessionNoRef.current.value = "";
         if (authorRef.current) authorRef.current.value = "";
       }, 0);
-
-      fetchBooks();
     }
   }, [show, onlyAvailable]);
 
@@ -1134,7 +1132,6 @@ const AdmBook = ({ show, handleClose, selectedRowId, onSelectBook, onlyAvailable
                         className="btn btn-primary me-2"
                         style={{ width: "150px" }}
                         onClick={handleRemoteSearch}
-                        disabled={isLoading}
                       >
                         {isLoading ? "Searching..." : "Search"}
                       </button>

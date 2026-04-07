@@ -2886,17 +2886,28 @@ const AdmADHOCFee = () => {
     }
 
     try {
+      const batchId = selectedSessionIds[0];
+      const academicYearId = selectedAcademicYearIds[0];
+
+      if (selectedSessionIds.length > 1 || selectedAcademicYearIds.length > 1) {
+        console.warn(
+          "GetStudentBasedCourseSection supports a single batch_id and academic_year_id. Using the first selected values.",
+          {
+            batchId,
+            academicYearId,
+            selectedSessionIds,
+            selectedAcademicYearIds,
+          },
+        );
+      }
+
       const url = `${
         ApiUrl.apiurl
-      }Filter/GetStudentBasedCourseSection/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${selectedSessionIds.join(
-        ",",
-      )}&course_ids=${selectedCourseIds.join(
+      }Filter/GetStudentBasedCourseSection/?organization_id=${organization_id}&branch_id=${branch_id}&batch_id=${batchId}&course_ids=${selectedCourseIds.join(
         ",",
       )}&department_ids=${selectedDepartmentIds.join(
         ",",
-      )}&academic_year_id=${selectedAcademicYearIds.join(
-        ",",
-      )}&semester_ids=${selectedSemesterIds.join(
+      )}&academic_year_id=${academicYearId}&semester_ids=${selectedSemesterIds.join(
         ",",
       )}&section_ids=${selectedSectionIds.join(",")}`;
 
