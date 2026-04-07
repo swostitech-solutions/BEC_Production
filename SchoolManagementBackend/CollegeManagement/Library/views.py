@@ -3328,7 +3328,7 @@ class AllBookBarcodeFilterListAPIView(ListAPIView):
                             'categoryName': item.book.book_category.category_name,
                             'subcategoryId': item.book.book_sub_category.id,
                             'subcategoryName': item.book.book_sub_category.sub_category_name,
-                            'bookBarcodeStatus': item.book.book_barcode_status,
+                            'bookBarcodeStatus': item.book_barcode_status,
                             'totalCopies': total_copies,
                             'availableCopies': available_copies,
                             'isAvailable': is_available,
