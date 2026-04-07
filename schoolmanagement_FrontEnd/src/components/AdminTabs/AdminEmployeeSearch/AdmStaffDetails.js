@@ -277,6 +277,9 @@ export default function BasicTabs() {
     if (!b.religion) {
       errors.religion = "Religion is required.";
     }
+    if (!b.bloodGroup) {
+      errors.bloodGroup = "Blood Group is required.";
+    }
     if (!b.motherTongue) {
       errors.motherTongue = "Mother Tongue is required.";
     }
@@ -404,8 +407,6 @@ export default function BasicTabs() {
         if (found) return found.id;
       }
 
-      // Fallback to hardcoded map if list search fails (safety net)
-      if (s === "o+") return 17;
       if (s === "male") return 5;
       if (s === "female") return 6;
       if (s === "hindu") return 5;
@@ -438,8 +439,19 @@ export default function BasicTabs() {
         basicPayload.append("office_email", basicInfoData.officeEmail || "");
         basicPayload.append("employee_type", basicInfoData.employeeType || "");
         basicPayload.append("emergency_contact_number", basicInfoData.emergencyContactNumber || "");
+        const bloodGroupId = mapVal(basicInfoData.bloodGroup, bloodGroups);
+        if (!bloodGroupId) {
+          setBasicInfoFieldErrors((prev) => ({
+            ...prev,
+            bloodGroup: "Please select a valid Blood Group.",
+          }));
+          setValue(0);
+          alert("Please select a valid Blood Group.");
+          return;
+        }
+
         basicPayload.append("mother_tongue", basicInfoData.motherTongue || "");
-        basicPayload.append("blood_group", mapVal(basicInfoData.bloodGroup, bloodGroups) || 17);
+        basicPayload.append("blood_group", bloodGroupId);
         basicPayload.append("batch", 1);
         basicPayload.append("created_by", userId);
 
@@ -815,8 +827,6 @@ export default function BasicTabs() {
         if (found) return found.id;
       }
 
-      // Fallback to hardcoded map if list search fails (safety net)
-      if (s === "o+") return 17;
       if (s === "male") return 5;
       if (s === "female") return 6;
       if (s === "hindu") return 5;
@@ -856,8 +866,19 @@ export default function BasicTabs() {
           basicPayload.append("office_email", basicInfoData.officeEmail || "");
           basicPayload.append("employee_type", basicInfoData.employeeType || "");
           basicPayload.append("emergency_contact_number", basicInfoData.emergencyContactNumber || "");
+          const bloodGroupId = mapVal(basicInfoData.bloodGroup, bloodGroups);
+          if (!bloodGroupId) {
+            setBasicInfoFieldErrors((prev) => ({
+              ...prev,
+              bloodGroup: "Please select a valid Blood Group.",
+            }));
+            setValue(0);
+            alert("Please select a valid Blood Group.");
+            return;
+          }
+
           basicPayload.append("mother_tongue", basicInfoData.motherTongue || "");
-          basicPayload.append("blood_group", mapVal(basicInfoData.bloodGroup, bloodGroups) || 17);
+          basicPayload.append("blood_group", bloodGroupId);
           basicPayload.append("batch", 1);
           basicPayload.append("created_by", userId);  // Backend requires this even for updates
           basicPayload.append("updated_by", userId);

@@ -653,6 +653,7 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
                     <div className="col-md-3 mb-3">
                       <label htmlFor="blood-group" className="form-label">
                         Blood Group
+                        <span style={{ color: "red" }}>*</span>
                       </label>
 
                       <Select
@@ -671,13 +672,17 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
                           .find(
                             (option) => option.value === formData.bloodGroup,
                           )}
-                        onChange={(selectedOption) =>
+                        onChange={(selectedOption) => {
                           setFormData({
                             ...formData,
                             bloodGroup: selectedOption.value, // store ID (value)
-                          })
-                        }
+                          });
+                          clearRequiredError("bloodGroup");
+                        }}
                       />
+                      {requiredErrors.bloodGroup && (
+                        <small className="text-danger">{requiredErrors.bloodGroup}</small>
+                      )}
                     </div>
 
                     <div className="col-md-3 mb-3">
