@@ -169,10 +169,12 @@ import NewInventory from "./components/AdminTabs/AdminInventoryMgmt/AdmNewInvent
 import CreateAdminUserPage from "./pages/AdminPanel/CreateAdminUserPage";
 import CreateNewAdminUser from "./components/AdminTabs/RoleManagement/CreateNewAdminUser";
 import AdminChangePassword from "./components/AdminTabs/AdminChangePassword/AdminChangePassword";
+import PostLoginWelcomeModal from "./components/common/PostLoginWelcomeModal";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("");
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [state, setState] = useState({
     top: false,
     left: false,
@@ -204,6 +206,22 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setShowWelcomeModal(false);
+      return;
+    }
+
+    const shouldOpenWelcomeModal =
+      sessionStorage.getItem("bec_welcome_modal_pending") === "true";
+    setShowWelcomeModal(shouldOpenWelcomeModal);
+  }, [isLoggedIn, userRole]);
+
+  const handleCloseWelcomeModal = () => {
+    sessionStorage.removeItem("bec_welcome_modal_pending");
+    setShowWelcomeModal(false);
+  };
+
   return (
     <Router>
       {isLoggedIn && (
@@ -218,6 +236,10 @@ function App() {
           />
         </>
       )}
+      <PostLoginWelcomeModal
+        show={showWelcomeModal}
+        onHide={handleCloseWelcomeModal}
+      />
 
       <div className="App">
         <Routes>

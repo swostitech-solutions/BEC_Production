@@ -160,7 +160,7 @@ function Sidebar({ state, setState }) {
         {(userRole === "principal" || userRole === "admin") && (
           <>
             {isModuleAccessible("dashboard") && createExpandableSection("Dashboards", <MdDashboard />, [
-              isChildAccessible("dashboard.fee_dashboard") && { path: "/admin/fee-dashboard", text: "Fee" },
+              isChildAccessible("dashboard.fee_dashboard") && { path: "/admin/fee-dashboard", text: "Fee Status" },
               isChildAccessible("dashboard.attendance") && { path: "/admin/student-attendance-list", text: "Attendance" },
             ].filter(Boolean))}
             {isModuleAccessible("student") && createExpandableSection("Student", <PiStudentBold />, [

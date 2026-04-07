@@ -20,7 +20,7 @@ const EditAdminUserModal = ({ show, handleClose, roleData, staffMap, onUpdateSuc
       parent: "dashboard",
       label: "Dashboard",
       children: [
-        { code: "dashboard.fee_dashboard", label: "Fee Dashboard" },
+        { code: "dashboard.fee_dashboard", label: "Fee Status" },
         { code: "dashboard.attendance", label: "Attendance Dashboard" },
       ]
     },

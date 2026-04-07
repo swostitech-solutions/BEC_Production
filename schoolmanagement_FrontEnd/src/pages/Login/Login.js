@@ -14,10 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import { ApiUrl } from "../../ApiUrl";
 import ForgotPasswordModal from "./ForgotPasswordModal";
-
-
-
-
+import "./Login.css";
 
 const Login = ({ onLogin }) => {
   // const [formData, setFormData] = useState({
@@ -351,6 +348,7 @@ const Login = ({ onLogin }) => {
       // Store display_name and role_name
       if (display_name) sessionStorage.setItem("display_name", display_name);
       if (role_name) sessionStorage.setItem("role_name", role_name);
+      sessionStorage.setItem("bec_welcome_modal_pending", "true");
 
       // --- Step 2: Navigate based on role ---
       setIsLoggedIn(true);
@@ -419,73 +417,58 @@ const Login = ({ onLogin }) => {
 
   return (
     <div
-      style={{
-        backgroundImage: "url('/img/backgroundimage.png')",
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "top center",
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-        paddingBottom: "50px",
-      }}
+      className="bec-login-page"
+      style={{ backgroundImage: "url('/img/bec_bg_final.png')" }}
     >
-      {/* <div>
-        <h1>Welcome to BEC ERP Management System</h1>
-      </div> */}
-      <div
-        style={{
-          position: "absolute",
-          top: "30px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          alignItems: "center",
-          gap: "15px",
-          zIndex: 10,
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2.2rem",
-            fontWeight: "bold",
-            margin: 0,
-            fontFamily: "'Poppins', sans-serif",
-            letterSpacing: "1.5px",
-            color: "#000",
-            whiteSpace: "nowrap",
-            textTransform: "uppercase",
-          }}
-        >
-          Welcome to BEC ERP Management System
-        </h1>
+      <div className="bec-login-overlay" />
+      <div className="bec-login-topband" />
 
-       
+      <div className="bec-login-hero">
+        <div className="bec-login-brandwrap">
+          <img
+            src="/img/bec_logo_final.jpeg"
+            alt="Bhubaneswar Engineering College"
+            className="bec-login-brandlogo"
+          />
+          <div className="bec-login-brandcopy">
+            <span className="bec-login-kicker">Bhubaneswar Engineering College</span>
+            <h1>Welcome to BEC ERP Management System</h1>
+            <p>
+              A unified digital workspace for students, staff, faculty, and administration.
+            </p>
+          </div>
+        </div>
       </div>
-      <Container className="mt-5">
+
+      <Container className="bec-login-container">
         <Row className="justify-content-center">
           <Col md={6}>
-            <Card className="card bg-dark text-light" style={{ opacity: 0.9 }}>
-              <Card.Img
-                variant="top"
-                src="/img/logobec.png"
-                className="beautiful-face mx-auto d-block"
-                style={{ width: "150px", height: "100px", marginTop: "10px" }}
-              />
-              <Card.Body>
-                <Card.Title className="text-center fw-bold">Login</Card.Title>
+            <Card className="bec-login-card">
+              <div className="bec-login-card-header">
+                <img
+                  src="/img/bec_logo_final.jpeg"
+                  alt="BEC logo"
+                  className="bec-login-card-logo"
+                />
+              </div>
+              <Card.Body className="bec-login-card-body">
+                <Card.Title className="text-center fw-bold bec-login-title">
+                  Secure Sign In
+                </Card.Title>
+                <p className="bec-login-subtitle text-center">
+                  Access your ERP portal with your institutional credentials.
+                </p>
                 <Form onSubmit={handleSubmit}>
                   {/* User Name */}
                   <Form.Group className="mb-3 d-flex flex-column align-items-start w-100">
-                    <Form.Label className="fw-bold">User Name</Form.Label>
+                    <Form.Label className="fw-bold bec-login-label">User Name</Form.Label>
                     <Form.Control
                       type="text"
                       name="username"
                       value={formData.username}
                       onChange={handleInputChange}
                       isInvalid={!!errors.username}
-                      style={{ textAlign: "left", borderRadius: "2px" }}
+                      className="bec-login-input"
                     />
                     <Form.Control.Feedback type="invalid">
                       {errors.username}
@@ -494,7 +477,7 @@ const Login = ({ onLogin }) => {
 
                   {/* Password */}
                   <Form.Group className="mb-3 d-flex flex-column align-items-start w-100">
-                    <Form.Label className="fw-bold">Password</Form.Label>
+                    <Form.Label className="fw-bold bec-login-label">Password</Form.Label>
                     <InputGroup>
                       <Form.Control
                         type={formData.showPassword ? "text" : "password"}
@@ -502,9 +485,12 @@ const Login = ({ onLogin }) => {
                         value={formData.password}
                         onChange={handleInputChange}
                         isInvalid={!!errors.password}
-                        style={{ textAlign: "left", borderRadius: "2px" }}
+                        className="bec-login-input"
                       />
-                      <InputGroup.Text onClick={togglePasswordVisibility}>
+                      <InputGroup.Text
+                        onClick={togglePasswordVisibility}
+                        className="bec-login-input-icon"
+                      >
                         {formData.showPassword ? <BsEyeSlash /> : <BsEye />}
                       </InputGroup.Text>
                       <Form.Control.Feedback type="invalid">
@@ -514,7 +500,7 @@ const Login = ({ onLogin }) => {
                   </Form.Group>
 
                   <Form.Group className="mb-4 ... w-100">
-                    <Form.Label className="fw-bold">Institute</Form.Label>
+                    <Form.Label className="fw-bold bec-login-label">Institute</Form.Label>
                     <Form.Control
                       list="institutes"
                       name="institute"
@@ -534,11 +520,7 @@ const Login = ({ onLogin }) => {
                         });
                       }}
                       disabled={instituteOptions.length === 1}
-                      style={{
-                        borderRadius: "2px",
-                        minHeight: "38px",
-                        width: "100%",
-                      }}
+                      className="bec-login-input"
                     />
                     <datalist id="institutes">
                       {instituteOptions.map((inst) => (
@@ -551,8 +533,7 @@ const Login = ({ onLogin }) => {
                   <div className="d-flex justify-content-center align-items-center mt-2">
                     <Button
                       type="submit"
-                      variant="primary"
-                      size="sm"
+                      className="bec-login-button"
                       disabled={loading}
                     >
                       {loading ? (
@@ -561,13 +542,13 @@ const Login = ({ onLogin }) => {
                         "Log In"
                       )}
                     </Button>
-                    <a
+                    <button
+                      type="button"
                       onClick={() => setShowForgotPassword(true)}
-                      className="text-light text-decoration-none ms-3"
-                      style={{ fontSize: "0.9rem", cursor: "pointer" }}
+                      className="bec-login-forgot ms-3"
                     >
                       Forgot Password?
-                    </a>
+                    </button>
                   </div>
                 </Form>
               </Card.Body>

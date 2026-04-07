@@ -1453,7 +1453,7 @@ const FeeDashboard = () => {
                   fontWeight: "700",
                 }}
               >
-                FEE DASHBOARD
+                FEE STATUS
               </p>
               <div
                 style={{

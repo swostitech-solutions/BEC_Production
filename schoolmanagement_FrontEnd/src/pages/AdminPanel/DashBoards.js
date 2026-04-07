@@ -545,7 +545,7 @@ const AutoLayoutExample = () => {
                 </Col>
               </Row>
 
-              {/* Fee Dashboard & Session Fee */}
+              {/* Fee Status & Session Fee */}
               <Row>
                 <Col md={8} className="mb-4">
                   <div style={sectionCardStyle}>
@@ -554,7 +554,7 @@ const AutoLayoutExample = () => {
                         <FaCalendarAlt
                           style={{ marginRight: "8px", color: "#6b7280" }}
                         />
-                        Fee Dashboard
+                        Fee Status
                       </h6>
                       <div
                         style={{
