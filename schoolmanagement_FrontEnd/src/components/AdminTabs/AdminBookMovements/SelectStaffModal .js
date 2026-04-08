@@ -383,7 +383,7 @@ const SelectStaffModal = ({ isVisible, onClose, onSelectEmployee }) => {
                     </div>
                   </div>
                   <div className="row p-2">
-                    <div className="col-12 col-md-6 mb-3">
+                    {/* <div className="col-12 col-md-6 mb-3">
                       <label htmlFor="department" className="form-label mb-1">
                         Department
                       </label>
@@ -402,8 +402,8 @@ const SelectStaffModal = ({ isVisible, onClose, onSelectEmployee }) => {
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div className="col-12 col-md-6 mb-3">
+                    </div> */}
+                    {/* <div className="col-12 col-md-6 mb-3">
                       <label htmlFor="designation" className="form-label mb-1">
                         Designation
                       </label>
@@ -422,7 +422,7 @@ const SelectStaffModal = ({ isVisible, onClose, onSelectEmployee }) => {
                           </option>
                         ))}
                       </select>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Students Table */}
@@ -435,8 +435,8 @@ const SelectStaffModal = ({ isVisible, onClose, onSelectEmployee }) => {
                               {/* <th>Sr.No</th> */}
                               <th>Teacher Name</th>
                               <th>Teacher Code</th>
-                              <th>Department</th>
-                              <th>Designation</th>
+                              {/* <th>Department</th> */}
+                              {/* <th>Designation</th> */}
                               <th>Select</th>
                             </tr>
                           </thead>
@@ -446,8 +446,8 @@ const SelectStaffModal = ({ isVisible, onClose, onSelectEmployee }) => {
                                 <tr key={employee.id}>
                                   <td>{employee.employeeName || employee.employee_name || ""}</td>
                                   <td>{employee.employee_code || employee.employeeCode || ""}</td>
-                                  <td>{employee.departmentName || employee.department_name || employee.department || ""}</td>
-                                  <td>{employee.designationName || employee.designation_name || employee.designation || ""}</td>
+                                  {/* <td>{employee.departmentName || employee.department_name || employee.department || ""}</td> */}
+                                  {/* <td>{employee.designationName || employee.designation_name || employee.designation || ""}</td> */}
                                   <td>
                                     <input
                                       type="radio"
@@ -462,7 +462,7 @@ const SelectStaffModal = ({ isVisible, onClose, onSelectEmployee }) => {
                               ))
                             ) : (
                               <tr>
-                                <td colSpan="5" className="text-center">
+                                <td colSpan="3" className="text-center">
                                   No Data Found
                                 </td>
                               </tr>

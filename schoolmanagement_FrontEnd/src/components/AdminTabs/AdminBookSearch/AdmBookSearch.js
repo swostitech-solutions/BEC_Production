@@ -518,6 +518,24 @@ const AdmBookSearch = () => {
     }
   };
 
+  const normalizeSearchValue = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const matchesAuthorSearch = (book, authorQuery) => {
+    if (!authorQuery) return true;
+
+    const normalizedAuthor = normalizeSearchValue(
+      book.author || book.author_name || ""
+    );
+
+    // Keep author filtering strict on the visible author field so
+    // co-author lists that start with someone else do not appear first.
+    return normalizedAuthor.startsWith(authorQuery);
+  };
+
 
   // const handleSearch = async () => {
   //   const academicYearId = localStorage.getItem("academicSessionId");
@@ -564,6 +582,7 @@ const AdmBookSearch = () => {
   // };
   const handleSearch = async () => {
     const academicYearId = localStorage.getItem("academicSessionId");
+    const normalizedAuthorQuery = normalizeSearchValue(author);
 
     if (!academicYearId) {
       console.error("Academic Year ID is not available");
@@ -578,12 +597,24 @@ const AdmBookSearch = () => {
     console.log("Branch:", branch, "Location:", location);
     console.log("=====================");
 
-    const apiUrl = `${ApiUrl.apiurl
-      }LIBRARYBOOK/GetBooksearchList/?academic_year_id=${academicYearId}${bookCode ? `&book_code=${bookCode}` : ""
-      }${bookAccessionNo ? `&book_accession_no=${bookAccessionNo}` : ""}${bookName ? `&book_name=${bookName}` : ""
-      }${author ? `&author=${author}` : ""}${bookCategory ? `&book_category=${bookCategory}` : ""
-      }${bookSubCategory ? `&book_sub_category=${bookSubCategory}` : ""}${isbn ? `&ISBN=${isbn}` : ""}${typeofBooks ? `&typeofbooks=${typeofBooks}` : ""
-      }`;
+    const queryParams = new URLSearchParams({
+      academic_year_id: academicYearId,
+    });
+
+    if (bookCode) queryParams.append("book_code", bookCode.trim());
+    if (bookAccessionNo) {
+      queryParams.append("book_accession_no", bookAccessionNo.trim());
+    }
+    if (bookName) queryParams.append("book_name", bookName.trim());
+    if (author) queryParams.append("author", author.trim());
+    if (bookCategory) queryParams.append("book_category", bookCategory);
+    if (bookSubCategory) {
+      queryParams.append("book_sub_category", bookSubCategory);
+    }
+    if (isbn) queryParams.append("ISBN", isbn.trim());
+    if (typeofBooks) queryParams.append("typeofbooks", typeofBooks);
+
+    const apiUrl = `${ApiUrl.apiurl}LIBRARYBOOK/GetBooksearchList/?${queryParams.toString()}`;
 
     console.log("API URL:", apiUrl);
 
@@ -594,6 +625,12 @@ const AdmBookSearch = () => {
 
       if (response.ok && result.message === "success" && result.data.length > 0) {
         let filteredData = result.data;
+
+        if (normalizedAuthorQuery) {
+          filteredData = filteredData.filter((item) =>
+            matchesAuthorSearch(item, normalizedAuthorQuery)
+          );
+        }
 
         // Frontend Filtering for Branch
         if (branch) {

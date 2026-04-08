@@ -86,6 +86,16 @@ const AdmAttendanceEntry = () => {
     }
   };
 
+  const getIncomeCategoryLabel = (item) =>
+    item?.income_category_name ||
+    item?.income_category ||
+    item?.category_name ||
+    item?.expense_category ||
+    item?.category?.label ||
+    item?.category?.expense_category ||
+    item?.category ||
+    "";
+
 const handleView = async (incomeId) => {
   try {
     const response = await api.get(
@@ -121,7 +131,7 @@ const handleView = async (incomeId) => {
       detailsData.forEach((item, index) => {
         tableRows.push([
           index + 1,
-          item.income_category_name || "",
+          getIncomeCategoryLabel(item),
           item.remarks || "",
           Number(item.amount || 0).toFixed(2),
         ]);
