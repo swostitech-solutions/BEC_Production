@@ -52,59 +52,12 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     setCurrentPage(0);
   }, [studentData]);
 
-  // Fetch Students Data when modal is shown
   useEffect(() => {
-    if (!show) return; // Only fetch when modal is shown
+    if (!show) return;
 
-    const fetchFullStudentData = async () => {
-      setStudentLoading(true);
-
-      try {
-        const academicSessionId = localStorage.getItem("academicSessionId");
-
-        if (!academicSessionId) {
-          console.error("No academic session ID found");
-          setStudentError("No academic session ID found");
-          setStudentLoading(false);
-          return;
-        }
-
-        console.log("Fetching students for academic session:", academicSessionId);
-
-        const response = await fetch(
-          `${ApiUrl.apiurl}StudentCourseApi/GetAllSTUDENTList/${academicSessionId}/`
-        );
-
-        console.log("Response status:", response.status);
-
-        if (!response.ok) {
-          throw new Error("Error fetching student data");
-        }
-
-        const data = await response.json();
-        console.log("Fetched data:", data);
-
-        if (data.data) {
-          setFullStudentData(data.data);
-          setStudentData(data.data);
-          // Debug: Log first student to see available fields
-          if (data.data.length > 0) {
-            console.log("First student data structure:", data.data[0]);
-            console.log("studentBasicDetails fields:", data.data[0].studentBasicDetails);
-          }
-        } else {
-          console.warn("No data found for the given academic session ID");
-          setStudentData([]);
-          setFullStudentData([]);
-        }
-      } catch (error) {
-        console.error("Fetch error:", error);
-        setStudentError(error.message);
-      } finally {
-        setStudentLoading(false);
-      }
-    };
-    fetchFullStudentData();
+    setStudentError("");
+    setStudentData([]);
+    setFullStudentData([]);
   }, [show]);
 
   const handleInputChange = (e) => {
@@ -126,7 +79,7 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     setStudentError("");
 
     try {
-      const academicSessionId = selectedSession?.value || localStorage.getItem("academicSessionId");
+      const academicSessionId = localStorage.getItem("academicSessionId");
 
       if (!academicSessionId) {
         setStudentError("No session found.");
@@ -134,48 +87,23 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
         return;
       }
 
-      // Build URL — pass course_id to backend for server-side filtering
-      let url = `${ApiUrl.apiurl}StudentCourseApi/GetAllSTUDENTList/${academicSessionId}/`;
-      if (selectedCourse?.value) {
-        url += `?course_id=${selectedCourse.value}`;
-      }
+      const params = new URLSearchParams();
+      if (selectedCourse?.value) params.set("course_id", selectedCourse.value);
+      if (filters.studentName.trim()) params.set("studentName", filters.studentName.trim());
+      if (filters.admissionNo.trim()) params.set("admissionNo", filters.admissionNo.trim());
+      if (filters.barcode.trim()) params.set("barcode", filters.barcode.trim());
+      if (filters.fatherName.trim()) params.set("fatherName", filters.fatherName.trim());
+      if (filters.motherName.trim()) params.set("motherName", filters.motherName.trim());
+      if (filters.schoolAdmissionNo.trim()) params.set("admission_no", filters.schoolAdmissionNo.trim());
 
-      const response = await fetch(url);
+      const response = await fetch(
+        `${ApiUrl.apiurl}StudentCourseApi/GetAllSTUDENTList/${academicSessionId}/${params.toString() ? `?${params.toString()}` : ""}`
+      );
       if (!response.ok) throw new Error("Error fetching student data");
       const data = await response.json();
+      const filteredData = data.data || [];
 
-      const allFetched = data.data || [];
-
-      // Apply client-side text filters on the API result
-      const filteredData = allFetched.filter((student) => {
-        const studentDetails = student.studentBasicDetails || student;
-
-        const fullName = `${studentDetails.first_name || ""} ${studentDetails.middle_name || ""} ${studentDetails.last_name || ""}`
-          .trim()
-          .toLowerCase();
-        const searchParts = filters.studentName.toLowerCase().split(" ").filter(Boolean);
-        const nameMatches = !filters.studentName || searchParts.every((part) => fullName.includes(part));
-
-        const admissionNoMatch = !filters.admissionNo ||
-          studentDetails.college_admission_no?.toString().includes(filters.admissionNo) ||
-          studentDetails.admission_no?.toString().includes(filters.admissionNo);
-
-        const schoolAdmissionNoMatch = !filters.schoolAdmissionNo ||
-          studentDetails.college_admission_no?.toString().includes(filters.schoolAdmissionNo);
-
-        const barcodeMatch = !filters.barcode ||
-          studentDetails.barcode?.toString().includes(filters.barcode);
-
-        const fatherMatch = !filters.fatherName ||
-          studentDetails.father_name?.toLowerCase().includes(filters.fatherName.toLowerCase());
-
-        const motherMatch = !filters.motherName ||
-          studentDetails.mother_name?.toLowerCase().includes(filters.motherName.toLowerCase());
-
-        return nameMatches && admissionNoMatch && schoolAdmissionNoMatch && barcodeMatch && fatherMatch && motherMatch;
-      });
-
-      setFullStudentData(allFetched);
+      setFullStudentData(filteredData);
       setStudentData(filteredData);
     } catch (error) {
       console.error("Search fetch error:", error);
@@ -209,7 +137,9 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
 
     setSelectedSession(null); // Clear session
     setSelectedCourse(null); // Clear course
-    setStudentData(fullStudentData); // Reset the student data to the full list
+    setStudentData([]);
+    setFullStudentData([]);
+    setStudentError("");
   };
 
   return (
