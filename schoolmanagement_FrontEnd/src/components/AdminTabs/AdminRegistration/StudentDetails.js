@@ -796,10 +796,11 @@ const AdmAttendanceEntry = ({
                           type="text"
                           id="student-name"
                           className="form-control detail mx-2"
-                          placeholder="Enter last name"
+                          placeholder="Enter last name "
                           name="last_name"
                           value={formData.last_name}
                           onChange={handleInputChange}
+                          required
                         />
                         {errors.last_name && (
                           <small style={{ color: "red" }}>
@@ -816,7 +817,7 @@ const AdmAttendanceEntry = ({
 
                     <div className="col-12 col-sm-6 col-md-3 mb-2">
                       <label htmlFor="gender" className="form-label">
-                        Gender
+                        Gender<span style={{ color: "red" }}>*</span>
                       </label>
                       <Select
                         id="gender"

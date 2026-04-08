@@ -71,8 +71,16 @@ const StudentFee = () => {
   const [selectedSemester, setSelectedSemester] = useState();
   const [selectedSection, setSelectedSection] = useState();
   const [studentName, setStudentName] = useState("");
-  const [visibleSemesters, setVisibleSemesters] = useState(0);
+  const [visibleFeeSemesters, setVisibleFeeSemesters] = useState(0);
+  const [visibleDiscountSemesters, setVisibleDiscountSemesters] = useState(0);
   const [semesterOptions, setSemesterOptions] = useState([]);
+
+  const tableVisibleSemesters = Math.max(
+    visibleFeeSemesters,
+    visibleDiscountSemesters,
+    ...addedFeeElements.map((item) => item.periods?.length || 0),
+    ...addedDiscountElements.map((item) => item.periods?.length || 0)
+  );
 
 
   const handleClear = () => {
@@ -92,7 +100,8 @@ const StudentFee = () => {
     setAddedDiscountElements([]);
 
     // RESET SEMESTERS COUNT & DROPDOWNS
-    setVisibleSemesters(0);
+    setVisibleFeeSemesters(0);
+    setVisibleDiscountSemesters(0);
 
     // RESET ADD FEE ELEMENT FORM
     setFeeElement({
@@ -328,8 +337,7 @@ const StudentFee = () => {
       return;
     }
 
-    // Build safe periods array matching visibleSemesters
-    const periods = Array.from({ length: visibleSemesters }).map(
+    const periods = Array.from({ length: visibleFeeSemesters }).map(
       (_, i) => feeElement.semesters?.[i] ?? ""
     );
 
@@ -341,30 +349,37 @@ const StudentFee = () => {
         frequencyOptions.find((o) => o.value === feeElement.frequency)?.label ||
         "",
       amount: feeElement.amount,
-      periods, // always an array of length visibleSemesters
+      periods,
     };
 
     setAddedFeeElements((prev) => [...prev, newElement]);
 
-    // Reset form, keep semesters length in sync with visibleSemesters
     setFeeElement({
       element_type_id: null,
       name: "",
       frequency: "",
       amount: "",
-      semesters: Array(visibleSemesters).fill(""),
+      semesters: Array(visibleFeeSemesters).fill(""),
       adjustment_flag: "N",
       period_month: "",
     });
   };
 
   const handleDiscountFrequencyChange = async (selectedOption) => {
+    if (!selectedOption) {
+      setVisibleDiscountSemesters(0);
+      setDiscountElement((prev) => ({
+        ...prev,
+        frequency: "",
+        semesters: [],
+      }));
+      return;
+    }
+
     setDiscountElement((prev) => ({
       ...prev,
-      frequency: selectedOption?.value || "",
+      frequency: selectedOption.value,
     }));
-
-    if (!selectedOption) return;
 
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
@@ -375,9 +390,9 @@ const StudentFee = () => {
       );
 
       const data = await res.json();
-      const count = data.frequency_period;
+      const count = Number(data.frequency_period) || 0;
 
-      setVisibleSemesters(count);
+      setVisibleDiscountSemesters(count);
       setDiscountElement((prev) => ({
         ...prev,
         semesters: Array(count).fill(""),
@@ -392,7 +407,7 @@ const StudentFee = () => {
       return;
     }
 
-    const periods = Array.from({ length: visibleSemesters }).map(
+    const periods = Array.from({ length: visibleDiscountSemesters }).map(
       (_, i) => discountElement.semesters?.[i] ?? ""
     );
 
@@ -411,7 +426,7 @@ const StudentFee = () => {
       name: "",
       frequency: "",
       amount: "",
-      semesters: Array(visibleSemesters).fill(""),
+      semesters: Array(visibleDiscountSemesters).fill(""),
     });
   };
 
@@ -466,12 +481,20 @@ const StudentFee = () => {
   }, [selectedSession, selectedCourse, selectedDepartment]);
 
   const handleFrequencyChange = async (selectedOption) => {
+    if (!selectedOption) {
+      setVisibleFeeSemesters(0);
+      setFeeElement((prev) => ({
+        ...prev,
+        frequency: "",
+        semesters: [],
+      }));
+      return;
+    }
+
     setFeeElement((prev) => ({
       ...prev,
-      frequency: selectedOption?.value || "",
+      frequency: selectedOption.value,
     }));
-
-    if (!selectedOption) return;
 
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
@@ -482,9 +505,9 @@ const StudentFee = () => {
       );
 
       const data = await res.json();
-      const count = data.frequency_period;
+      const count = Number(data.frequency_period) || 0;
 
-      setVisibleSemesters(count);
+      setVisibleFeeSemesters(count);
       setFeeElement((prev) => ({
         ...prev,
         semesters: Array(count).fill(""),
@@ -817,6 +840,8 @@ const StudentFee = () => {
         studentIndividualFeeDetails.some((item) => item.remove_flag) ||
         studentFeeDetails.some((item) => item.remove_flag);
 
+      const hasAddedFeeElements = addedFeeElements.length > 0;
+      const hasAddedDiscountElements = addedDiscountElements.length > 0;
       const isAdd = addfeeElement.length > 0;
 
       const response = await fetch(
@@ -834,7 +859,13 @@ const StudentFee = () => {
       const data = await response.json();
 
       if (isAdd) {
-        alert("Fee element added successfully!");
+        if (hasAddedDiscountElements && hasAddedFeeElements) {
+          alert("Fee element and discount added successfully!");
+        } else if (hasAddedDiscountElements) {
+          alert("Discount added successfully!");
+        } else {
+          alert("Fee element added successfully!");
+        }
       } else if (isRemove) {
         alert("Fee element removed successfully!");
       } else if (isUpdate) {
@@ -1361,11 +1392,11 @@ const StudentFee = () => {
                           />
                         </div>
 
-                        {visibleSemesters > 0 && (
+                        {visibleDiscountSemesters > 0 && (
                           <>
                             <h6>Semester</h6>
                             <div className="row g-3">
-                              {Array.from({ length: visibleSemesters }).map((_, idx) => (
+                              {Array.from({ length: visibleDiscountSemesters }).map((_, idx) => (
                                 <div className="col-md-6 mb-3" key={`discount-${idx}`}>
                                   <label className="form-label">Semester{idx + 1}</label>
                                   <Select
@@ -1382,7 +1413,7 @@ const StudentFee = () => {
                                     }
                                     onChange={(opt) => {
                                       const updated = Array.from({
-                                        length: visibleSemesters,
+                                        length: visibleDiscountSemesters,
                                       }).map((_, i) => discountElement.semesters?.[i] ?? "");
                                       updated[idx] = opt ? opt.value : "";
                                       setDiscountElement((prev) => ({
@@ -1469,11 +1500,11 @@ const StudentFee = () => {
                           />
                         </div>
 
-                        {visibleSemesters > 0 && (
+                        {visibleFeeSemesters > 0 && (
                           <>
                             <h6>Semester</h6>
                             <div className="row g-3">
-                              {Array.from({ length: visibleSemesters }).map((_, idx) => (
+                              {Array.from({ length: visibleFeeSemesters }).map((_, idx) => (
                                 <div className="col-md-6 mb-3" key={`fee-${idx}`}>
                                   <label className="form-label">Semester{idx + 1}</label>
                                   <Select
@@ -1490,7 +1521,7 @@ const StudentFee = () => {
                                     }
                                     onChange={(opt) => {
                                       const updated = Array.from({
-                                        length: visibleSemesters,
+                                        length: visibleFeeSemesters,
                                       }).map((_, i) => feeElement.semesters?.[i] ?? "");
                                       updated[idx] = opt ? opt.value : "";
                                       setFeeElement((prev) => ({
@@ -1530,7 +1561,7 @@ const StudentFee = () => {
                           <th>Element Name</th>
                           <th>Element Frequency</th>
                           <th>Amount</th>
-                          {Array.from({ length: visibleSemesters }).map(
+                          {Array.from({ length: tableVisibleSemesters }).map(
                             (_, idx) => (
                               <th key={idx}>Period {idx + 1}</th>
                             )
@@ -1558,7 +1589,7 @@ const StudentFee = () => {
                                   : element.amount}
                               </td>
 
-                              {Array.from({ length: visibleSemesters }).map(
+                              {Array.from({ length: tableVisibleSemesters }).map(
                                 (_, pIdx) => {
                                   const safeSemesterOptions = Array.isArray(
                                     semesterOptions
@@ -1600,7 +1631,7 @@ const StudentFee = () => {
                           ))
                         ) : (
                           <tr>
-                            <td colSpan={5 + visibleSemesters}>
+                            <td colSpan={5 + tableVisibleSemesters}>
                               No elements added
                             </td>
                           </tr>

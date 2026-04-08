@@ -135,7 +135,7 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
 
         <div className="col-12 col-md-6 mb-2">
           <label htmlFor="father_aadharno" className="form-label">
-            Father's Aadhar No
+            Father's Aadhar No<span style={{ color: "red" }}>*</span>
           </label>
           <input
             type="text"
@@ -145,6 +145,7 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
             value={formData.father_aadharno}
             placeholder="Enter father's aadhar no"
             maxLength={12}
+            required
             onChange={(e) => {
               // Restrict input to only digits (0-9)
               const value = e.target.value.replace(/[^0-9]/g, ""); // This regex removes any non-numeric character
@@ -154,11 +155,14 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
           {errors.father_aadharno && (
             <small style={{ color: "red" }}>{errors.father_aadharno}</small>
           )}
+          {!errors.father_aadharno && requiredErrors.father_aadharno && (
+            <small style={{ color: "red" }}>{requiredErrors.father_aadharno}</small>
+          )}
         </div>
 
         <div className="col-12 col-md-6 mb-2">
           <label htmlFor="mother_aadharno" className="form-label">
-            Mother's Aadhar No
+            Mother's Aadhar No<span style={{ color: "red" }}>*</span>
           </label>
           <input
             type="text"
@@ -168,6 +172,7 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
             value={formData.mother_aadharno}
             placeholder="Enter mother's aadhar no"
             maxLength={12}
+            required
             onChange={(e) => {
               // Restrict input to only digits (0-9)
               const value = e.target.value.replace(/[^0-9]/g, ""); // This regex removes any non-numeric character
@@ -176,6 +181,9 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
           />
           {errors.mother_aadharno && (
             <small style={{ color: "red" }}>{errors.mother_aadharno}</small>
+          )}
+          {!errors.mother_aadharno && requiredErrors.mother_aadharno && (
+            <small style={{ color: "red" }}>{requiredErrors.mother_aadharno}</small>
           )}
         </div>
       </div>
