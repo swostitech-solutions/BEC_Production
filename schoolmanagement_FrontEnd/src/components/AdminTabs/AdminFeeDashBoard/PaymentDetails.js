@@ -388,14 +388,9 @@ const FeeDetails = () => {
     header.style.marginBottom = "20px";
 
     const collegeName = document.createElement("h3");
-    collegeName.textContent = "Vinayak Vidya Mandir Sr. Sec. School";
+    collegeName.textContent = "Bhubaneswar Engineering College";
     collegeName.style.margin = "0";
     collegeName.style.fontWeight = "bold";
-
-    const address = document.createElement("p");
-    address.textContent = "Kumashpur, SONIPAT, HARYANA-131021";
-    address.style.margin = "0";
-    address.style.fontSize = "14px";
 
     const dateRange = document.createElement("p");
     const fromDateStr = startDate
@@ -408,7 +403,6 @@ const FeeDetails = () => {
     dateRange.style.fontWeight = "bold";
 
     header.appendChild(collegeName);
-    header.appendChild(address);
     header.appendChild(dateRange);
 
     // Create hidden container and append header + table
