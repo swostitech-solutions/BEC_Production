@@ -10,6 +10,7 @@ import "jspdf-autotable";
 import api from "../../../utils/api";
 import useBanks from "../../hooks/useBanks";
 import useBankAccounts from "../../hooks/useBankAccounts";
+import useExpenseIncomeCategories from "../../hooks/useExpenseIncomeCategories";
 
 
 
@@ -20,6 +21,7 @@ const AdmAttendanceEntry = () => {
   const [paymentOptions, setPaymentOptions] = useState([]);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const { categories: incomeCategories } = useExpenseIncomeCategories("I");
 
 
   // Custom hooks for fetching data
@@ -91,6 +93,15 @@ const AdmAttendanceEntry = () => {
     item?.income_category ||
     item?.category_name ||
     item?.expense_category ||
+    incomeCategories.find(
+      (category) =>
+        String(category.value || category.expense_category_id) ===
+        String(
+          item?.category_id ||
+          item?.income_category_id ||
+          item?.expense_income_category_id
+        )
+    )?.label ||
     item?.category?.label ||
     item?.category?.expense_category ||
     item?.category ||

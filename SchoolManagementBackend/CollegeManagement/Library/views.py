@@ -3857,6 +3857,11 @@ class GetLostDamageBookListAPIView(ListAPIView):
             filterdata = LibraryBooksBarcode.objects.filter(
                 book_barcode_status__in=statuses,
                 is_active=True
+            ).select_related(
+                'book',
+                'book__book_category',
+                'book__book_sub_category',
+                'book__library_branch',
             )
 
             if filterdata:
