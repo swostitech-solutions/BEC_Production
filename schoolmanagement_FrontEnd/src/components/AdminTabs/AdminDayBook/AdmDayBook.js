@@ -1134,14 +1134,6 @@ const AdmAttendanceEntry = () => {
       const doc = new jsPDF("portrait", "mm", "a4");
       let startY = 20;
 
-      // Load and add logo
-      try {
-        const logoData = await loadLogoImage();
-        doc.addImage(logoData, "JPEG", 10, 10, 20, 20);
-      } catch (error) {
-        console.error("Error loading logo:", error);
-      }
-
       // Header
       const pageWidth = doc.internal.pageSize.getWidth();
       doc.setFont("Helvetica", "bold");
@@ -1366,24 +1358,6 @@ const AdmAttendanceEntry = () => {
     return dates;
   };
 
-  // Helper function to load logo image
-  const loadLogoImage = () => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL("image/jpeg"));
-      };
-      img.onerror = (err) => reject(err);
-      img.src = "/Assets/sparsh.jpeg";
-    });
-  };
-
   // Add a day's data as a page to an existing PDF document - Modified to show only Fee Receipts
   const addDayPageToPDF = async (doc, dayData, date, paymentMethodName, isFirstPage = false) => {
     // Add new page if not the first page
@@ -1392,14 +1366,6 @@ const AdmAttendanceEntry = () => {
     }
 
     let startY = 20;
-
-    // Load and add logo on every page
-    try {
-      const logoData = await loadLogoImage();
-      doc.addImage(logoData, "JPEG", 10, 10, 20, 20);
-    } catch (error) {
-      console.error("Error loading logo:", error);
-    }
 
     // Header
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -1603,14 +1569,6 @@ const AdmAttendanceEntry = () => {
         }
 
         pageCount++;
-
-        // Add logo
-        try {
-          const logoData = await loadLogoImage();
-          doc.addImage(logoData, "JPEG", 10, 10, 20, 20);
-        } catch (error) {
-          console.error("Error loading logo:", error);
-        }
 
         // Header
         const pageWidth = doc.internal.pageSize.getWidth();
