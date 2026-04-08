@@ -308,6 +308,12 @@ export default function BasicTabs() {
     }
     if (!formData.father_name?.trim()) newErrors.father_name = "Father Name is required";
     if (!formData.mother_name?.trim()) newErrors.mother_name = "Mother Name is required";
+    if (!formData.father_aadharno?.trim()) {
+      newErrors.father_aadharno = "Father Aadhar Number is required";
+    }
+    if (!formData.mother_aadharno?.trim()) {
+      newErrors.mother_aadharno = "Mother Aadhar Number is required";
+    }
     if (!formData.father_profession) newErrors.father_profession = "Father Profession is required";
     if (!formData.mother_profession) newErrors.mother_profession = "Mother Profession is required";
     if (!formData.father_contact_number?.trim()) {
