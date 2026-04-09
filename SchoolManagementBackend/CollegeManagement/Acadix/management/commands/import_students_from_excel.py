@@ -265,16 +265,19 @@ class Command(BaseCommand):
             semester_code=semester_code,
             is_active=True,
         )
-        first_semester = (
-            Semester.objects.filter(
-                batch=batch,
-                course=course,
-                department=department,
-                is_active=True,
-            )
-            .order_by("display_order", "id")
-            .first()
-        )
+        admission_type = self._normalize_admission_type(row.get("Admission Type"))
+        semester_queryset = Semester.objects.filter(
+            batch=batch,
+            course=course,
+            department=department,
+            is_active=True,
+        ).order_by("display_order", "id")
+        batch_years = re.findall(r"(\d{4})", str(batch.batch_code or ""))
+        is_three_year_batch = len(batch_years) >= 2 and int(batch_years[1]) - int(batch_years[0]) == 3
+        if admission_type == "LATERAL" or is_three_year_batch:
+            first_semester = semester_queryset.filter(display_order__gte=3).first() or semester_queryset.first()
+        else:
+            first_semester = semester_queryset.first()
         if not first_semester:
             raise ValueError(
                 f"No semester found for {batch.batch_code} / {course.course_code} / {department.department_description}"
@@ -304,7 +307,6 @@ class Command(BaseCommand):
         email = self._normalize_email(row.get("Email"))
         dob = self._normalize_date(row.get("Date Of Birth"))
         doa = self._normalize_date(row.get("Date Of Admission"))
-        admission_type = self._normalize_admission_type(row.get("Admission Type"))
 
         gender = self._resolve_optional_master(Gender, row.get("Gender"), ("gender_code", "gender_name"), self._normalize_gender_label)
         blood = self._resolve_optional_master(Blood, row.get("Blood Group"), ("blood_code", "blood_name"))
@@ -461,6 +463,12 @@ class Command(BaseCommand):
         fee_group: FeeStructureMaster,
     ) -> None:
         detail_rows = FeeStructureDetail.objects.filter(fee_structure_master=fee_group, is_active=True)
+        fee_applied_from = student_course.fee_applied_from
+        if not fee_applied_from:
+            raise ValueError(f"Student course {student_course.id} is missing fee_applied_from")
+
+        start_order = fee_applied_from.display_order or fee_applied_from.id or 0
+
         for detail in detail_rows:
             periods = detail.element_frequency.frequency_period
             semester_ids = [
@@ -473,18 +481,18 @@ class Command(BaseCommand):
                 detail.semester_7,
                 detail.semester_8,
             ]
-            fee_applied_from_id = detail.semester_1
-            if not fee_applied_from_id:
+            selected_semester_ids = semester_ids[:periods]
+            if any(not semester_id for semester_id in selected_semester_ids):
                 raise ValueError(
-                    f"Fee structure detail {detail.id} is missing semester_1 for fee group {fee_group.id}"
+                    f"Fee structure detail {detail.id} is missing one of the semester slots for period {periods}"
                 )
-            fee_applied_from = Semester.objects.get(id=fee_applied_from_id, is_active=True)
-            for semester_id in semester_ids[:periods]:
-                if not semester_id:
-                    raise ValueError(
-                        f"Fee structure detail {detail.id} is missing one of the semester slots for period {periods}"
-                    )
+
+            for semester_id in selected_semester_ids:
                 semester = Semester.objects.get(id=semester_id, is_active=True)
+                semester_order = semester.display_order or semester.id or 0
+                if semester_order < start_order:
+                    continue
+
                 StudentFeeDetail.objects.create(
                     student=student,
                     student_course=student_course,

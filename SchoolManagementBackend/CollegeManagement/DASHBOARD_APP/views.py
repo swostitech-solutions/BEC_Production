@@ -463,17 +463,37 @@ class FeesDuesListAPIView(ListAPIView):
                 from_date = datetime.strptime(f"01-01-{year}", '%d-%m-%Y').date()
                 to_date = datetime.strptime(f"31-12-{year}", '%d-%m-%Y').date()
 
+            # Scope fee records to the requested academic year window.
+            # This prevents old years with no fee setup from reusing the current year's totals.
+            academic_year_qs = AcademicYear.objects.filter(
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True
+            )
+
+            if year:
+                academic_year_qs = academic_year_qs.filter(
+                    Q(date_from__year__lte=year, date_to__year__gte=year)
+                    | Q(academic_year_code__icontains=str(year))
+                    | Q(academic_year_description__icontains=str(year))
+                ).distinct()
+            elif batch_id:
+                academic_year_qs = academic_year_qs.filter(
+                    Q(id=batch_id) | Q(batch_id=batch_id)
+                ).distinct()
+
             try:
-                # Filter StudentFeeDetail by organization and branch ONLY (NO batch filtering)
-                # This gives us the fee structure elements (total dues and discounts) for ALL batches
                 filterdata = StudentFeeDetail.objects.filter(
-                    organization= organization_id,
-                    branch= branch_id,
+                    organization=organization_id,
+                    branch=branch_id,
                     is_active=True
                 )
-                    
-            except Exception as e:
-                filterdata=[]
+
+                if year or academic_year_qs.exists():
+                    filterdata = filterdata.filter(academic_year__in=academic_year_qs)
+
+            except Exception:
+                filterdata = []
 
             if filterdata:
 
@@ -506,6 +526,10 @@ class FeesDuesListAPIView(ListAPIView):
                     'is_active': True
                 }
                 
+                # Keep receipt totals in the same academic-year scope when a year/batch filter is supplied.
+                if academic_year_qs.exists() and (year or batch_id):
+                    receipt_filter['receipt__academic_year__in'] = academic_year_qs
+
                 # Add date range filter if year is provided
                 if from_date and to_date:
                     receipt_filter['receipt__receipt_date__gte'] = from_date

@@ -7,7 +7,7 @@
 --   current semester = 2nd Semester
 --   section          = Section A
 --   fee group        = 2024-2028 BTECH Agriculture 1st year
---   fee applied from = 1st Semester
+--   fee applied from = 1st Semester for Regular / 3rd Semester for Lateral
 --
 -- How to use:
 -- 1. Run the staging-table block once.
@@ -115,7 +115,10 @@ WITH cleaned AS (
             WHEN upper(trim(mother_tongue)) = 'ODIA' THEN 'Odia'
             ELSE NULLIF(initcap(trim(mother_tongue)), '')
         END AS mother_tongue_name,
-        COALESCE(NULLIF(trim(admission_type), ''), 'Regular') AS admission_type,
+        CASE
+            WHEN upper(trim(COALESCE(admission_type, 'Regular'))) = 'LATERAL' THEN 'LATERAL'
+            ELSE 'Regular'
+        END AS admission_type,
         NULLIF(substring(regexp_replace(COALESCE(student_phone_number, ''), '\D', '', 'g') FROM 1 FOR 10), '') AS student_phone,
         NULLIF(btrim(student_email_id), '') AS student_email,
         NULLIF(substring(regexp_replace(COALESCE(student_aadhar_number, ''), '\D', '', 'g') FROM 1 FOR 12), '') AS student_aadhaar,
@@ -187,7 +190,13 @@ resolved AS (
       ON fee_from.batch_id = b.id
      AND fee_from.course_id = cr.id
      AND fee_from.department_id = d.id
-     AND fee_from.semester_description = '1st Semester'
+     AND fee_from.is_active = true
+     AND lower(fee_from.semester_description) = lower(
+         CASE
+             WHEN c.admission_type = 'LATERAL' THEN '3rd Semester'
+             ELSE '1st Semester'
+         END
+     )
 )
 SELECT * FROM resolved;
 
@@ -654,6 +663,8 @@ fee_rows AS (
      AND fsd.is_active = true
     JOIN "Acadix_feeelementtype" fet
       ON fet.id = fsd.element_type_id
+    JOIN "Acadix_semester" fee_from_sem
+      ON fee_from_sem.id = scm.fee_applied_from_id
     CROSS JOIN LATERAL (
         VALUES
             (fsd.semester_1),
@@ -665,7 +676,10 @@ fee_rows AS (
             (fsd.semester_7),
             (fsd.semester_8)
     ) AS sem_map(semester_id)
+    JOIN "Acadix_semester" fee_sem
+      ON fee_sem.id = sem_map.semester_id
     WHERE sem_map.semester_id IS NOT NULL
+      AND COALESCE(fee_sem.display_order, fee_sem.id) >= COALESCE(fee_from_sem.display_order, fee_from_sem.id)
 )
 INSERT INTO "Acadix_studentfeedetail" (
     student_id,
