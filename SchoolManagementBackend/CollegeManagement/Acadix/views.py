@@ -23356,11 +23356,34 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
             except ObjectDoesNotExist:
                 return Response({'message': 'Student course record Not Found!'}, status=status.HTTP_404_NOT_FOUND)
 
+            def get_semester_order(semester_obj=None, semester_name=None):
+                if semester_obj is not None:
+                    display_order = getattr(semester_obj, 'display_order', None)
+                    if display_order:
+                        return display_order
+                    semester_name = getattr(semester_obj, 'semester_description', None) or getattr(semester_obj, 'semester_code', None)
+
+                normalized_name = str(semester_name or '').strip().lower()
+                match = re.search(r'(\d+)', normalized_name)
+                return int(match.group(1)) if match else 0
+
+            def get_batch_year_span(batch_code):
+                years = re.findall(r'(\d{4})', str(batch_code or ''))
+                return int(years[1]) - int(years[0]) if len(years) >= 2 else 0
+
+            start_semester_order = get_semester_order(semester_obj=studentCourseInstance.fee_applied_from)
+            if get_batch_year_span(studentCourseInstance.batch.batch_code if studentCourseInstance.batch else '') == 3 and start_semester_order < 3:
+                start_semester_order = 3
+
             studentfeedetailsrecord = None
             try:
-                studentfeedetailsrecord = StudentFeeDetail.objects.filter(organization=organization_id,
-                                                                          branch=branch_id, student=student_id,
-                                                                          is_active=True)
+                studentfeedetailsrecord = StudentFeeDetail.objects.filter(
+                    organization=organization_id,
+                    branch=branch_id,
+                    student=student_id,
+                    student_course=studentCourseInstance,
+                    is_active=True,
+                ).order_by('semester__display_order', 'fee_applied_from__display_order', 'id')
             except ObjectDoesNotExist:
                 studentfeedetailsrecord = None
 
@@ -23401,6 +23424,13 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                         semester_name = "-"
                     if semester_display_order is None:
                         semester_display_order = 999999
+
+                    if (
+                        start_semester_order
+                        and semester_display_order != 999999
+                        and semester_display_order < start_semester_order
+                    ):
+                        continue
 
                     data = {
                         'element_name': stdfees.element_name,
@@ -23444,8 +23474,12 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                 'session_code': studentCourseInstance.academic_year.academic_year_code,
                 'course_id': studentCourseInstance.course.id,
                 'course_name': studentCourseInstance.course.course_name,
+                'batch_name': studentCourseInstance.batch.batch_code if studentCourseInstance.batch else "",
                 'section_id': studentCourseInstance.section.id,
                 'section_name': studentCourseInstance.section.section_name,
+                'fee_applied_from_id': studentCourseInstance.fee_applied_from.id if studentCourseInstance.fee_applied_from else None,
+                'fee_applied_from_name': studentCourseInstance.fee_applied_from.semester_description if studentCourseInstance.fee_applied_from else "",
+                'visible_start_semester_order': start_semester_order,
                 'fathername': studentCourseInstance.student.father_name,
                 'mothername': studentCourseInstance.student.mother_name,
                 'admission_no': studentCourseInstance.student.admission_no,

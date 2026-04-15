@@ -1109,6 +1109,15 @@ const AdmAttendanceEntry = () => {
       return;
     }
 
+    const ledgerItem = tableData.find(
+      (item) => Number(item.studentId || item.student_id) === Number(studentId)
+    );
+
+    if (ledgerItem?.semester_wise_details) {
+      generatePDF(buildPdfDataFromLedgerItem(ledgerItem));
+      return;
+    }
+
     try {
       console.log("Fetching PDF data =>", {
         organization_id,
@@ -1144,37 +1153,107 @@ const AdmAttendanceEntry = () => {
     }
   };
 
-  // Convert image to Base64
-  const toBase64 = (url) =>
-    fetch(url)
-      .then((res) => res.blob())
-      .then(
-        (blob) =>
-          new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-          })
+  const getSemesterOrder = (value) => {
+    const match = String(value || "").toLowerCase().match(/(\d+)/);
+    return match ? Number(match[1]) : 0;
+  };
+
+  const getBatchYearSpan = (value) => {
+    const years = String(value || "").match(/\d{4}/g);
+    return years && years.length >= 2 ? Number(years[1]) - Number(years[0]) : 0;
+  };
+
+  const normalizePdfFeeDetails = (data) => {
+    const batchStartSemesterOrder =
+      getBatchYearSpan(data?.batch_name) === 3 ? 3 : 0;
+    const startSemesterOrder = Math.max(
+      Number(data?.visible_start_semester_order) || 0,
+      getSemesterOrder(data?.fee_applied_from_name),
+      batchStartSemesterOrder
+    );
+
+    const filteredFees = (data?.feesdetails || []).filter((fee) => {
+      if (!startSemesterOrder) return true;
+      const currentOrder = getSemesterOrder(fee?.semester_name);
+      return !currentOrder || currentOrder >= startSemesterOrder;
+    });
+
+    let totalFees = 0;
+    let totalPaid = 0;
+    let totalDiscount = 0;
+
+    filteredFees.forEach((fee) => {
+      const totalAmount = Number(fee?.total_amount || 0);
+      const paidAmount = Number(fee?.paid_amount || 0);
+
+      if (fee?.element_name === "DISCOUNT") {
+        totalDiscount += totalAmount || paidAmount;
+      } else {
+        totalFees += totalAmount;
+        totalPaid += paidAmount;
+      }
+    });
+
+    return {
+      feesdetails: filteredFees,
+      totalFees,
+      totalPaid,
+      totalDiscount,
+      balance: totalFees - totalPaid - totalDiscount,
+    };
+  };
+
+  const buildPdfDataFromLedgerItem = (item) => {
+    const feesdetails = Object.entries(item?.semester_wise_details || {})
+      .sort(([semesterA], [semesterB]) => {
+        return getSemesterOrder(semesterA) - getSemesterOrder(semesterB);
+      })
+      .flatMap(([semesterName, elements]) =>
+        Object.entries(elements || {}).map(([elementName, detail]) => {
+          const totalAmount = Number(detail?.amount || 0);
+          const paidAmount = Number(detail?.paid || 0);
+          const balanceAmount =
+            detail?.balance !== undefined && detail?.balance !== null
+              ? Number(detail.balance)
+              : totalAmount - paidAmount;
+
+          return {
+            semester_name: semesterName,
+            element_name: elementName,
+            total_amount: totalAmount,
+            paid_amount: paidAmount,
+            remaining_amount: balanceAmount,
+          };
+        })
       );
 
-  const generatePDF = async (data) => {
+    return {
+      studentname: item?.student_name || "",
+      session_code: item?.academic_year_code || "",
+      course_name: item?.course_name || "",
+      section_name: item?.section_name || "",
+      fathername: item?.fatherName || "",
+      mothername: item?.motherName || "",
+      admission_no: item?.college_admission_no || "",
+      barcode: item?.barcode || "",
+      batch_name: item?.batch_name || "",
+      fee_applied_from_name:
+        item?.fee_applied_from_name || item?.semester_name || "",
+      visible_start_semester_order: Math.max(
+        getSemesterOrder(item?.fee_applied_from_name),
+        getBatchYearSpan(item?.batch_name) === 3 ? 3 : 0
+      ),
+      feesdetails,
+      total_fees: Number(item?.total_fees || 0),
+      total_paid: Number(item?.total_paid || 0),
+      total_discount: Number(item?.discount_fees || 0),
+      remaining_amount: Number(item?.remaining_fees || 0),
+    };
+  };
+
+  const generatePDF = (data) => {
     const doc = new jsPDF("portrait", "mm", "a4");
-
-    // Load Sparsh logo
-    const sparshLogo = await toBase64("/Assets/sparsh.jpeg");
-
-    // Image positioning
-    const imgX = 10;
-    const imgY = 10;
-    const imgWidth = 20;
-    const imgHeight = 20;
-
-    // Add the logo
-    try {
-      doc.addImage(sparshLogo, "JPEG", imgX, imgY, imgWidth, imgHeight);
-    } catch (error) {
-      console.error("Error adding image:", error);
-    }
+    const pdfFeeData = normalizePdfFeeDetails(data);
 
     // ====== INSTITUTION HEADER (CENTERED) ======
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -1218,7 +1297,7 @@ const AdmAttendanceEntry = () => {
 
     // ========== FEE DETAILS ==========
 
-    const feeDetails = data.feesdetails.map((fee) => [
+    const feeDetails = pdfFeeData.feesdetails.map((fee) => [
       fee.semester_name,
       fee.element_name,
       fee.total_amount,
@@ -1228,10 +1307,10 @@ const AdmAttendanceEntry = () => {
 
     // Totals rows
     const totalRows = [
-      ["", "", "", "Total Fees", data.total_fees],
-      ["", "", "", "Total Paid", data.total_paid],
-      ["", "", "", "Total Discount", data.total_discount],
-      ["", "", "", "Balance", data.remaining_amount],
+      ["", "", "", "Total Fees", pdfFeeData.totalFees],
+      ["", "", "", "Total Paid", pdfFeeData.totalPaid],
+      ["", "", "", "Total Discount", pdfFeeData.totalDiscount],
+      ["", "", "", "Balance", pdfFeeData.balance],
     ];
 
     feeDetails.push(...totalRows);

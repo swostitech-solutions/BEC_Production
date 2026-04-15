@@ -92,17 +92,12 @@ const AdmAttendanceEntry = () => {
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
 
-      // Add logo
-      const logo = new Image();
-      logo.src = "/Assets/sparsh.jpeg";
-      pdf.addImage(logo, "PNG", 10, 5, 40, 20);
-
       // Add title
       pdf.setFontSize(16);
-      pdf.text("Income & Expense Report", 70, 30);
+      pdf.text("Income & Expense Report", 105, 18, { align: "center" });
 
       // Add captured HTML as image
-      pdf.addImage(imgData, "PNG", 10, 40, 190, 0);
+      pdf.addImage(imgData, "PNG", 10, 28, 190, 0);
 
       // Save the PDF
       pdf.save("Finance Report.pdf");
