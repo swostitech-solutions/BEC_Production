@@ -40,7 +40,7 @@ const PostLoginWelcomeModal = ({ show, onHide }) => {
           <div>
             <p className="bec-welcome-label">Person</p>
             <h3>{details.person}</h3>
-            <p className="bec-welcome-role-text">{details.role}</p>
+            {/* <p className="bec-welcome-role-text">{details.role}</p> */}
           </div>
         </div>
 

@@ -7491,7 +7491,11 @@ class StudentCourseListAPIView(ListAPIView):
                     # Step 2: Retrieve related data
                     feeDetails = StudentCourse.objects.filter(student_id=studentId, is_active=True)
                     transportDetails = StudentCourse.objects.filter(student_id=studentId, is_active=True)
-                    addressDetails = Address.objects.filter(reference_id=studentId)
+                    addressDetails = Address.objects.filter(
+                        reference_id=studentId,
+                        usertype__iexact='STUDENT',
+                        is_active=True
+                    )
                     sibilingsDetails = SiblingDetail.objects.filter(student_id=studentId)
                     studentEmergencyContacts = StudentEmergencyContact.objects.filter(student_id=studentId)
                     authorizedPickups = AuthorisedPickup.objects.filter(student_id=studentId)
@@ -7545,6 +7549,13 @@ class StudentCourseListAPIView(ListAPIView):
                     courseInstance = stu.course
                     sectionInstance = stu.section
 
+                    serialized_addresses = AddressDetailsSerializer(addressDetails, many=True).data
+                    filtered_addresses = [
+                        addr for addr in serialized_addresses
+                        if str(addr.get('usertype', '')).strip().lower() == 'student'
+                        and bool(addr.get('is_active'))
+                    ]
+
                     # Step 3: Serialize the data using respective serializers
                     student_data = {
                         # **StudentBasicDetailSerializer(RegistrationInstance).data,
@@ -7564,7 +7575,7 @@ class StudentCourseListAPIView(ListAPIView):
                                 RegistrationInstance.profile_pic.url) if RegistrationInstance.profile_pic else None
                         },
                         'feeDetails': feeDetailslist,  # StudentFeeAppliedDetails(feeDetails).data,
-                        'addressDetails': AddressDetailsSerializer(addressDetails, many=True).data,
+                        'addressDetails': filtered_addresses,
                         'sibilingsDetails': sibilinglist,
                         # StudentSibilingsDetailsSerializer(sibilingsDetails, many=True).data,
                         'emegencyContact': StudentEmergencyContactDetailsSerializer(studentEmergencyContacts,
@@ -10905,17 +10916,43 @@ class UtilityGroupMixin:
     def addressDetailsProcess(self, addressDetail, student_instance):
 
         try:
+            def resolve_location_value(raw_value, model, name_field):
+                if raw_value is None:
+                    return ""
+
+                value = str(raw_value).strip()
+                if value == "":
+                    return ""
+
+                numeric_id = None
+                if value.isdigit():
+                    numeric_id = int(value)
+                else:
+                    try:
+                        as_float = float(value)
+                        if as_float.is_integer():
+                            numeric_id = int(as_float)
+                    except (TypeError, ValueError):
+                        numeric_id = None
+
+                if numeric_id is not None:
+                    obj = model.objects.filter(id=numeric_id).values(name_field).first()
+                    if obj and obj.get(name_field):
+                        return obj[name_field]
+
+                return value
+
             present_address = addressDetail.get('present_address')
             present_pincode = addressDetail.get('present_pincode')
-            present_city = addressDetail.get('present_city')
-            present_state = addressDetail.get('present_state')
-            present_country = addressDetail.get('present_country')
+            present_city = resolve_location_value(addressDetail.get('present_city'), City, 'city_name')
+            present_state = resolve_location_value(addressDetail.get('present_state'), State, 'state_name')
+            present_country = resolve_location_value(addressDetail.get('present_country'), Country, 'country_name')
             present_phone_number = addressDetail.get('present_phone_number')
             permanent_address = addressDetail.get('permanent_address')
             permanent_pincode = addressDetail.get('permanent_pincode')
-            permanent_city = addressDetail.get('permanent_city')
-            permanent_state = addressDetail.get('permanent_state')
-            permanent_country = addressDetail.get('permanent_country')
+            permanent_city = resolve_location_value(addressDetail.get('permanent_city'), City, 'city_name')
+            permanent_state = resolve_location_value(addressDetail.get('permanent_state'), State, 'state_name')
+            permanent_country = resolve_location_value(addressDetail.get('permanent_country'), Country, 'country_name')
             permanent_phone_number = addressDetail.get('permanent_phone_number')
             # created_by = student_instance.get('created_by')
 
@@ -12015,7 +12052,11 @@ class StudentRegistrationListAPIView(ListAPIView):
                 if student is not None:
                     # Step 2: Retrieve related data
                     feeDetails = StudentCourse.objects.filter(student=student, is_active=True).select_related('fee_group', 'fee_applied_from')
-                    addressDetails = Address.objects.filter(reference_id=student.id)
+                    addressDetails = Address.objects.filter(
+                        reference_id=student.id,
+                        usertype__iexact='STUDENT',
+                        is_active=True
+                    )
                     sibilingsDetails = SiblingDetail.objects.filter(student=student)
                     studentEmergencyContacts = StudentEmergencyContact.objects.filter(student=student)
                     authorizedPickups = AuthorisedPickup.objects.filter(student=student)
@@ -12053,6 +12094,13 @@ class StudentRegistrationListAPIView(ListAPIView):
                                 'section_name': studentInstance.section.section_name
                             }
                             sibilinglist.append(sibilingsdata)
+                    serialized_addresses = AddressDetailsSerializer(addressDetails, many=True).data
+                    filtered_addresses = [
+                        addr for addr in serialized_addresses
+                        if str(addr.get('usertype', '')).strip().lower() == 'student'
+                        and bool(addr.get('is_active'))
+                    ]
+
                     # Step 3: Serialize the data using respective serializers
                     student_data = {
                         'studentBasicDetails': {
@@ -12076,7 +12124,7 @@ class StudentRegistrationListAPIView(ListAPIView):
                                 student.profile_pic.url) if student.profile_pic else None
                         },
                         'feeDetails': feeDetailslist,  # StudentFeeAppliedDetails(feeDetails).data,
-                        'addressDetails': AddressDetailsSerializer(addressDetails, many=True).data,
+                        'addressDetails': filtered_addresses,
                         'sibilingsDetails': sibilinglist,
                         # StudentSibilingsDetailsSerializer(sibilingsDetails, many=True).data,
                         'emegencyContact': StudentEmergencyContactDetailsSerializer(studentEmergencyContacts,
@@ -13224,7 +13272,11 @@ class StudentRegistrationBasedOnIdAPIView(RetrieveAPIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             # Fetch other related details
-            addressDetails = Address.objects.filter(reference_id=student_instance.id, is_active=True)
+            addressDetails = Address.objects.filter(
+                reference_id=student_instance.id,
+                usertype__iexact='STUDENT',
+                is_active=True
+            )
             sibilingsDetails = SiblingDetail.objects.filter(student=student_instance, is_active=True)
             emegencyContact = StudentEmergencyContact.objects.filter(student=student_instance, is_active=True)
             authorizedpickup = AuthorisedPickup.objects.filter(student=student_instance, is_active=True)
@@ -23920,14 +23972,15 @@ class GetStudentFeeBalanceReceiptListAPIView(ListAPIView):
                     address_instance = Address.objects.get(
                         reference_id=stdId, usertype="STUDENT", is_active=True
                     )
+                    address_data = AddressDetailsSerializer(address_instance).data
                     address_parts = filter(
                         None,
                         [
-                            address_instance.permanent_address,
-                            address_instance.permanent_pincode,
-                            address_instance.permanent_city,
-                            address_instance.permanent_state,
-                            address_instance.permanent_country,
+                            address_data.get('permanent_address'),
+                            address_data.get('permanent_pincode'),
+                            address_data.get('permanent_city'),
+                            address_data.get('permanent_state'),
+                            address_data.get('permanent_country'),
                         ],
                     )
                     full_address = " ".join(address_parts)
@@ -24141,14 +24194,15 @@ class GetStudentFeeDetailSemesterWiseListAPIView(ListAPIView):
                     address_instance = Address.objects.get(
                         reference_id=stdId, usertype="STUDENT", is_active=True
                     )
+                    address_data = AddressDetailsSerializer(address_instance).data
                     address_parts = filter(
                         None,
                         [
-                            address_instance.permanent_address,
-                            address_instance.permanent_pincode,
-                            address_instance.permanent_city,
-                            address_instance.permanent_state,
-                            address_instance.permanent_country,
+                            address_data.get('permanent_address'),
+                            address_data.get('permanent_pincode'),
+                            address_data.get('permanent_city'),
+                            address_data.get('permanent_state'),
+                            address_data.get('permanent_country'),
                         ],
                     )
                     full_address = " ".join(address_parts)
@@ -24465,14 +24519,15 @@ class GetStudentperiodwiseFeeListAPIView(ListAPIView):
                     address_instance = Address.objects.get(
                         reference_id=stdIds, usertype="STUDENT", is_active=True
                     )
+                    address_data = AddressDetailsSerializer(address_instance).data
                     address_parts = filter(
                         None,
                         [
-                            address_instance.permanent_address,
-                            address_instance.permanent_pincode,
-                            address_instance.permanent_city,
-                            address_instance.permanent_state,
-                            address_instance.permanent_country,
+                            address_data.get('permanent_address'),
+                            address_data.get('permanent_pincode'),
+                            address_data.get('permanent_city'),
+                            address_data.get('permanent_state'),
+                            address_data.get('permanent_country'),
                         ],
                     )
                     full_address = " ".join(address_parts)

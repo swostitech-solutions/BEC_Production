@@ -59,12 +59,19 @@ const useFetchStates = (selectedCountryName) => {
   // ✅ Get country list to find country ID
   const { countries } = useFetchCountries();
 
+  const isSameValue = (left, right) =>
+    String(left ?? "").trim().toLowerCase() ===
+    String(right ?? "").trim().toLowerCase();
+
   useEffect(() => {
     if (!selectedCountryName || countries.length === 0) return;
 
     // 🔥 Find the country ID based on country_name
     const matchedCountry = countries.find(
-      (c) => c.country_name.toLowerCase() === selectedCountryName.toLowerCase()
+      (c) =>
+        isSameValue(c.country_name, selectedCountryName) ||
+        isSameValue(c.id, selectedCountryName) ||
+        isSameValue(c.country_id, selectedCountryName)
     );
 
     if (!matchedCountry) {
