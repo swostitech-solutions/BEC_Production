@@ -15882,6 +15882,12 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
                         is_active=True,
                     ).order_by('semester__display_order', 'id')
 
+                    if not StudentFeeDetailData.exists():
+                        StudentFeeDetailData = StudentFeeDetail.objects.filter(
+                            student=StudentCourseInstance.student,
+                            is_active=True,
+                        ).order_by('semester__display_order', 'id')
+
                     feestructuredetailsdata = []
                     element_discount_amount = ''
                     for item in StudentFeeDetailData:
