@@ -27,6 +27,41 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
     permanent_phone_number: "",
   });
 
+  const normalize = (v) => String(v ?? "").trim().toLowerCase();
+  const resolveCountryName = (value) => {
+    if (value === null || value === undefined || value === "") return "";
+    const matched = countries.find(
+      (country) =>
+        normalize(country.country_name) === normalize(value) ||
+        normalize(country.id) === normalize(value) ||
+        normalize(country.country_id) === normalize(value)
+    );
+    return matched?.country_name || String(value);
+  };
+
+  const resolveStateName = (value) => {
+    if (value === null || value === undefined || value === "") return "";
+    const matched = states.find(
+      (state) =>
+        normalize(state.state_name) === normalize(value) ||
+        normalize(state.id) === normalize(value) ||
+        normalize(state.state_id) === normalize(value)
+    );
+    return matched?.state_name || String(value);
+  };
+
+  const resolveCityName = (value) => {
+    if (value === null || value === undefined || value === "") return "";
+    const matched = cities.find(
+      (city) =>
+        normalize(city.city_name) === normalize(value) ||
+        normalize(city.cityname) === normalize(value) ||
+        normalize(city.id) === normalize(value) ||
+        normalize(city.city_id) === normalize(value)
+    );
+    return matched?.city_name || matched?.cityname || String(value);
+  };
+
   // 10282025
   const fetchStudentData = async () => {
     try {
@@ -36,7 +71,14 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
       const apiUrl = `${ApiUrl.apiurl}StudentRegistrationApi/GetStudentDetailsBasedOnId/?organization_id=${organization_id}&branch_id=${branch_id}&student_id=${id}`;
       console.log("📡 Fetching Student Data From:", apiUrl);
 
-      const response = await fetch(apiUrl);
+      const token = localStorage.getItem("accessToken");
+
+      const response = await fetch(apiUrl, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Content-Type": "application/json",
+        },
+      });
       if (!response.ok) {
         throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
@@ -52,46 +94,14 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
       ) {
         const address = result.data.address_details[0];
 
-        // 🔥 Normalization helper
-        const normalize = (v) => (v ? v.trim().toLowerCase() : "");
+        // Resolve labels even if API returns IDs for country/state/city.
+        const matchedPresentCountry = resolveCountryName(address.present_country);
+        const matchedPresentState = resolveStateName(address.present_state);
+        const matchedPresentCity = resolveCityName(address.present_city);
 
-        // 🔥 MATCH API VALUES WITH DROPDOWN OPTION VALUES
-        const matchedPresentCountry =
-          countries.find(
-            (c) =>
-              normalize(c.country_name) ===
-              normalize(address.present_country)
-          )?.country_name || address.present_country || "";
-
-        const matchedPresentState =
-          states.find(
-            (s) =>
-              normalize(s.state_name) === normalize(address.present_state)
-          )?.state_name || address.present_state || "";
-
-        const matchedPresentCity =
-          cities.find(
-            (c) => normalize(c.cityname) === normalize(address.present_city)
-          )?.cityname || address.present_city || "";
-
-        const matchedPermanentCountry =
-          countries.find(
-            (c) =>
-              normalize(c.country_name) ===
-              normalize(address.permanent_country)
-          )?.country_name || address.permanent_country || "";
-
-        const matchedPermanentState =
-          states.find(
-            (s) =>
-              normalize(s.state_name) === normalize(address.permanent_state)
-          )?.state_name || address.permanent_state || "";
-
-        const matchedPermanentCity =
-          cities.find(
-            (c) =>
-              normalize(c.cityname) === normalize(address.permanent_city)
-          )?.cityname || address.permanent_city || "";
+        const matchedPermanentCountry = resolveCountryName(address.permanent_country);
+        const matchedPermanentState = resolveStateName(address.permanent_state);
+        const matchedPermanentCity = resolveCityName(address.permanent_city);
 
         // 🔥 UPDATE formData (Now Select boxes will show values)
         setFormData((prev) => ({
@@ -128,7 +138,7 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
     if (id && countries.length) {
       fetchStudentData();
     }
-  }, [id, countries.length]);
+  }, [id, countries.length, states.length, cities.length]);
 
   const handleCheckboxChange = () => {
     setIsSameAddress((prev) => {

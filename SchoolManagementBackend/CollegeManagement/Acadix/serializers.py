@@ -1779,6 +1779,48 @@ class AddressDetailsSerializer(serializers.ModelSerializer):
                   'permanent_state',
                   'permanent_country', 'permanent_phone_number', 'is_active']
 
+    @staticmethod
+    def _resolve_master_name(model, raw_value, name_field):
+        if raw_value is None:
+            return ""
+
+        value = str(raw_value).strip()
+        if value == "":
+            return ""
+
+        # Resolve numeric IDs stored in Address table back to display names.
+        numeric_id = None
+        if value.isdigit():
+            numeric_id = int(value)
+        else:
+            try:
+                as_float = float(value)
+                if as_float.is_integer():
+                    numeric_id = int(as_float)
+            except (TypeError, ValueError):
+                numeric_id = None
+
+        if numeric_id is not None:
+            obj = model.objects.filter(id=numeric_id).values(name_field).first()
+            if obj and obj.get(name_field):
+                return obj[name_field]
+
+        # If already stored as name, keep it untouched.
+        return value
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['present_country'] = self._resolve_master_name(Country, data.get('present_country'), 'country_name')
+        data['present_state'] = self._resolve_master_name(State, data.get('present_state'), 'state_name')
+        data['present_city'] = self._resolve_master_name(City, data.get('present_city'), 'city_name')
+
+        data['permanent_country'] = self._resolve_master_name(Country, data.get('permanent_country'), 'country_name')
+        data['permanent_state'] = self._resolve_master_name(State, data.get('permanent_state'), 'state_name')
+        data['permanent_city'] = self._resolve_master_name(City, data.get('permanent_city'), 'city_name')
+
+        return data
+
         # def validate_reference_id(self, value):
         #     if not value:
         #         raise serializers.ValidationError("reference_id required!! .")

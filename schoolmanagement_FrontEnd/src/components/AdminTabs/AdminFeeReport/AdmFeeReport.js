@@ -9,6 +9,57 @@ const toNumber = (value) => Number(value || 0);
 const getDiscountAmount = (item) => Math.abs(toNumber(item.discount_fees));
 const getActualPaidAmount = (item) => toNumber(item.total_paid) - getDiscountAmount(item);
 const getRemainingAmount = (item) => toNumber(item.total_fees) - toNumber(item.total_paid);
+const getSemesterOrder = (value) => {
+  const normalized = String(value || "").toLowerCase();
+  const match = normalized.match(/(\d+)/);
+  return match ? Number(match[1]) : 0;
+};
+const getBatchYearSpan = (value) => {
+  const years = String(value || "").match(/\d{4}/g);
+  return years && years.length >= 2 ? Number(years[1]) - Number(years[0]) : 0;
+};
+const getVisibleStartSemesterOrder = (item) => {
+  const feeStartOrder = getSemesterOrder(item?.fee_applied_from_name);
+  const batchStartOrder = getBatchYearSpan(item?.batch_name) === 3 ? 3 : 0;
+  return Math.max(feeStartOrder, batchStartOrder, 0);
+};
+const filterReportItemByVisibleSemester = (item) => {
+  const startOrder = getVisibleStartSemesterOrder(item);
+  if (!startOrder || !item?.semester_wise_details) return item;
+
+  const filteredSemesterWiseDetails = Object.fromEntries(
+    Object.entries(item.semester_wise_details).filter(([semesterName]) => {
+      const semesterOrder = getSemesterOrder(semesterName);
+      return !semesterOrder || semesterOrder >= startOrder;
+    })
+  );
+
+  let totalFees = 0;
+  let totalPaid = 0;
+  let discountFees = 0;
+
+  Object.values(filteredSemesterWiseDetails).forEach((elements) => {
+    Object.entries(elements || {}).forEach(([elementName, detail]) => {
+      const amount = toNumber(detail?.amount);
+      const paid = toNumber(detail?.paid);
+      if (elementName === "DISCOUNT") {
+        discountFees += paid;
+      } else {
+        totalFees += amount;
+        totalPaid += paid;
+      }
+    });
+  });
+
+  return {
+    ...item,
+    semester_wise_details: filteredSemesterWiseDetails,
+    total_fees: totalFees,
+    total_paid: totalPaid,
+    discount_fees: discountFees,
+    remaining_fees: totalFees - totalPaid - discountFees,
+  };
+};
 
 function AdmFeeReport() {
   const navigate = useNavigate();
@@ -238,7 +289,8 @@ function AdmFeeReport() {
       const result = await response.json();
 
       if (response.ok && result.message === "success!!") {
-        setReportData(result.data);
+        const filteredData = (result.data || []).map(filterReportItemByVisibleSemester);
+        setReportData(filteredData);
         setShowTable(true);
         setCurrentPage(0);
       } else {

@@ -359,64 +359,47 @@ const handleView = async (incomeId) => {
 
     const doc = new jsPDF();
 
-    // Set logo path
-    const logoPath = "/SynergyLogo.gif"; // Relative path inside public folder
-
-    // Add college name
     doc.setFontSize(16);
-    doc.text("Synergy College", 80, 20); // Adjust position as needed
+    doc.text("Other Income Report", 105, 18, { align: "center" });
 
-    // Add logo
-    const img = new Image();
-    img.src = logoPath;
-    img.onload = () => {
-      doc.addImage(img, "PNG", 15, 10, 30, 20); // X, Y, Width, Height
+    const headers = [
+      [
+        "Income ID",
+        "Income No",
+        "Date",
+        "Party Name",
+        "Payment Method",
+        "Bank Name",
+        "Account No",
+        "Amount",
+      ],
+    ];
 
-      // Define table headers
-      const headers = [
-        [
-          "Income ID",
-          "Income No",
-          "Date",
-          "Party Name",
-          "Payment Method",
-          "Bank Name",
-          "Account No",
-          "Amount",
-        ],
-      ];
+    const data = searchResults.map((income) => [
+      income.income_id,
+      income.income_no,
+      income.income_date,
+      income.partyName,
+      income.payment_method,
+      income.bankName || "N/A",
+      income.account_name ? income.account_name : "N/A",
+      income.amount.toFixed(2),
+    ]);
 
-      // Map searchResults into a format suitable for PDF
-      const data = searchResults.map((income) => [
-        income.income_id,
-        income.income_no,
-        income.income_date,
-        income.partyName,
-        income.payment_method,
-        income.bankName || "N/A",
-        income.account_name ? income.account_name : "N/A",
-        income.amount.toFixed(2),
-      ]);
+    const totalAmount = searchResults
+      .reduce((sum, income) => sum + income.amount, 0)
+      .toFixed(2);
 
-      // Calculate total amount
-      const totalAmount = searchResults
-        .reduce((sum, income) => sum + income.amount, 0)
-        .toFixed(2);
+    data.push(["", "", "", "", "", "", "Total:", totalAmount]);
 
-      // Add total row
-      data.push(["", "", "", "", "", "", "Total:", totalAmount]);
+    doc.autoTable({
+      startY: 28,
+      head: headers,
+      body: data,
+      theme: "grid",
+    });
 
-      // Generate table
-      doc.autoTable({
-        startY: 40, // Adjust based on logo position
-        head: headers,
-        body: data,
-        theme: "grid",
-      });
-
-      // Save the PDF
-      doc.save("Income_Data.pdf");
-    };
+    doc.save("Income_Data.pdf");
   };
 
   const handleClear = () => {

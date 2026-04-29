@@ -7491,7 +7491,11 @@ class StudentCourseListAPIView(ListAPIView):
                     # Step 2: Retrieve related data
                     feeDetails = StudentCourse.objects.filter(student_id=studentId, is_active=True)
                     transportDetails = StudentCourse.objects.filter(student_id=studentId, is_active=True)
-                    addressDetails = Address.objects.filter(reference_id=studentId)
+                    addressDetails = Address.objects.filter(
+                        reference_id=studentId,
+                        usertype__iexact='STUDENT',
+                        is_active=True
+                    )
                     sibilingsDetails = SiblingDetail.objects.filter(student_id=studentId)
                     studentEmergencyContacts = StudentEmergencyContact.objects.filter(student_id=studentId)
                     authorizedPickups = AuthorisedPickup.objects.filter(student_id=studentId)
@@ -7545,6 +7549,13 @@ class StudentCourseListAPIView(ListAPIView):
                     courseInstance = stu.course
                     sectionInstance = stu.section
 
+                    serialized_addresses = AddressDetailsSerializer(addressDetails, many=True).data
+                    filtered_addresses = [
+                        addr for addr in serialized_addresses
+                        if str(addr.get('usertype', '')).strip().lower() == 'student'
+                        and bool(addr.get('is_active'))
+                    ]
+
                     # Step 3: Serialize the data using respective serializers
                     student_data = {
                         # **StudentBasicDetailSerializer(RegistrationInstance).data,
@@ -7564,7 +7575,7 @@ class StudentCourseListAPIView(ListAPIView):
                                 RegistrationInstance.profile_pic.url) if RegistrationInstance.profile_pic else None
                         },
                         'feeDetails': feeDetailslist,  # StudentFeeAppliedDetails(feeDetails).data,
-                        'addressDetails': AddressDetailsSerializer(addressDetails, many=True).data,
+                        'addressDetails': filtered_addresses,
                         'sibilingsDetails': sibilinglist,
                         # StudentSibilingsDetailsSerializer(sibilingsDetails, many=True).data,
                         'emegencyContact': StudentEmergencyContactDetailsSerializer(studentEmergencyContacts,
@@ -10646,86 +10657,103 @@ class StudentPromotionCreateAPI(CreateAPIView):
 
 
 class UtilityGroupMixin:
+    def _semester_order_value(self, semester_instance):
+        if not semester_instance:
+            return 0
+        return semester_instance.display_order or semester_instance.id or 0
+
+    def _resolve_fee_applied_from_semester(self, fee_applied_from, student_instance):
+        if isinstance(fee_applied_from, Semester):
+            return fee_applied_from
+
+        if fee_applied_from:
+            try:
+                return Semester.objects.get(id=fee_applied_from, is_active=True)
+            except Semester.DoesNotExist:
+                pass
+
+        semester_queryset = Semester.objects.filter(
+            organization=student_instance.organization,
+            branch=student_instance.branch,
+            batch=student_instance.batch,
+            course=student_instance.course,
+            department=student_instance.department,
+            is_active=True,
+        ).order_by('display_order', 'id')
+
+        batch_years = re.findall(r'(\d{4})', str(getattr(student_instance.batch, 'batch_code', '') or ''))
+        is_three_year_batch = len(batch_years) >= 2 and int(batch_years[1]) - int(batch_years[0]) == 3
+
+        if (student_instance.admission_type or '').strip().upper() == 'LATERAL' or is_three_year_batch:
+            lateral_semester = semester_queryset.filter(display_order__gte=3).first()
+            if lateral_semester:
+                return lateral_semester
+
+        fallback_semester = semester_queryset.first()
+        if not fallback_semester:
+            raise Semester.DoesNotExist("semester record not found !!!")
+        return fallback_semester
+
     def process_fee_group(self, fee_applied_from, fee_group, student_instance):
         try:
             # Start a new atomic transaction for the fee group processing
             with transaction.atomic():
-                # print(fee_group, type(fee_group))
-                # print(student_instance, type(student_instance))
-                # Process fee group logic here
                 FeeStructuremasterInstance = FeeStructureMaster.objects.get(id=fee_group)
 
-                # print(FeeStructuremasterInstance,type(FeeStructuremasterInstance))
-
-                # print(feeStructureMasterInstance)
-                # fee_group_id = feeStructureMasterInstance.id
-                # print(fee_group_id,type(fee_group_id))
-
-                # Get FeeStructureDetail record
                 fee_structure_details_instance = FeeStructureDetail.objects.filter(
-                    fee_structure_master=FeeStructuremasterInstance)
-
-                # print(fee_structure_details_instance)
+                    fee_structure_master=FeeStructuremasterInstance
+                )
 
                 if not fee_structure_details_instance:
-                    # raise ValueError("No fee structure details found for the provided fee group.")
                     return Response({'message': 'No fee structure details found for the provided fee group'})
 
-                # print(fee_structure_details_instance)
+                fee_applied_from_instance = self._resolve_fee_applied_from_semester(
+                    fee_applied_from,
+                    student_instance,
+                )
+                fee_applied_from_order = self._semester_order_value(fee_applied_from_instance)
+                studentCourseInstance = StudentCourse.objects.get(student=student_instance.id, is_active=True)
 
-                # Process fee structure details
                 for details in fee_structure_details_instance:
-                    element_frequency_id = details.element_frequency.id
-                    # if element_frequency_id == 1:
-
-                    # print(element_frequency_id)
-
-                    # Get frequency Instance
-                    # Only filter by ID - the extra filters cause failures when there are FK mismatches
-                    frequency_instance = FeeFrequency.objects.get(id=element_frequency_id)
-                    # print(frequency_instance)
-
-                    # Get frequency period
+                    frequency_instance = FeeFrequency.objects.get(id=details.element_frequency.id)
                     frequency_period = frequency_instance.frequency_period
 
                     if frequency_period > 0 and frequency_period < 12:
-                        # for item in range(1, frequency_period+1):
-                        for item in range(1, frequency_period + 1):
+                        semester_ids = [
+                            details.semester_1,
+                            details.semester_2,
+                            details.semester_3,
+                            details.semester_4,
+                            details.semester_5,
+                            details.semester_6,
+                            details.semester_7,
+                            details.semester_8,
+                        ]
+                        selected_semester_ids = [semester_id for semester_id in semester_ids[:frequency_period] if semester_id]
 
-                            if item == 1:
-                                semester = details.semester_1
+                        if len(selected_semester_ids) != frequency_period:
+                            raise ValueError(
+                                f"Fee structure detail {details.id} is missing one of the semester slots for period {frequency_period}"
+                            )
 
-                            elif item == 2:
-                                semester = details.semester_2
+                        semester_instances = Semester.objects.filter(
+                            id__in=selected_semester_ids,
+                            is_active=True,
+                        ).order_by('display_order', 'id')
+                        semester_map = {semester.id: semester for semester in semester_instances}
 
-                            elif item == 3:
-                                semester = details.semester_3
+                        for semester_id in selected_semester_ids:
+                            semester_instance = semester_map.get(semester_id)
+                            if not semester_instance:
+                                return Response(
+                                    {"message": f"semester record not found with id {semester_id} !!!"},
+                                    status=status.HTTP_204_NO_CONTENT,
+                                )
 
-                            elif item == 4:
-                                semester = details.semester_4
+                            if self._semester_order_value(semester_instance) < fee_applied_from_order:
+                                continue
 
-                            elif item == 5:
-                                semester = details.semester_5
-
-                            elif item == 6:
-                                semester = details.semester_6
-
-                            elif item == 7:
-                                semester = details.semester_7
-
-                            elif item == 8:
-                                semester = details.semester_8
-
-                            try:
-                                fee_applied_from_instance = Semester.objects.get(id=details.semester_1, is_active=True)
-                                semester_instance = Semester.objects.get(id=semester, is_active=True)
-                            except Semester.DoesNotExist:
-                                return Response({"message": "semester record not found !!!"},
-                                                status=status.HTTP_204_NO_CONTENT)
-                            studentCourseInstance = StudentCourse.objects.get(student=student_instance.id,
-                                                                              is_active=True)
-                            # Try creating the student fee details record
-                            student_fee_details_instance = StudentFeeDetail.objects.create(
+                            StudentFeeDetail.objects.create(
                                 student=student_instance,
                                 student_course=studentCourseInstance,
                                 fee_group=FeeStructuremasterInstance,
@@ -10747,31 +10775,26 @@ class UtilityGroupMixin:
                             )
 
                     else:
-                        semester_instance = Semester.objects.filter(
+                        semester_instances = Semester.objects.filter(
                             organization=student_instance.organization,
                             branch=student_instance.branch,
                             batch=student_instance.batch,
                             course=student_instance.course,
                             department=student_instance.department,
+                            is_active=True,
+                        ).order_by('display_order', 'id')
 
-                        )
-                        # period_times = len(period_instance)
+                        for semester in semester_instances:
+                            if self._semester_order_value(semester) < fee_applied_from_order:
+                                continue
 
-                        studentCourseInstance = StudentCourse.objects.get(student=student_instance, is_active=True)
-
-                        # for item in range(period_times):
-                        # period_month= period_instance.period_name
-                        for semester in semester_instance:
-                            # period_month = period.id
-
-                            # Try creating the student fee details record
-                            student_fee_details_instance = StudentFeeDetail.objects.create(
+                            StudentFeeDetail.objects.create(
                                 student=student_instance,
                                 student_course=studentCourseInstance,
                                 fee_group=FeeStructuremasterInstance,
                                 fee_structure_details=details,
                                 element_name=details.element_type.element_name,
-                                fee_applied_from=semester_instance[0],
+                                fee_applied_from=fee_applied_from_instance,
                                 semester=semester,
                                 paid='N',
                                 academic_year=student_instance.academic_year,
@@ -10893,17 +10916,43 @@ class UtilityGroupMixin:
     def addressDetailsProcess(self, addressDetail, student_instance):
 
         try:
+            def resolve_location_value(raw_value, model, name_field):
+                if raw_value is None:
+                    return ""
+
+                value = str(raw_value).strip()
+                if value == "":
+                    return ""
+
+                numeric_id = None
+                if value.isdigit():
+                    numeric_id = int(value)
+                else:
+                    try:
+                        as_float = float(value)
+                        if as_float.is_integer():
+                            numeric_id = int(as_float)
+                    except (TypeError, ValueError):
+                        numeric_id = None
+
+                if numeric_id is not None:
+                    obj = model.objects.filter(id=numeric_id).values(name_field).first()
+                    if obj and obj.get(name_field):
+                        return obj[name_field]
+
+                return value
+
             present_address = addressDetail.get('present_address')
             present_pincode = addressDetail.get('present_pincode')
-            present_city = addressDetail.get('present_city')
-            present_state = addressDetail.get('present_state')
-            present_country = addressDetail.get('present_country')
+            present_city = resolve_location_value(addressDetail.get('present_city'), City, 'city_name')
+            present_state = resolve_location_value(addressDetail.get('present_state'), State, 'state_name')
+            present_country = resolve_location_value(addressDetail.get('present_country'), Country, 'country_name')
             present_phone_number = addressDetail.get('present_phone_number')
             permanent_address = addressDetail.get('permanent_address')
             permanent_pincode = addressDetail.get('permanent_pincode')
-            permanent_city = addressDetail.get('permanent_city')
-            permanent_state = addressDetail.get('permanent_state')
-            permanent_country = addressDetail.get('permanent_country')
+            permanent_city = resolve_location_value(addressDetail.get('permanent_city'), City, 'city_name')
+            permanent_state = resolve_location_value(addressDetail.get('permanent_state'), State, 'state_name')
+            permanent_country = resolve_location_value(addressDetail.get('permanent_country'), Country, 'country_name')
             permanent_phone_number = addressDetail.get('permanent_phone_number')
             # created_by = student_instance.get('created_by')
 
@@ -12003,7 +12052,11 @@ class StudentRegistrationListAPIView(ListAPIView):
                 if student is not None:
                     # Step 2: Retrieve related data
                     feeDetails = StudentCourse.objects.filter(student=student, is_active=True).select_related('fee_group', 'fee_applied_from')
-                    addressDetails = Address.objects.filter(reference_id=student.id)
+                    addressDetails = Address.objects.filter(
+                        reference_id=student.id,
+                        usertype__iexact='STUDENT',
+                        is_active=True
+                    )
                     sibilingsDetails = SiblingDetail.objects.filter(student=student)
                     studentEmergencyContacts = StudentEmergencyContact.objects.filter(student=student)
                     authorizedPickups = AuthorisedPickup.objects.filter(student=student)
@@ -12041,6 +12094,13 @@ class StudentRegistrationListAPIView(ListAPIView):
                                 'section_name': studentInstance.section.section_name
                             }
                             sibilinglist.append(sibilingsdata)
+                    serialized_addresses = AddressDetailsSerializer(addressDetails, many=True).data
+                    filtered_addresses = [
+                        addr for addr in serialized_addresses
+                        if str(addr.get('usertype', '')).strip().lower() == 'student'
+                        and bool(addr.get('is_active'))
+                    ]
+
                     # Step 3: Serialize the data using respective serializers
                     student_data = {
                         'studentBasicDetails': {
@@ -12064,7 +12124,7 @@ class StudentRegistrationListAPIView(ListAPIView):
                                 student.profile_pic.url) if student.profile_pic else None
                         },
                         'feeDetails': feeDetailslist,  # StudentFeeAppliedDetails(feeDetails).data,
-                        'addressDetails': AddressDetailsSerializer(addressDetails, many=True).data,
+                        'addressDetails': filtered_addresses,
                         'sibilingsDetails': sibilinglist,
                         # StudentSibilingsDetailsSerializer(sibilingsDetails, many=True).data,
                         'emegencyContact': StudentEmergencyContactDetailsSerializer(studentEmergencyContacts,
@@ -13212,7 +13272,11 @@ class StudentRegistrationBasedOnIdAPIView(RetrieveAPIView):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             # Fetch other related details
-            addressDetails = Address.objects.filter(reference_id=student_instance.id, is_active=True)
+            addressDetails = Address.objects.filter(
+                reference_id=student_instance.id,
+                usertype__iexact='STUDENT',
+                is_active=True
+            )
             sibilingsDetails = SiblingDetail.objects.filter(student=student_instance, is_active=True)
             emegencyContact = StudentEmergencyContact.objects.filter(student=student_instance, is_active=True)
             authorizedpickup = AuthorisedPickup.objects.filter(student=student_instance, is_active=True)
@@ -15734,7 +15798,7 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
             if studentCourseId:
                 try:
                     # StudentInstance = StudentRegistration.objects.get(id=studentId)
-                    StudentCourseInstance = StudentCourse.objects.get(id=studentCourseId)
+                    StudentCourseInstance = StudentCourse.objects.get(id=studentCourseId, is_active=True)
                 # except StudentRegistration.DoesNotExist:
                 except StudentCourse.DoesNotExist:
                     return Response({"message": f"{studentCourseId} not matched any student !!"},
@@ -15757,6 +15821,25 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
                                     status=status.HTTP_200_OK)
 
             if StudentCourseInstance:
+
+                def get_semester_order(semester_obj=None, semester_name=None):
+                    if semester_obj is not None:
+                        display_order = getattr(semester_obj, 'display_order', None)
+                        if display_order:
+                            return display_order
+                        semester_name = getattr(semester_obj, 'semester_description', None) or getattr(semester_obj, 'semester_code', None)
+
+                    normalized_name = str(semester_name or '').strip().lower()
+                    match = re.search(r'(\d+)', normalized_name)
+                    return int(match.group(1)) if match else 0
+
+                def get_batch_year_span(batch_code):
+                    years = re.findall(r'(\d{4})', str(batch_code or ''))
+                    return int(years[1]) - int(years[0]) if len(years) >= 2 else 0
+
+                start_semester_order = get_semester_order(semester_obj=StudentCourseInstance.fee_applied_from)
+                if get_batch_year_span(StudentCourseInstance.batch.batch_code) == 3 and start_semester_order < 3:
+                    start_semester_order = 3
 
                 courseInstance = Course.objects.get(id=StudentCourseInstance.course.id, is_active=True)
                 sectionInstance = Section.objects.get(id=StudentCourseInstance.section.id, is_active=True)
@@ -15791,8 +15874,14 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
                     # print("going")
                     # Get All Data For Specific Student ID On Student Fee Details Table
 
-                    StudentFeeDetailData = StudentFeeDetail.objects.filter(student=StudentCourseInstance.student,
-                                                                           is_active=True, ).order_by('semester__display_order', 'id')
+                    start_order = get_semester_order(semester_obj=StudentCourseInstance.fee_applied_from)
+
+                    StudentFeeDetailData = StudentFeeDetail.objects.filter(
+                        student=StudentCourseInstance.student,
+                        student_course=StudentCourseInstance,
+                        is_active=True,
+                    ).order_by('semester__display_order', 'id')
+
                     feestructuredetailsdata = []
                     element_discount_amount = ''
                     for item in StudentFeeDetailData:
@@ -15809,6 +15898,11 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
                             semesterInstance = Semester.objects.get(id=item.semester.id)
                         except ObjectDoesNotExist:
                             semesterInstance = None
+
+                        if start_semester_order and semesterInstance:
+                            current_semester_order = get_semester_order(semester_obj=semesterInstance)
+                            if current_semester_order and current_semester_order < start_semester_order:
+                                continue
                         # registrationInstance = StudentRegistration.objects.get(id=item.student_id.id)
 
                         if item.fee_group:
@@ -15858,10 +15952,14 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
                         'student_name': student_name,
                         'barcode': StudentCourseInstance.student.barcode,
                         'college_admission_no': StudentCourseInstance.student.college_admission_no,
+                        'batch': StudentCourseInstance.batch.batch_code,
+                        'academic_year': StudentCourseInstance.academic_year.academic_year_code,
                         'course_name': courseInstance.course_name,
                         'section_name': sectionInstance.section_name,
                         'enrollment_no': StudentCourseInstance.enrollment_no,
                         'house': StudentCourseInstance.house.house_name if StudentCourseInstance.house else '',
+                        'fee_applied_fromId': StudentCourseInstance.fee_applied_from.id if StudentCourseInstance.fee_applied_from else None,
+                        'fee_applied_from': StudentCourseInstance.fee_applied_from.semester_description if StudentCourseInstance.fee_applied_from else None,
                         'feegroupId': FeeStructureMasterInstance.id if FeeStructureMasterInstance else None,
                         # 'feegroup': FeeStructureMasterInstance.fee_structure_code if FeeStructureMasterInstance else None,
                         'feegroup': FeeStructureMasterInstance.fee_structure_description if FeeStructureMasterInstance else '',
@@ -15874,10 +15972,14 @@ class StudentSearchBasedOnIdBarcodeCollegeAdmissionNo(ListAPIView):
                         'student_name': student_name,
                         'barcode': StudentCourseInstance.student.barcode,
                         'college_admission_no': StudentCourseInstance.student.college_admission_no,
+                        'batch': StudentCourseInstance.batch.batch_code,
+                        'academic_year': StudentCourseInstance.academic_year.academic_year_code,
                         'course_name': courseInstance.course_name,
                         'section_name': sectionInstance.section_name,
                         'enrollment_no': StudentCourseInstance.enrollment_no,
                         'house': StudentCourseInstance.house,
+                        'fee_applied_fromId': StudentCourseInstance.fee_applied_from.id if StudentCourseInstance.fee_applied_from else None,
+                        'fee_applied_from': StudentCourseInstance.fee_applied_from.semester_description if StudentCourseInstance.fee_applied_from else None,
                         'feegroupId': FeeStructureMasterInstance.id if FeeStructureMasterInstance else None,
                         # 'feegroup': FeeStructureMasterInstance.fee_structure_code if FeeStructureMasterInstance else None,
                         # 'fee_structure_desc': FeeStructureMasterInstance.fee_structure_desc if FeeStructureMasterInstance else '',
@@ -22688,6 +22790,21 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
             if filterdata:
                 responsedata = []
 
+                def get_semester_order(semester_obj=None, semester_name=None):
+                    if semester_obj is not None:
+                        display_order = getattr(semester_obj, 'display_order', None)
+                        if display_order:
+                            return display_order
+                        semester_name = getattr(semester_obj, 'semester_description', None) or getattr(semester_obj, 'semester_code', None)
+
+                    normalized_name = str(semester_name or '').strip().lower()
+                    match = re.search(r'(\d+)', normalized_name)
+                    return int(match.group(1)) if match else 0
+
+                def get_batch_year_span(batch_code):
+                    years = re.findall(r'(\d{4})', str(batch_code or ''))
+                    return int(years[1]) - int(years[0]) if len(years) >= 2 else 0
+
                 for item in filterdata:
 
                     try:
@@ -22698,10 +22815,14 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                             {'message': f"No student found in registration table for ID {item.student.id}"},
                             status=status.HTTP_404_NOT_FOUND
                         )
-                    # Get fee details for the student
+                    # Get fee details for the current student-course only
+                    start_semester_order = get_semester_order(semester_obj=item.fee_applied_from)
+                    if get_batch_year_span(item.batch.batch_code) == 3 and start_semester_order < 3:
+                        start_semester_order = 3
+
                     feesrecord = StudentFeeDetail.objects.filter(
                         student=item.student,
-                        # academic_year=academic_year_id,
+                        student_course=item,
                         is_active=True
                     )
 
@@ -22714,7 +22835,7 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                                                                                                                 flat=True).order_by(
                                 'id')
                             semester_ids = semesterInstanceIds.filter(id__range=[from_semester, to_semester])
-                            feesrecord.filter(fee_applied_from__in=semester_ids)
+                            feesrecord = feesrecord.filter(fee_applied_from__in=semester_ids)
 
                         if from_semester and not to_semester:
                             semesterInstanceIds = Semester.objects.filter(organization=organization_id,
@@ -22725,7 +22846,7 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                                 'id')
                             semester_ids = semesterInstanceIds.filter(
                                 id__range=[from_semester, semesterInstanceIds[len(semesterInstanceIds) - 1]])
-                            feesrecord.filter(fee_applied_from__in=semester_ids)
+                            feesrecord = feesrecord.filter(fee_applied_from__in=semester_ids)
 
                         if not from_semester and to_semester:
                             semesterInstanceIds = Semester.objects.filter(organization=organization_id,
@@ -22735,7 +22856,7 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                                                                                                                 flat=True).order_by(
                                 'id')
                             semester_ids = semesterInstanceIds.filter(id__range=[semesterInstanceIds[0], to_semester])
-                            feesrecord.filter(fee_applied_from__in=semester_ids)
+                            feesrecord = feesrecord.filter(fee_applied_from__in=semester_ids)
                         # Filter fees based on periods
                         # if from_semester:
                         #     try:
@@ -22775,6 +22896,12 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
 
                         # Calculate fee amounts
                         for fee in feesrecord:
+                            fee_semester = fee.semester or fee.fee_applied_from
+                            if start_semester_order and fee_semester:
+                                current_semester_order = get_semester_order(semester_obj=fee_semester)
+                                if current_semester_order and current_semester_order < start_semester_order:
+                                    continue
+
                             if fee.element_name == 'DISCOUNT':
                                 discount_fees += fee.paid_amount
                             else:
@@ -22865,6 +22992,8 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                         'academic_year_code': item.academic_year.academic_year_code,
                         'semester_id': item.semester.id,
                         'semester_name': item.semester.semester_description,
+                        'fee_applied_from_id': item.fee_applied_from.id if item.fee_applied_from else None,
+                        'fee_applied_from_name': item.fee_applied_from.semester_description if item.fee_applied_from else None,
                         'section_id': item.section.id,
                         'section_name': item.section.section_name,
 
@@ -23279,11 +23408,34 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
             except ObjectDoesNotExist:
                 return Response({'message': 'Student course record Not Found!'}, status=status.HTTP_404_NOT_FOUND)
 
+            def get_semester_order(semester_obj=None, semester_name=None):
+                if semester_obj is not None:
+                    display_order = getattr(semester_obj, 'display_order', None)
+                    if display_order:
+                        return display_order
+                    semester_name = getattr(semester_obj, 'semester_description', None) or getattr(semester_obj, 'semester_code', None)
+
+                normalized_name = str(semester_name or '').strip().lower()
+                match = re.search(r'(\d+)', normalized_name)
+                return int(match.group(1)) if match else 0
+
+            def get_batch_year_span(batch_code):
+                years = re.findall(r'(\d{4})', str(batch_code or ''))
+                return int(years[1]) - int(years[0]) if len(years) >= 2 else 0
+
+            start_semester_order = get_semester_order(semester_obj=studentCourseInstance.fee_applied_from)
+            if get_batch_year_span(studentCourseInstance.batch.batch_code if studentCourseInstance.batch else '') == 3 and start_semester_order < 3:
+                start_semester_order = 3
+
             studentfeedetailsrecord = None
             try:
-                studentfeedetailsrecord = StudentFeeDetail.objects.filter(organization=organization_id,
-                                                                          branch=branch_id, student=student_id,
-                                                                          is_active=True)
+                studentfeedetailsrecord = StudentFeeDetail.objects.filter(
+                    organization=organization_id,
+                    branch=branch_id,
+                    student=student_id,
+                    student_course=studentCourseInstance,
+                    is_active=True,
+                ).order_by('semester__display_order', 'fee_applied_from__display_order', 'id')
             except ObjectDoesNotExist:
                 studentfeedetailsrecord = None
 
@@ -23324,6 +23476,13 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                         semester_name = "-"
                     if semester_display_order is None:
                         semester_display_order = 999999
+
+                    if (
+                        start_semester_order
+                        and semester_display_order != 999999
+                        and semester_display_order < start_semester_order
+                    ):
+                        continue
 
                     data = {
                         'element_name': stdfees.element_name,
@@ -23367,8 +23526,12 @@ class GetStudentFeesDetailsPDFBasedOnStudentId(ListAPIView):
                 'session_code': studentCourseInstance.academic_year.academic_year_code,
                 'course_id': studentCourseInstance.course.id,
                 'course_name': studentCourseInstance.course.course_name,
+                'batch_name': studentCourseInstance.batch.batch_code if studentCourseInstance.batch else "",
                 'section_id': studentCourseInstance.section.id,
                 'section_name': studentCourseInstance.section.section_name,
+                'fee_applied_from_id': studentCourseInstance.fee_applied_from.id if studentCourseInstance.fee_applied_from else None,
+                'fee_applied_from_name': studentCourseInstance.fee_applied_from.semester_description if studentCourseInstance.fee_applied_from else "",
+                'visible_start_semester_order': start_semester_order,
                 'fathername': studentCourseInstance.student.father_name,
                 'mothername': studentCourseInstance.student.mother_name,
                 'admission_no': studentCourseInstance.student.admission_no,
@@ -23809,14 +23972,15 @@ class GetStudentFeeBalanceReceiptListAPIView(ListAPIView):
                     address_instance = Address.objects.get(
                         reference_id=stdId, usertype="STUDENT", is_active=True
                     )
+                    address_data = AddressDetailsSerializer(address_instance).data
                     address_parts = filter(
                         None,
                         [
-                            address_instance.permanent_address,
-                            address_instance.permanent_pincode,
-                            address_instance.permanent_city,
-                            address_instance.permanent_state,
-                            address_instance.permanent_country,
+                            address_data.get('permanent_address'),
+                            address_data.get('permanent_pincode'),
+                            address_data.get('permanent_city'),
+                            address_data.get('permanent_state'),
+                            address_data.get('permanent_country'),
                         ],
                     )
                     full_address = " ".join(address_parts)
@@ -24030,14 +24194,15 @@ class GetStudentFeeDetailSemesterWiseListAPIView(ListAPIView):
                     address_instance = Address.objects.get(
                         reference_id=stdId, usertype="STUDENT", is_active=True
                     )
+                    address_data = AddressDetailsSerializer(address_instance).data
                     address_parts = filter(
                         None,
                         [
-                            address_instance.permanent_address,
-                            address_instance.permanent_pincode,
-                            address_instance.permanent_city,
-                            address_instance.permanent_state,
-                            address_instance.permanent_country,
+                            address_data.get('permanent_address'),
+                            address_data.get('permanent_pincode'),
+                            address_data.get('permanent_city'),
+                            address_data.get('permanent_state'),
+                            address_data.get('permanent_country'),
                         ],
                     )
                     full_address = " ".join(address_parts)
@@ -24354,14 +24519,15 @@ class GetStudentperiodwiseFeeListAPIView(ListAPIView):
                     address_instance = Address.objects.get(
                         reference_id=stdIds, usertype="STUDENT", is_active=True
                     )
+                    address_data = AddressDetailsSerializer(address_instance).data
                     address_parts = filter(
                         None,
                         [
-                            address_instance.permanent_address,
-                            address_instance.permanent_pincode,
-                            address_instance.permanent_city,
-                            address_instance.permanent_state,
-                            address_instance.permanent_country,
+                            address_data.get('permanent_address'),
+                            address_data.get('permanent_pincode'),
+                            address_data.get('permanent_city'),
+                            address_data.get('permanent_state'),
+                            address_data.get('permanent_country'),
                         ],
                     )
                     full_address = " ".join(address_parts)

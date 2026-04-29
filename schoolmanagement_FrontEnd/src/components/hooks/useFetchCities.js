@@ -82,12 +82,19 @@ const useFetchCities = (selectedCountryName, selectedStateName) => {
 
   const { states } = useFetchStates(selectedCountryName);
 
+  const isSameValue = (left, right) =>
+    String(left ?? "").trim().toLowerCase() ===
+    String(right ?? "").trim().toLowerCase();
+
   useEffect(() => {
     if (!selectedStateName || states.length === 0) return;
 
     // 🔥 Find state ID
     const matchedState = states.find(
-      (s) => s.state_name.toLowerCase() === selectedStateName.toLowerCase()
+      (s) =>
+        isSameValue(s.state_name, selectedStateName) ||
+        isSameValue(s.id, selectedStateName) ||
+        isSameValue(s.state_id, selectedStateName)
     );
 
     if (!matchedState) {
@@ -102,7 +109,13 @@ const useFetchCities = (selectedCountryName, selectedStateName) => {
       try {
         const apiURL = `${ApiUrl.apiurl}City/GetCityListBasedOnStateId/${stateId}`;
 
-        const response = await fetch(apiURL);
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(apiURL, {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+            "Content-Type": "application/json",
+          },
+        });
         const data = await response.json();
 
         if (

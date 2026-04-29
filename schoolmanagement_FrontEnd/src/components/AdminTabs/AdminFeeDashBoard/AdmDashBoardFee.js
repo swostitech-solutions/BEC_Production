@@ -1221,35 +1221,6 @@ const FeeDashboard = () => {
           else setFeeData([]);
         })
         .catch((error) => console.error("❌ Error fetching fee data:", error));
-
-      const url2 = `${ApiUrl.apiurl}FeesDashBoard/FeesCalculateBasedOnBatch/?organization_id=${org_id}&branch_id=${branch_id}&batch_id=${academic_year_id}`;
-      console.log("📊 Calling FeesCalculateBasedOnBatch API:", url2);
-
-      fetch(url2)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.data) {
-            const sessionData = data.data;
-            const totalCollectable =
-              sessionData.element_amount - sessionData.total_discount_amount;
-            const totalBalance =
-              totalCollectable - sessionData.total_paid_amount;
-
-            setSessionFeeDetails({
-              totalDues: sessionData.element_amount,
-              totalDiscount: sessionData.total_discount_amount,
-              totalCollectable: totalCollectable,
-              totalCollected: sessionData.total_paid_amount,
-              totalBalance: totalBalance,
-              batch: sessionData.batch,
-            });
-          } else {
-            setSessionFeeDetails({});
-          }
-        })
-        .catch((error) =>
-          console.error("Error fetching session fee details:", error)
-        );
     }
   }, [selectedMonthValue, selectedYearValue]);
 

@@ -2693,6 +2693,38 @@ const FeeCollection = () => {
     fetchAccountDetails();
   }, [selectedBankId]);
 
+  const getSemesterOrder = (semesterLabel) => {
+    const normalizedLabel = String(semesterLabel || "").toLowerCase();
+    const match = normalizedLabel.match(/(\d+)/);
+    return match ? Number(match[1]) : 0;
+  };
+
+  const getBatchYearSpan = (sessionLabel) => {
+    const years = String(sessionLabel || "").match(/\d{4}/g);
+    return years && years.length >= 2 ? Number(years[1]) - Number(years[0]) : 0;
+  };
+
+  const getVisibleStartSemesterOrder = (studentData) => {
+    const feeStartOrder = getSemesterOrder(studentData?.fee_applied_from);
+    const sessionLabel = studentData?.batch || selectedSession?.label || "";
+    const batchStartOrder = getBatchYearSpan(sessionLabel) === 3 ? 3 : 0;
+    return Math.max(feeStartOrder, batchStartOrder, 0);
+  };
+
+  const filterVisibleFeeDetails = (details, studentData) => {
+    const safeDetails = Array.isArray(details) ? details : [];
+    const startSemesterOrder = getVisibleStartSemesterOrder(studentData);
+
+    if (!startSemesterOrder) {
+      return safeDetails;
+    }
+
+    return safeDetails.filter((item) => {
+      const semesterOrder = getSemesterOrder(item?.semester);
+      return !semesterOrder || semesterOrder >= startSemesterOrder;
+    });
+  };
+
   const fetchStudentData = async ({ id, barcode, admissionNo } = {}) => {
     // Validate that at least one identifier is provided
     if (!id && !barcode && !admissionNo) {
@@ -2719,7 +2751,10 @@ const FeeCollection = () => {
 
       if (data.message === "success!!") {
         const studentData = data.data;
-        const feeDetails = studentData.feedetails || [];
+        const feeDetails = filterVisibleFeeDetails(
+          studentData.feedetails || [],
+          studentData
+        );
 
         // Aggregating period-wise totals
         const periodMap = {};
