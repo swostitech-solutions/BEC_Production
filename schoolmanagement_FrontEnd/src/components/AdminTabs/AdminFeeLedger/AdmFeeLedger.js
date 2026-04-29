@@ -861,6 +861,40 @@ const AdmAttendanceEntry = () => {
     fetchPeriods();
   }, [selectedSession, selectedCourse, selectedDepartment]);
 
+  const normalizeFeeSummary = (item) => {
+    const totalFees = Number(item?.total_fees) || 0;
+    const rawPaid = Number(item?.total_paid) || 0;
+    const discount = Number(item?.discount_fees) || 0;
+    const rawBalance = Number(item?.remaining_fees) || 0;
+    const netFee = Math.max(totalFees - discount, 0);
+
+    let actualPaid = rawPaid;
+    let balance = rawBalance;
+    const excessAmount = rawPaid + rawBalance - netFee;
+
+    if (excessAmount > 0) {
+      const paidReduction = Math.min(discount, excessAmount, actualPaid);
+      actualPaid -= paidReduction;
+
+      const remainingExcess = excessAmount - paidReduction;
+      const balanceReduction = Math.min(discount, remainingExcess, balance);
+      balance -= balanceReduction;
+    }
+
+    return {
+      actualPaid: Math.max(actualPaid, 0),
+      balance: Math.max(balance, 0),
+    };
+  };
+
+  const calculateActualPaidFee = (item) => {
+    return normalizeFeeSummary(item).actualPaid;
+  };
+
+  const calculateAdjustedBalance = (item) => {
+    return normalizeFeeSummary(item).balance;
+  };
+
   // Export to Excel function
   const exportToExcel = () => {
     if (tableData && tableData.length > 0) {
@@ -872,9 +906,9 @@ const AdmAttendanceEntry = () => {
         "Father Name": item.fatherName || "",
         "Mother Name": item.motherName || "",
         "Total Fees": item.total_fees || 0,
-        "Fees Paid": item.total_paid || 0,
+        "Fees Paid": calculateActualPaidFee(item),
         "Discount": item.discount_fees || 0,
-        "Balance": item.remaining_fees || 0,
+        "Balance": calculateAdjustedBalance(item),
       }));
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
@@ -1084,9 +1118,9 @@ const AdmAttendanceEntry = () => {
       "Father Name": item.fatherName || "",
       "Mother Name": item.motherName || "",
       "Total Fees": item.total_fees || 0,
-      "Fees Paid": item.total_paid || 0,
+      "Fees Paid": calculateActualPaidFee(item),
       Discount: item.discount_fees || 0,
-      Balance: item.remaining_fees || 0,
+      Balance: calculateAdjustedBalance(item),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
@@ -1630,9 +1664,9 @@ const AdmAttendanceEntry = () => {
                               <td>{item.fatherName}</td>
                               <td>{item.motherName}</td>
                               <td>{item.total_fees}</td>
-                              <td>{item.total_paid}</td>
+                              <td>{calculateActualPaidFee(item)}</td>
                               <td>{item.discount_fees}</td>
-                              <td>{item.remaining_fees}</td>
+                              <td>{calculateAdjustedBalance(item)}</td>
                               <td>
                                 <button
                                   className="btn btn-link"
