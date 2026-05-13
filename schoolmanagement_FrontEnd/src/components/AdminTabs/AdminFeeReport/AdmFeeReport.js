@@ -23,12 +23,53 @@ const getVisibleStartSemesterOrder = (item) => {
   const batchStartOrder = getBatchYearSpan(item?.batch_name) === 3 ? 3 : 0;
   return Math.max(feeStartOrder, batchStartOrder, 0);
 };
+const getSortedSemesterNames = (item) => {
+  const semesterNames = new Set([
+    ...Object.keys(item?.semester_wise_details || {}),
+    ...Object.keys(item?.semester_wise_remarks || {}),
+  ]);
+
+  return Array.from(semesterNames).sort(
+    (a, b) => getSemesterOrder(a) - getSemesterOrder(b)
+  );
+};
+const mergeSemesterRemarks = (baseRemarks = {}, extraRemarks = {}) => {
+  const merged = { ...baseRemarks };
+
+  Object.entries(extraRemarks || {}).forEach(([semesterName, remarkValue]) => {
+    const cleanedRemark = String(remarkValue || "").trim();
+    if (!cleanedRemark) return;
+
+    if (!merged[semesterName]) {
+      merged[semesterName] = cleanedRemark;
+      return;
+    }
+
+    const existingRemarks = merged[semesterName]
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    if (!existingRemarks.includes(cleanedRemark)) {
+      merged[semesterName] = [...existingRemarks, cleanedRemark].join(", ");
+    }
+  });
+
+  return merged;
+};
 const filterReportItemByVisibleSemester = (item) => {
   const startOrder = getVisibleStartSemesterOrder(item);
-  if (!startOrder || !item?.semester_wise_details) return item;
+  if (!startOrder) return item;
 
   const filteredSemesterWiseDetails = Object.fromEntries(
-    Object.entries(item.semester_wise_details).filter(([semesterName]) => {
+    Object.entries(item.semester_wise_details || {}).filter(([semesterName]) => {
+      const semesterOrder = getSemesterOrder(semesterName);
+      return !semesterOrder || semesterOrder >= startOrder;
+    })
+  );
+
+  const filteredSemesterWiseRemarks = Object.fromEntries(
+    Object.entries(item.semester_wise_remarks || {}).filter(([semesterName]) => {
       const semesterOrder = getSemesterOrder(semesterName);
       return !semesterOrder || semesterOrder >= startOrder;
     })
@@ -54,6 +95,7 @@ const filterReportItemByVisibleSemester = (item) => {
   return {
     ...item,
     semester_wise_details: filteredSemesterWiseDetails,
+    semester_wise_remarks: filteredSemesterWiseRemarks,
     total_fees: totalFees,
     total_paid: totalPaid,
     discount_fees: discountFees,
@@ -278,18 +320,76 @@ function AdmFeeReport() {
     const apiUrl = `${ApiUrl.apiurl}FeeLedger/GetFeeLedgerBasedOnCondition/?${params.toString()}`;
 
     try {
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-        },
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+      };
+
+      const receiptParams = new URLSearchParams({
+        organization_id,
+        branch_id,
+        batch_id: selectedSession?.value || "",
+        course_id: selectedCourse?.value || "",
+        department_id: selectedDepartment?.value || "",
+        academic_year_id: selectedAcademicYear?.value || "",
+        semester_id: selectedSemester?.value || "",
+        section_id: selectedSection?.value || "",
+        view_receipt: "true",
+        view_cancel_receipt: "false",
       });
 
+      const [response, receiptResponse] = await Promise.all([
+        fetch(apiUrl, {
+          method: "GET",
+          headers,
+        }),
+        fetch(`${ApiUrl.apiurl}FeeReceipt/GetFilterFeeReceipts/?${receiptParams.toString()}`, {
+          method: "GET",
+          headers,
+        }),
+      ]);
+
       const result = await response.json();
+      const receiptResult = await receiptResponse.json().catch(() => ({ data: [] }));
 
       if (response.ok && result.message === "success!!") {
-        const filteredData = (result.data || []).map(filterReportItemByVisibleSemester);
+        const receiptRemarksByStudent = {};
+
+        if (receiptResponse.ok && Array.isArray(receiptResult.data)) {
+          receiptResult.data.forEach((receipt) => {
+            const studentKey = String(receipt.studentId || "");
+            const semesterName = receipt.semester_description || receipt.semester || "";
+            const cleanedRemark = String(receipt.remarks || "").trim();
+
+            if (!studentKey || !semesterName || !cleanedRemark) return;
+
+            if (!receiptRemarksByStudent[studentKey]) {
+              receiptRemarksByStudent[studentKey] = {};
+            }
+
+            const existingRemark = receiptRemarksByStudent[studentKey][semesterName];
+            if (!existingRemark) {
+              receiptRemarksByStudent[studentKey][semesterName] = cleanedRemark;
+            } else if (
+              !existingRemark
+                .split(",")
+                .map((item) => item.trim())
+                .includes(cleanedRemark)
+            ) {
+              receiptRemarksByStudent[studentKey][semesterName] = `${existingRemark}, ${cleanedRemark}`;
+            }
+          });
+        }
+
+        const filteredData = (result.data || []).map((item) =>
+          filterReportItemByVisibleSemester({
+            ...item,
+            semester_wise_remarks: mergeSemesterRemarks(
+              item.semester_wise_remarks || {},
+              receiptRemarksByStudent[String(item.studentId || "")] || {}
+            ),
+          })
+        );
         setReportData(filteredData);
         setShowTable(true);
         setCurrentPage(0);
@@ -365,10 +465,13 @@ function AdmFeeReport() {
           row[`${sem} - ${elem} (Balance)`] = detail ? detail.balance : 0;
         });
 
+        getSortedSemesterNames(item).forEach((sem) => {
+          row[`${sem} - Remarks`] = item.semester_wise_remarks?.[sem] || "-";
+        });
+
         row["Total Fees"] = item.total_fees || 0;
         row["Fees Paid"] = getActualPaidAmount(item);
         row["Discount"] = item.discount_fees || 0;
-        row["Remarks"] = item.remarks || "-";
         row["Balance"] = getRemainingAmount(item);
 
         return row;
@@ -537,16 +640,20 @@ function AdmFeeReport() {
                 <div className="fee-details-table mt-4 mx-2">
                   {reportData.length > 0 ? (
                     currentItems.map((item, index) => {
-                      const studentHeaders = [];
-                      if (item.semester_wise_details) {
-                        Object.keys(item.semester_wise_details).sort().forEach(sem => {
-                          Object.keys(item.semester_wise_details[sem]).sort().forEach(elem => {
-                            if (elem !== "DISCOUNT") {
-                              studentHeaders.push({ sem, elem });
-                            }
-                          });
-                        });
-                      }
+                      const semesterGroups = getSortedSemesterNames(item)
+                        .map((sem) => ({
+                          sem,
+                          elements: Object.keys(item.semester_wise_details?.[sem] || {})
+                            .filter((elem) => elem !== "DISCOUNT")
+                            .sort(),
+                          remark: item.semester_wise_remarks?.[sem] || "-",
+                        }))
+                        .filter(
+                          ({ elements, remark }) =>
+                            elements.length > 0 || (remark && remark !== "-")
+                        );
+
+                      const hasDisplayColumns = semesterGroups.length > 0;
 
                       return (
                         <div key={index} className="card mt-3 mb-4 shadow-sm" style={{ border: "2px solid #ddd" }}>
@@ -566,27 +673,43 @@ function AdmFeeReport() {
                             <table className="table table-bordered mb-0 align-middle text-center m-0">
                               <thead className="table-light">
                                 <tr>
-                                  {studentHeaders.map((header, idx) => (
-                                    <th key={`h-${idx}`} colSpan="3" className="border-bottom">
-                                      {header.sem} <br/> <small>{header.elem}</small>
+                                  {semesterGroups.map(({ sem, elements }) => (
+                                    <th
+                                      key={`h-${sem}`}
+                                      colSpan={(elements.length * 3) + 1}
+                                      className="border-bottom"
+                                    >
+                                      {sem}
                                     </th>
                                   ))}
-                                  {studentHeaders.length === 0 && (
+                                  {!hasDisplayColumns && (
                                     <th rowSpan="2" className="border-bottom align-middle py-3">Fee Breakdowns</th>
                                   )}
                                   <th rowSpan="2" className="align-middle" style={{ width: "100px" }}>Total Fees</th>
                                   <th rowSpan="2" className="align-middle" style={{ width: "100px" }}>Fees Paid</th>
                                   <th rowSpan="2" className="align-middle" style={{ width: "100px" }}>Discount</th>
-                                  <th rowSpan="2" className="align-middle" style={{ minWidth: "180px" }}>Remarks</th>
                                   <th rowSpan="2" className="align-middle" style={{ width: "100px" }}>Balance</th>
                                 </tr>
-                                {studentHeaders.length > 0 && (
+                                {hasDisplayColumns && (
                                   <tr>
-                                    {studentHeaders.map((_, idx) => (
-                                      <React.Fragment key={`sub-${idx}`}>
-                                        <th style={{ minWidth: "80px", color: "inherit", backgroundColor: "transparent" }}>Total</th>
-                                        <th style={{ minWidth: "80px", color: "inherit", backgroundColor: "transparent" }}>Paid</th>
-                                        <th style={{ minWidth: "80px", color: "inherit", backgroundColor: "transparent" }}>Bal</th>
+                                    {semesterGroups.map(({ sem, elements }) => (
+                                      <React.Fragment key={`sub-${sem}`}>
+                                        {elements.map((elem) => (
+                                          <React.Fragment key={`${sem}-${elem}`}>
+                                            <th style={{ minWidth: "80px", color: "inherit", backgroundColor: "transparent" }}>
+                                              {elem} Total
+                                            </th>
+                                            <th style={{ minWidth: "80px", color: "inherit", backgroundColor: "transparent" }}>
+                                              {elem} Paid
+                                            </th>
+                                            <th style={{ minWidth: "80px", color: "inherit", backgroundColor: "transparent" }}>
+                                              {elem} Bal
+                                            </th>
+                                          </React.Fragment>
+                                        ))}
+                                        <th style={{ minWidth: "110px", color: "inherit", backgroundColor: "transparent" }}>
+                                          Remarks
+                                        </th>
                                       </React.Fragment>
                                     ))}
                                   </tr>
@@ -594,23 +717,27 @@ function AdmFeeReport() {
                               </thead>
                               <tbody>
                                 <tr>
-                                  {studentHeaders.map((header, idx) => {
-                                    const detail = item.semester_wise_details?.[header.sem]?.[header.elem];
-                                    return (
-                                      <React.Fragment key={`data-${idx}`}>
-                                        <td>{detail ? detail.amount : "-"}</td>
-                                        <td>{detail ? detail.paid : "-"}</td>
-                                        <td>{detail ? detail.balance : "-"}</td>
-                                      </React.Fragment>
-                                    );
-                                  })}
-                                  {studentHeaders.length === 0 && (
+                                  {semesterGroups.map(({ sem, elements, remark }) => (
+                                    <React.Fragment key={`data-${sem}`}>
+                                      {elements.map((elem) => {
+                                        const detail = item.semester_wise_details?.[sem]?.[elem];
+                                        return (
+                                          <React.Fragment key={`${sem}-${elem}-data`}>
+                                            <td>{detail ? detail.amount : "-"}</td>
+                                            <td>{detail ? detail.paid : "-"}</td>
+                                            <td>{detail ? detail.balance : "-"}</td>
+                                          </React.Fragment>
+                                        );
+                                      })}
+                                      <td>{remark}</td>
+                                    </React.Fragment>
+                                  ))}
+                                  {!hasDisplayColumns && (
                                     <td className="text-muted border-end-0">No specific fees applied</td>
                                   )}
                                   <td className="fw-bold">{item.total_fees || 0}</td>
                                   <td className="fw-bold text-success">{getActualPaidAmount(item)}</td>
                                   <td className="fw-bold text-info">{item.discount_fees || 0}</td>
-                                  <td>{item.remarks || "-"}</td>
                                   <td className="fw-bold text-danger">{getRemainingAmount(item)}</td>
                                 </tr>
                               </tbody>

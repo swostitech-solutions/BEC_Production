@@ -631,6 +631,7 @@ const FeeSearchPage = () => {
   const handleSearch = async () => {
     const organization_id = sessionStorage.getItem("organization_id");
     const branch_id = sessionStorage.getItem("branch_id");
+    const normalizedReceiptNo = receiptNo.trim().replace(/^RC\s*/i, "");
 
     // ✅ take dates from formData
     const formattedStartDate = formData.dateFrom
@@ -648,8 +649,13 @@ const FeeSearchPage = () => {
 
     // Optional filters
     if (studentId) params.append("student_id", studentId);
-    if (formattedStartDate) params.append("date_from", formattedStartDate);
-    if (formattedEndDate) params.append("date_to", formattedEndDate);
+    if (normalizedReceiptNo) params.append("receipt_no", normalizedReceiptNo);
+    if (!normalizedReceiptNo && formattedStartDate) {
+      params.append("date_from", formattedStartDate);
+    }
+    if (!normalizedReceiptNo && formattedEndDate) {
+      params.append("date_to", formattedEndDate);
+    }
 
     // View options
     params.append("view_receipt", viewOption === "viewReceipts");
@@ -673,14 +679,17 @@ const FeeSearchPage = () => {
         setReceiptsData(result.data);
         setShowTable(true);
         setSelectedReceipt(result.data.length > 0 ? result.data[0] : null);
+        setCurrentPage(0);
       } else {
         setReceiptsData([]);
         setShowTable(false);
+        setSelectedReceipt(null);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
       setReceiptsData([]);
       setShowTable(false);
+      setSelectedReceipt(null);
     }
   };
 
@@ -1604,7 +1613,6 @@ const FeeSearchPage = () => {
                           <th>Father's Name</th>
                           <th>Course</th>
                           <th>Section</th>
-                          <th>Bar Code No</th>
                           <th>College Admission No</th>
                           <th>Receipt Date</th>
                           <th>Receipt Amount</th>
@@ -1624,7 +1632,6 @@ const FeeSearchPage = () => {
                             <td>{receipt.father_name}</td>
                             <td>{receipt.course_name}</td>
                             <td>{receipt.section_name}</td>
-                            <td>{receipt.barcode}</td>
                             <td>{receipt.college_admission_no}</td>
                             <td>
                               {new Date(

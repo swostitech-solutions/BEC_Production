@@ -887,21 +887,63 @@ const AdmAttendanceEntry = () => {
     return normalizeFeeSummary(item).discount;
   };
 
+  const buildLedgerExportRows = (rows = []) => {
+    return rows.map((item) => ({
+      "Student Name": item.student_name || item.studentName || item.studentname || "",
+      Course: item.course_name || item.className || item.courseName || "",
+      Section: item.section_name || item.sectionName || item.sectionname || "",
+      "Father Name": item.fatherName || item.fathername || "",
+      "Mother Name": item.motherName || item.mothername || "",
+      "Total Fees": item.total_fees ?? item.totalFees ?? 0,
+      "Fees Paid":
+        item.total_fees !== undefined ||
+        item.total_paid !== undefined ||
+        item.discount_fees !== undefined ||
+        item.remaining_fees !== undefined
+          ? calculateActualPaidFee(item)
+          : item.paidFees ?? item.total_paid ?? 0,
+      Discount:
+        item.discount_fees !== undefined
+          ? calculateDisplayDiscount(item)
+          : Math.max(
+              0,
+              (Number(item.totalFees ?? 0) - Number(item.paidFees ?? 0)) -
+                Number(item.remainingFees ?? 0)
+            ),
+      Balance:
+        item.remaining_fees !== undefined
+          ? calculateAdjustedBalance(item)
+          : item.remainingFees ?? item.remaining_amount ?? 0,
+    }));
+  };
+
+  const mergeReportRowsWithLedgerTable = (rows = []) => {
+    return rows.map((row) => {
+      const matchingTableRow = tableData.find(
+        (item) =>
+          String(item.studentId || item.student_id || "") ===
+          String(row.studentId || row.student_id || "")
+      );
+
+      return matchingTableRow
+        ? {
+            ...matchingTableRow,
+            ...row,
+            motherName:
+              row.motherName ||
+              row.mothername ||
+              matchingTableRow.motherName ||
+              matchingTableRow.mothername ||
+              "",
+          }
+        : row;
+    });
+  };
+
   // Export to Excel function
   const exportToExcel = () => {
     if (tableData && tableData.length > 0) {
-      // Create a clean version of the data for export
-      const exportData = tableData.map((item) => ({
-        "Student Name": item.student_name || "",
-        "Course": item.course_name || "",
-        "Section": item.section_name || "",
-        "Father Name": item.fatherName || "",
-        "Mother Name": item.motherName || "",
-        "Total Fees": item.total_fees || 0,
-        "Fees Paid": calculateActualPaidFee(item),
-        "Discount": calculateDisplayDiscount(item),
-        "Balance": calculateAdjustedBalance(item),
-      }));
+      const exportData = buildLedgerExportRows(tableData);
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "FeeLedger");
@@ -960,10 +1002,17 @@ const AdmAttendanceEntry = () => {
       const result = await response.json();
 
       if (response.ok && result.message === "success!!") {
-        const studentIds = result.data.map((student) => student.studentId);
+        const normalizedRows =
+          showFees === "B"
+            ? (result.data || []).filter(
+                (student) => Number(calculateAdjustedBalance(student)) > 0.01
+              )
+            : result.data || [];
+
+        const studentIds = normalizedRows.map((student) => student.studentId);
 
         setSelectedStudentIds(studentIds);
-        setTableData(result.data);
+        setTableData(normalizedRows);
         setShowTable(true);
       } else {
         console.error("Failed to fetch data:", result.message);
@@ -1020,7 +1069,7 @@ const AdmAttendanceEntry = () => {
 
       //  EXPORT WITHOUT API
       if (report.value === "F") {
-        const worksheet = XLSX.utils.json_to_sheet(tableData);
+        const worksheet = XLSX.utils.json_to_sheet(buildLedgerExportRows(tableData));
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
         XLSX.writeFile(workbook, "ExportedReport.xlsx");
@@ -1082,7 +1131,8 @@ const AdmAttendanceEntry = () => {
       const data = await response.json();
 
       if (data?.message === "success" && data?.data?.length) {
-        const worksheet = XLSX.utils.json_to_sheet(data.data);
+        const mergedExportRows = mergeReportRowsWithLedgerTable(data.data);
+        const worksheet = XLSX.utils.json_to_sheet(buildLedgerExportRows(mergedExportRows));
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
         XLSX.writeFile(workbook, `${report.label}.xlsx`);
@@ -1102,18 +1152,7 @@ const AdmAttendanceEntry = () => {
       return;
     }
 
-    const exportRows = tableData.map((item, index) => ({
-      "Sl No": index + 1,
-      "Student Name": item.student_name || "",
-      Course: item.course_name || "",
-      Section: item.section_name || "",
-      "Father Name": item.fatherName || "",
-      "Mother Name": item.motherName || "",
-      "Total Fees": item.total_fees || 0,
-      "Fees Paid": calculateActualPaidFee(item),
-      Discount: calculateDisplayDiscount(item),
-      Balance: calculateAdjustedBalance(item),
-    }));
+    const exportRows = buildLedgerExportRows(tableData);
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
     const workbook = XLSX.utils.book_new();

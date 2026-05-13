@@ -65,6 +65,12 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
     }));
   };
 
+  const normalizeText = (value) =>
+    String(value || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .toLowerCase();
+
 
 
   useEffect(() => {
@@ -628,7 +634,16 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
           fullData: student,
         }));
 
-        setStudentData(mappedStudents);
+        const exactStudentName = normalizeText(filters.studentName);
+        const filteredStudents = exactStudentName
+          ? mappedStudents.filter(
+              (student) =>
+                normalizeText(student.studentBasicDetails?.student_name) ===
+                exactStudentName
+            )
+          : mappedStudents;
+
+        setStudentData(filteredStudents);
         setShowTable(true);
       } else {
         console.warn("No student data found or invalid response format");

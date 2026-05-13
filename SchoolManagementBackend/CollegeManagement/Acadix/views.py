@@ -22935,6 +22935,7 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                                 semester_wise_details[sem_name][elem]['paid'] += fee.paid_amount or Decimal('0.00')
                                 semester_wise_details[sem_name][elem]['balance'] += (fee.element_amount or Decimal('0.00')) - (fee.paid_amount or Decimal('0.00'))
 
+                        discount_fees = abs(discount_fees)
                         remaining_fees = total_fees - total_paid_fees - discount_fees
 
                     else:
@@ -22967,10 +22968,27 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                         receipt_remarks_queryset = receipt_remarks_queryset.filter(semester__id__lte=to_semester)
 
                     remarks_list = []
-                    for remark_text in receipt_remarks_queryset.values_list('remarks', flat=True):
-                        cleaned_remark = (remark_text or '').strip()
-                        if cleaned_remark and cleaned_remark not in remarks_list:
+                    semester_wise_remarks = {}
+                    for receipt in receipt_remarks_queryset.select_related('semester'):
+                        cleaned_remark = (receipt.remarks or '').strip()
+                        if not cleaned_remark:
+                            continue
+
+                        if cleaned_remark not in remarks_list:
                             remarks_list.append(cleaned_remark)
+
+                        semester_name = None
+                        if receipt.semester and receipt.semester.semester_description:
+                            semester_name = receipt.semester.semester_description
+
+                        if not semester_name:
+                            semester_name = "Unknown"
+
+                        if semester_name not in semester_wise_remarks:
+                            semester_wise_remarks[semester_name] = []
+
+                        if cleaned_remark not in semester_wise_remarks[semester_name]:
+                            semester_wise_remarks[semester_name].append(cleaned_remark)
 
                     # Get student name
                     name_part = filter(None, [
@@ -23013,6 +23031,10 @@ class StudentFeeLedgerFilterListAPIView(ListAPIView):
                         'total_paid': total_paid_fees,
                         'discount_fees': discount_fees,
                         'remarks': ', '.join(remarks_list),
+                        'semester_wise_remarks': {
+                            semester_name: ', '.join(semester_remarks)
+                            for semester_name, semester_remarks in semester_wise_remarks.items()
+                        },
                         'remaining_fees': remaining_fees,
                         'semester_wise_details': semester_wise_details
                     })

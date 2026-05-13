@@ -3655,6 +3655,36 @@ const generatePDF = async (data) => {
     });
   };
 
+  const isDiscountLikeFee = (item) => {
+    const elementName = String(item?.element_name || "").toLowerCase();
+
+    return (
+      Number(item?.element_amount) < 0 ||
+      Number(item?.paid_amount) < 0 ||
+      /discount|scholarship|merit/.test(elementName)
+    );
+  };
+
+  const getDiscountValue = (item) => {
+    const elementAmount = Number(item?.element_amount) || 0;
+    const paidAmount = Number(item?.paid_amount) || 0;
+    const elementName = String(item?.element_name || "").toLowerCase();
+    const isNamedDiscount = /discount|scholarship|merit/.test(elementName);
+
+    if (!isDiscountLikeFee(item)) {
+      return 0;
+    }
+
+    if (isNamedDiscount) {
+      return Math.max(Math.abs(elementAmount), Math.abs(paidAmount));
+    }
+
+    return Math.max(
+      Math.abs(Math.min(elementAmount, 0)),
+      Math.abs(Math.min(paidAmount, 0))
+    );
+  };
+
   // Helper function to group and sum fee details by element_name and period_month
   const aggregateFeeDetails = (feeDetails) => {
     const map = {};
@@ -3705,18 +3735,23 @@ const generatePDF = async (data) => {
       const period = detail.semester;
       const elementAmount = Number(detail.element_amount) || 0;
       const paidAmount = Number(detail.paid_amount) || 0;
+      const discountValue = getDiscountValue(detail);
+      const isDiscountEntry = isDiscountLikeFee(detail);
 
       if (!periodMap.has(period)) {
         periodMap.set(period, {
           period,
-          totalAmount: elementAmount,
+          totalAmount: isDiscountEntry ? 0 : elementAmount,
           paidAmount: paidAmount,
-          discount: 0,
+          discount: discountValue,
         });
       } else {
         const existing = periodMap.get(period);
-        existing.totalAmount += elementAmount;
+        if (!isDiscountEntry) {
+          existing.totalAmount += elementAmount;
+        }
         existing.paidAmount += paidAmount;
+        existing.discount += discountValue;
       }
     });
 
@@ -3724,7 +3759,8 @@ const generatePDF = async (data) => {
       ...p,
       totalAmount: Number(p.totalAmount),
       paidAmount: Number(p.paidAmount),
-      balanceAmount: Number(p.totalAmount - p.paidAmount),
+      discount: Number(p.discount),
+      balanceAmount: Number(p.totalAmount - p.paidAmount - p.discount),
     }));
   };
 
@@ -4233,10 +4269,10 @@ const generatePDF = async (data) => {
                                 <FaPlus style={{ cursor: "pointer" }} />
                               </td>
                               <td>{row.period}</td>
-                              <td>{row.totalAmount}</td>
-                              <td>{row.paidAmount}</td>
-                              <td>{row.discount}</td>
-                              <td>{row.balanceAmount}</td>
+                              <td>{Number(row.totalAmount || 0).toFixed(2)}</td>
+                              <td>{Number(row.paidAmount || 0).toFixed(2)}</td>
+                              <td>{Number(row.discount || 0).toFixed(2)}</td>
+                              <td>{Number(row.balanceAmount || 0).toFixed(2)}</td>
                               <td>
                                 {row.balanceAmount > 0 ? (
                                   <input
@@ -4782,17 +4818,6 @@ const generatePDF = async (data) => {
                               type="text"
                               className="form-control detail"
                               value={totalDues.toFixed(2)} // Total Dues
-                              readOnly
-                            />
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>Service Charges</td>
-                          <td>
-                            <input
-                              type="text"
-                              className="form-control detail"
-                              value="0.00" // Placeholder for service charges, modify if needed
                               readOnly
                             />
                           </td>
