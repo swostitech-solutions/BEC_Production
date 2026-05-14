@@ -14,6 +14,57 @@ const StdLibrary = () => {
     overdue: 0,
   });
 
+  const parseDateOnly = (dateValue) => {
+    if (!dateValue) return null;
+
+    if (dateValue instanceof Date) {
+      return new Date(
+        dateValue.getFullYear(),
+        dateValue.getMonth(),
+        dateValue.getDate()
+      );
+    }
+
+    const normalizedDate = String(dateValue).split("T")[0];
+    const dateParts = normalizedDate.split("-");
+
+    if (dateParts.length === 3) {
+      const [year, month, day] = dateParts.map(Number);
+      if (
+        Number.isFinite(year) &&
+        Number.isFinite(month) &&
+        Number.isFinite(day)
+      ) {
+        return new Date(year, month - 1, day);
+      }
+    }
+
+    const fallbackDate = new Date(dateValue);
+    if (Number.isNaN(fallbackDate.getTime())) {
+      return null;
+    }
+
+    return new Date(
+      fallbackDate.getFullYear(),
+      fallbackDate.getMonth(),
+      fallbackDate.getDate()
+    );
+  };
+
+  const isOverdueDate = (dueDate) => {
+    const normalizedDueDate = parseDateOnly(dueDate);
+    if (!normalizedDueDate) return false;
+
+    const today = new Date();
+    const todayDateOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+
+    return normalizedDueDate < todayDateOnly;
+  };
+
   useEffect(() => {
     fetchLibraryData();
   }, []);
@@ -68,7 +119,7 @@ const StdLibrary = () => {
         const returned = books.filter((book) => book.return_date).length;
         const overdue = books.filter((book) => {
           if (!book.return_date && book.due_date) {
-            return new Date(book.due_date) < new Date();
+            return isOverdueDate(book.due_date);
           }
           return false;
         }).length;
@@ -102,7 +153,10 @@ const StdLibrary = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("en-IN", {
+    const parsedDate = parseDateOnly(dateString);
+    if (!parsedDate) return "-";
+
+    return parsedDate.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -113,7 +167,7 @@ const StdLibrary = () => {
     if (book.return_date) {
       return <Badge bg="success">Returned</Badge>;
     }
-    if (book.due_date && new Date(book.due_date) < new Date()) {
+    if (book.due_date && isOverdueDate(book.due_date)) {
       return <Badge bg="danger">Overdue</Badge>;
     }
     return <Badge bg="primary">Borrowed</Badge>;

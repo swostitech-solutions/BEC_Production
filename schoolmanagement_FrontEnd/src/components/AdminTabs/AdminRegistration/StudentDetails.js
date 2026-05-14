@@ -172,6 +172,12 @@ const AdmAttendanceEntry = ({
   );
   const fileInputRef = useRef(null);
 
+  const clearFeeSelection = () => ({
+    admission_type: "",
+    feegroup: "",
+    feeappfrom: "",
+  });
+
   // useEffect(() => {
   //   // When departments (BranchList) are loaded after selecting course
   //   if (Array.isArray(BranchList) && BranchList.length > 0) {
@@ -528,9 +534,18 @@ const AdmAttendanceEntry = ({
     const courseId = formData.course;
     const deptId = formData.department;
     const academicYearId = formData.academic_year;
+    const semesterId = formData.semester;
 
     // ✅ Only process when required IDs are present
-    if (orgId && branchId && batchId && courseId && deptId && academicYearId) {
+    if (
+      orgId &&
+      branchId &&
+      batchId &&
+      courseId &&
+      deptId &&
+      academicYearId &&
+      semesterId
+    ) {
       localStorage.setItem("FeeGroupEnabled", "true");
       localStorage.setItem("selectedOrganizationId", orgId);
       localStorage.setItem("selectedBranchId", branchId);
@@ -538,6 +553,7 @@ const AdmAttendanceEntry = ({
       localStorage.setItem("selectedCourseId", courseId);
       localStorage.setItem("selectedDepartmentId", deptId);
       localStorage.setItem("selectedAcademicYearId", academicYearId);
+      localStorage.setItem("selectedSemesterId", semesterId);
 
       // 🔥 Don't overwrite category here — it's handled in category dropdown
       window.dispatchEvent(new Event("feeGroupDependenciesChanged"));
@@ -548,7 +564,8 @@ const AdmAttendanceEntry = ({
       !batchId ||
       !courseId ||
       !deptId ||
-      !academicYearId
+      !academicYearId ||
+      !semesterId
     ) {
       localStorage.removeItem("FeeGroupEnabled");
       localStorage.removeItem("selectedOrganizationId");
@@ -557,6 +574,7 @@ const AdmAttendanceEntry = ({
       localStorage.removeItem("selectedCourseId");
       localStorage.removeItem("selectedDepartmentId");
       localStorage.removeItem("selectedAcademicYearId");
+      localStorage.removeItem("selectedSemesterId");
 
       // ⚠️ Don't remove selectedCategoryId here — keep it intact
       window.dispatchEvent(new Event("feeGroupDependenciesChanged"));
@@ -568,6 +586,7 @@ const AdmAttendanceEntry = ({
     formData.course,
     formData.department,
     formData.academic_year,
+    formData.semester,
   ]);
 
   useEffect(() => {
@@ -929,11 +948,20 @@ const AdmAttendanceEntry = ({
                         }
                         onChange={(opt) => {
                           setSelectedSession(opt?.value || "");
+                          setSelectedCourse("");
+                          setSelectedDepartment("");
+                          setSelectedAcademicYear("");
+                          setSelectedSemester("");
+                          setSelectedSection("");
                           setFormData((prev) => ({
                             ...prev,
                             batch: opt?.value || "",
-                            feegroup: "",
-                            feeappfrom: "",
+                            course: "",
+                            department: "",
+                            academic_year: "",
+                            semester: "",
+                            addmitted_section: "",
+                            ...clearFeeSelection(),
                           }));
                         }}
                         options={
@@ -971,11 +999,18 @@ const AdmAttendanceEntry = ({
                         }
                         onChange={(opt) => {
                           setSelectedCourse(opt?.value || "");
+                          setSelectedDepartment("");
+                          setSelectedAcademicYear("");
+                          setSelectedSemester("");
+                          setSelectedSection("");
                           setFormData((prev) => ({
                             ...prev,
                             course: opt?.value || "",
-                            feegroup: "",
-                            feeappfrom: "",
+                            department: "",
+                            academic_year: "",
+                            semester: "",
+                            addmitted_section: "",
+                            ...clearFeeSelection(),
                           }));
                         }}
                         options={
@@ -1013,11 +1048,16 @@ const AdmAttendanceEntry = ({
                         }
                         onChange={(opt) => {
                           setSelectedDepartment(opt?.value || "");
+                          setSelectedAcademicYear("");
+                          setSelectedSemester("");
+                          setSelectedSection("");
                           setFormData((prev) => ({
                             ...prev,
                             department: opt?.value || "",
-                            feegroup: "",
-                            feeappfrom: "",
+                            academic_year: "",
+                            semester: "",
+                            addmitted_section: "",
+                            ...clearFeeSelection(),
                           }));
                         }}
                         options={
@@ -1057,11 +1097,14 @@ const AdmAttendanceEntry = ({
                         }
                         onChange={(opt) => {
                           setSelectedAcademicYear(opt?.value || "");
+                          setSelectedSemester("");
+                          setSelectedSection("");
                           setFormData((prev) => ({
                             ...prev,
                             academic_year: opt?.value || "",
-                            feegroup: "",
-                            feeappfrom: "",
+                            semester: "",
+                            addmitted_section: "",
+                            ...clearFeeSelection(),
                           }));
                         }}
                         options={
@@ -1104,8 +1147,7 @@ const AdmAttendanceEntry = ({
                             ...prev,
                             semester: opt?.value || "",
                             addmitted_section: "",
-                            feegroup: "",
-                            feeappfrom: "",
+                            ...clearFeeSelection(),
                           }));
                         }}
                         options={

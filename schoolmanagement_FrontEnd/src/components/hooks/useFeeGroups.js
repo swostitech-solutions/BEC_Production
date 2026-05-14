@@ -9,13 +9,23 @@ const useFeeGroups = () => {
 
   const fetchFeeStructure = useCallback(async () => {
     const organizationId = localStorage.getItem("selectedOrganizationId");
+    const batchId = localStorage.getItem("selectedBatchId");
     const academicYearId = localStorage.getItem("selectedAcademicYearId");
     const courseId = localStorage.getItem("selectedCourseId");
+    const departmentId = localStorage.getItem("selectedDepartmentId");
+    const semesterId = localStorage.getItem("selectedSemesterId");
     const categoryId = localStorage.getItem("selectedCategoryId");
     const token = localStorage.getItem("accessToken");
 
     // ✅ Must have org + academic year, and at least course or category
-    if (!organizationId || !academicYearId || (!courseId && !categoryId)) {
+    if (
+      !organizationId ||
+      !batchId ||
+      !academicYearId ||
+      !departmentId ||
+      !semesterId ||
+      (!courseId && !categoryId)
+    ) {
       console.log("⚠️ Missing required fields for Fee Group fetch");
       setFeeGroups([]);
       return;

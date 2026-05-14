@@ -16,6 +16,144 @@ import useStudentFeeReceipts from "../../hooks/useStudentFeeReceipts";
 import api from "../../../utils/api";
 import { openFeeReceiptPdf } from "../../AdminTabs/AdminFeeSearch/feeReceiptPdf";
 
+const toNumber = (value) => Number(value) || 0;
+
+const isDiscountLikeFee = (item) => {
+  const elementName = String(item?.element_name || "").toLowerCase();
+
+  return (
+    toNumber(item?.element_amount) < 0 ||
+    toNumber(item?.paid_amount) < 0 ||
+    /discount|scholarship|merit/.test(elementName)
+  );
+};
+
+const getDiscountValue = (item) => {
+  const elementAmount = toNumber(item?.element_amount);
+  const paidAmount = toNumber(item?.paid_amount);
+  const explicitDiscount = Math.max(
+    0,
+    toNumber(item?.discount || item?.element_discount_amount)
+  );
+  const elementName = String(item?.element_name || "").toLowerCase();
+  const isNamedDiscount = /discount|scholarship|merit/.test(elementName);
+
+  if (explicitDiscount > 0) {
+    return explicitDiscount;
+  }
+
+  if (!isDiscountLikeFee(item)) {
+    return 0;
+  }
+
+  if (isNamedDiscount) {
+    return Math.max(Math.abs(elementAmount), Math.abs(paidAmount));
+  }
+
+  return Math.max(
+    Math.abs(Math.min(elementAmount, 0)),
+    Math.abs(Math.min(paidAmount, 0))
+  );
+};
+
+const getDisplayBalance = (item) => {
+  const balance =
+    toNumber(item?.element_amount) -
+    toNumber(item?.paid_amount) -
+    getDiscountValue(item);
+
+  return balance > 0 ? balance : 0;
+};
+
+const hasVisibleValues = (item) => {
+  return (
+    toNumber(item?.element_amount) !== 0 ||
+    toNumber(item?.paid_amount) !== 0 ||
+    getDiscountValue(item) !== 0 ||
+    getDisplayBalance(item) !== 0
+  );
+};
+
+const isDiscountReceiptElement = (item) => {
+  const elementName = String(item?.element_name || "").toLowerCase();
+  return Number(item?.amount) < 0 || /discount|scholarship|merit/.test(elementName);
+};
+
+const getReceiptElementDiscount = (item) => {
+  if (!isDiscountReceiptElement(item)) {
+    return 0;
+  }
+
+  return Math.abs(toNumber(item?.amount));
+};
+
+const normalizeReceiptBreakdown = (receiptData) => {
+  const elementList = Object.values(receiptData?.payment_element_list || {});
+
+  return elementList.map((element, index) => {
+    const amount = toNumber(element?.amount);
+    const discount = getReceiptElementDiscount(element);
+    const paid = isDiscountReceiptElement(element) ? 0 : Math.max(amount, 0);
+
+    return {
+      id: element?.id || `${receiptData?.receipt_no || "receipt"}-${index}`,
+      element_name: element?.element_name || "-",
+      amount,
+      paid,
+      discount,
+    };
+  });
+};
+
+const normalizeSemesterLabel = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+const buildSemesterBreakdownRows = (group) => {
+  if (!group?.subFees || !Array.isArray(group.subFees)) {
+    return [];
+  }
+
+  return group.subFees
+    .filter(hasVisibleValues)
+    .map((subFee, index) => ({
+      id:
+        subFee?.id ||
+        `${group?.semester_id || group?.semester || "semester"}-${index}`,
+      element_name: subFee?.element_name || "-",
+      amount: toNumber(subFee?.element_amount),
+      paid: toNumber(subFee?.paid_amount),
+      discount: toNumber(subFee?.discount ?? getDiscountValue(subFee)),
+    }));
+};
+
+const findMatchingSemesterGroup = (receipt, groupedFees = []) => {
+  if (!receipt || !Array.isArray(groupedFees) || groupedFees.length === 0) {
+    return null;
+  }
+
+  const receiptSemesterId = String(
+    receipt?.semester_id || receipt?.fee_applied_from || ""
+  );
+  const receiptSemesterLabel = normalizeSemesterLabel(
+    receipt?.semester || receipt?.fee_applied_from
+  );
+
+  return (
+    groupedFees.find((group) => {
+      const groupSemesterId = String(group?.semester_id || "");
+      const groupSemesterLabel = normalizeSemesterLabel(group?.semester);
+
+      return (
+        (receiptSemesterId && groupSemesterId === receiptSemesterId) ||
+        (receiptSemesterLabel && groupSemesterLabel === receiptSemesterLabel)
+      );
+    }) || null
+  );
+};
+
 const StdPayment = () => {
   const navigate = useNavigate();
 
@@ -81,6 +219,9 @@ const StdPayment = () => {
 
   // Selected sub-fees state (by sub-fee ID)
   const [selectedSubFees, setSelectedSubFees] = useState({});
+  const [expandedPaymentRows, setExpandedPaymentRows] = useState(new Set());
+  const [paymentBreakdowns, setPaymentBreakdowns] = useState({});
+  const [paymentBreakdownLoading, setPaymentBreakdownLoading] = useState({});
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -109,7 +250,7 @@ const StdPayment = () => {
     return "-";
   };
 
-  // Group fees by semester_id and collapse duplicate fee heads within a semester.
+  // Group fees by semester and normalize discount rows the same way as fee collection.
   const groupedFees = useMemo(() => {
     if (!feedetails || feedetails.length === 0) return [];
 
@@ -131,8 +272,8 @@ const StdPayment = () => {
       groups[groupKey].subFees.push(fee);
     });
 
-    const dedupeSubFees = (subFees) => {
-      const dedupedMap = {};
+    const aggregateSubFees = (subFees) => {
+      const aggregatedMap = {};
 
       subFees.forEach((subFee) => {
         const elementName = (subFee.element_name || "").trim().toUpperCase();
@@ -142,82 +283,59 @@ const StdPayment = () => {
           elementName,
         ].join("|");
 
-        const elementAmount = parseFloat(subFee.element_amount || 0);
-        const paidAmount = parseFloat(subFee.paid_amount || 0);
-        const discountAmount = parseFloat(
-          subFee.discount || subFee.element_discount_amount || 0
-        );
-        const candidateBalance = elementAmount - paidAmount;
-
-        if (!dedupedMap[dedupeKey]) {
-          dedupedMap[dedupeKey] = {
+        if (!aggregatedMap[dedupeKey]) {
+          aggregatedMap[dedupeKey] = {
             ...subFee,
-            element_amount: elementAmount,
-            paid_amount: paidAmount,
-            discount: discountAmount,
+            all_ids: [subFee.id],
+            element_amount: toNumber(subFee.element_amount),
+            paid_amount: toNumber(subFee.paid_amount),
+            discount: getDiscountValue(subFee),
           };
           return;
         }
 
-        const existing = dedupedMap[dedupeKey];
-        const existingAmount = parseFloat(existing.element_amount || 0);
-        const existingPaid = parseFloat(existing.paid_amount || 0);
-        const existingDiscount = parseFloat(
-          existing.discount || existing.element_discount_amount || 0
-        );
-        const existingBalance = existingAmount - existingPaid;
-
-        // Keep the strongest representative row instead of summing duplicates.
-        const candidateScore =
-          candidateBalance + paidAmount + discountAmount + elementAmount;
-        const existingScore =
-          existingBalance + existingPaid + existingDiscount + existingAmount;
-
-        if (candidateScore > existingScore) {
-          dedupedMap[dedupeKey] = {
-            ...subFee,
-            element_amount: elementAmount,
-            paid_amount: paidAmount,
-            discount: discountAmount,
-          };
-        }
+        const existing = aggregatedMap[dedupeKey];
+        existing.all_ids = [...new Set([...(existing.all_ids || []), subFee.id])];
+        existing.element_amount += toNumber(subFee.element_amount);
+        existing.paid_amount += toNumber(subFee.paid_amount);
+        existing.discount += getDiscountValue(subFee);
       });
 
-      return Object.values(dedupedMap);
+      return Object.values(aggregatedMap).map((subFee) => ({
+        ...subFee,
+        balance: getDisplayBalance(subFee),
+      }));
     };
 
-    // Calculate totals for each group (excluding sub-fees where all values are zero)
+    // Calculate totals for each group using normalized fee heads.
     return Object.values(groups).map((group) => {
-      const normalizedSubFees = dedupeSubFees(group.subFees);
-      const totals = normalizedSubFees
-        .filter((subFee) => {
-          // Exclude sub-fees where total, paid, and discount are all zero
-          const elementAmount = parseFloat(subFee.element_amount || 0);
-          const paidAmount = parseFloat(subFee.paid_amount || 0);
-          const discountAmount = parseFloat(
-            subFee.discount || subFee.element_discount_amount || 0
-          );
-          return !(elementAmount === 0 && paidAmount === 0 && discountAmount === 0);
-        })
-        .reduce(
-          (acc, subFee) => {
-            const elementAmount = parseFloat(subFee.element_amount || 0);
-            const paidAmount = parseFloat(subFee.paid_amount || 0);
-            const balance = elementAmount - paidAmount;
-            return {
-              totalAmount: acc.totalAmount + elementAmount,
-              totalPaid: acc.totalPaid + paidAmount,
-              totalDue: acc.totalDue + (balance > 0 ? balance : 0),
-              totalDiscount: acc.totalDiscount + parseFloat(subFee.discount || 0),
-            };
-          },
-          { totalAmount: 0, totalPaid: 0, totalDue: 0, totalDiscount: 0 }
-        );
+      const normalizedSubFees = aggregateSubFees(group.subFees).filter(hasVisibleValues);
+      const totals = normalizedSubFees.reduce(
+        (acc, subFee) => {
+          const elementAmount = toNumber(subFee.element_amount);
+          const paidAmount = toNumber(subFee.paid_amount);
+          const discountAmount = getDiscountValue(subFee);
+          const isDiscountEntry = isDiscountLikeFee(subFee);
+
+          return {
+            totalAmount: acc.totalAmount + (isDiscountEntry ? 0 : elementAmount),
+            totalPaid: acc.totalPaid + paidAmount,
+            totalDiscount: acc.totalDiscount + discountAmount,
+          };
+        },
+        { totalAmount: 0, totalPaid: 0, totalDiscount: 0 }
+      );
+
+      const totalDue = Math.max(
+        totals.totalAmount - totals.totalPaid - totals.totalDiscount,
+        0
+      );
 
       return {
         ...group,
         subFees: normalizedSubFees,
         ...totals,
+        totalDue,
       };
     });
   }, [feedetails]);
@@ -278,6 +396,26 @@ const StdPayment = () => {
     { totalPaid: 0, totalDiscount: 0, totalReceipts: 0 }
   );
 
+  const fetchReceiptData = async (receiptNo) => {
+    if (!receiptNo) return null;
+
+    const orgId =
+      localStorage.getItem("orgId") ||
+      sessionStorage.getItem("organization_id");
+    const branchId =
+      localStorage.getItem("branchId") || sessionStorage.getItem("branch_id");
+
+    const response = await api.get("FeeReceipt/GetFeeReceiptsBasedOnReceiptNo/", {
+      params: {
+        receipt_no: receiptNo,
+        organization_id: orgId,
+        branch_id: branchId,
+      },
+    });
+
+    return response.data?.receipt_data || null;
+  };
+
   // Handle receipt link click
   const handleReceiptClick = async (receiptNo) => {
     if (!receiptNo) return;
@@ -285,28 +423,75 @@ const StdPayment = () => {
     try {
       setSelectedReceipt(receiptNo);
 
-      const orgId =
-        localStorage.getItem("orgId") ||
-        sessionStorage.getItem("organization_id");
-      const branchId =
-        localStorage.getItem("branchId") || sessionStorage.getItem("branch_id");
-
-      const response = await api.get("FeeReceipt/GetFeeReceiptsBasedOnReceiptNo/", {
-        params: {
-          receipt_no: receiptNo,
-          organization_id: orgId,
-          branch_id: branchId,
-        },
-      });
-
-      const result = response.data;
-      if (result && result.receipt_data) {
-        openFeeReceiptPdf(result.receipt_data);
+      const receiptData = await fetchReceiptData(receiptNo);
+      if (receiptData) {
+        openFeeReceiptPdf(receiptData);
         return;
       }
     } catch (err) {
       console.error("Error fetching receipt details:", err);
       alert("Failed to load receipt details");
+    }
+  };
+
+  const togglePaymentRowExpansion = async (receipt) => {
+    const receiptKey =
+      receipt?.receipt_no || String(receipt?.receipt_id || receipt?.id || "");
+
+    if (!receiptKey) return;
+
+    const isAlreadyExpanded = expandedPaymentRows.has(receiptKey);
+    if (isAlreadyExpanded) {
+      setExpandedPaymentRows((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(receiptKey);
+        return newSet;
+      });
+      return;
+    }
+
+    setExpandedPaymentRows((prev) => new Set(prev).add(receiptKey));
+
+    if (paymentBreakdowns[receiptKey] || paymentBreakdownLoading[receiptKey]) {
+      return;
+    }
+
+    try {
+      setPaymentBreakdownLoading((prev) => ({ ...prev, [receiptKey]: true }));
+      const semesterGroup = findMatchingSemesterGroup(receipt, groupedFees);
+      const semesterBreakdownRows = buildSemesterBreakdownRows(semesterGroup);
+
+      if (semesterBreakdownRows.length > 0) {
+        setPaymentBreakdowns((prev) => ({
+          ...prev,
+          [receiptKey]: {
+            receiptData: semesterGroup,
+            breakdownRows: semesterBreakdownRows,
+          },
+        }));
+        return;
+      }
+
+      const receiptData = await fetchReceiptData(receipt.receipt_no);
+      setPaymentBreakdowns((prev) => ({
+        ...prev,
+        [receiptKey]: {
+          receiptData,
+          breakdownRows: normalizeReceiptBreakdown(receiptData),
+        },
+      }));
+    } catch (error) {
+      console.error("Error loading receipt breakdown:", error);
+      setPaymentBreakdowns((prev) => ({
+        ...prev,
+        [receiptKey]: {
+          receiptData: null,
+          breakdownRows: [],
+          error: "Failed to load fee breakdown",
+        },
+      }));
+    } finally {
+      setPaymentBreakdownLoading((prev) => ({ ...prev, [receiptKey]: false }));
     }
   };
 
@@ -327,12 +512,7 @@ const StdPayment = () => {
     // Calculate from selected sub-fees only
     return group.subFees
       .filter((subFee) => selectedSubFeeIds.includes(String(subFee.id)))
-      .reduce((sum, subFee) => {
-        const elementAmount = parseFloat(subFee.element_amount || 0);
-        const paidAmount = parseFloat(subFee.paid_amount || 0);
-        const balance = elementAmount - paidAmount;
-        return sum + (balance > 0 ? balance : 0);
-      }, 0);
+      .reduce((sum, subFee) => sum + getDisplayBalance(subFee), 0);
   };
 
   // Handle Pay Now button click
@@ -344,11 +524,7 @@ const StdPayment = () => {
     // If no sub-fees selected, select all sub-fees with due amount > 0
     if (selectedIds.length === 0) {
       const subFeesWithDue = feeGroup.subFees
-        .filter((subFee) => {
-          const elementAmount = parseFloat(subFee.element_amount || 0);
-          const paidAmount = parseFloat(subFee.paid_amount || 0);
-          return elementAmount - paidAmount > 0;
-        })
+        .filter((subFee) => getDisplayBalance(subFee) > 0)
         .map((subFee) => String(subFee.id));
 
       const newSelected = {};
@@ -762,14 +938,9 @@ const StdPayment = () => {
                                       )}
                                     </td>
                                   </tr>
-                                  {isExpanded && groupSubFees.filter((subFee) => {
-                                    const elementAmount = parseFloat(subFee.element_amount || 0);
-                                    const paidAmount = parseFloat(subFee.paid_amount || 0);
-                                    const balance = elementAmount - paidAmount;
-                                    return balance > 0;
-                                  }).length > 0 && (
+                                  {isExpanded && groupSubFees.filter(hasVisibleValues).length > 0 && (
                                       <tr>
-                                        <td colSpan="6" style={{ padding: "0", border: "none" }}>
+                                        <td colSpan="7" style={{ padding: "0", border: "none" }}>
                                           <div style={{ margin: "10px", backgroundColor: "#f8f9fa" }}>
                                             <table className="table table-bordered table-sm" style={{ margin: "0 0 0 20px", backgroundColor: "white" }}>
                                               <thead>
@@ -777,32 +948,29 @@ const StdPayment = () => {
                                                   <th>Element Name</th>
                                                   <th>Amount</th>
                                                   <th>Paid</th>
+                                                  <th>Discount</th>
                                                   <th>Balance</th>
                                                   <th style={{ width: "60px" }}>Pay</th>
                                                 </tr>
                                               </thead>
                                               <tbody>
                                                 {groupSubFees
-                                                  .filter((subFee) => {
-                                                    // Filter out sub-fees where balance is zero
-                                                    const elementAmount = parseFloat(subFee.element_amount || 0);
-                                                    const paidAmount = parseFloat(subFee.paid_amount || 0);
-                                                    const balance = elementAmount - paidAmount;
-                                                    return balance > 0;
-                                                  })
+                                                  .filter(hasVisibleValues)
                                                   .map((subFee) => {
-                                                    const elementAmount = parseFloat(subFee.element_amount || 0);
-                                                    const paidAmount = parseFloat(subFee.paid_amount || 0);
-                                                    const balance = elementAmount - paidAmount;
+                                                    const elementAmount = toNumber(subFee.element_amount);
+                                                    const paidAmount = toNumber(subFee.paid_amount);
+                                                    const discountAmount = getDiscountValue(subFee);
+                                                    const balance = getDisplayBalance(subFee);
                                                     const isSelected = selectedSubFees[String(subFee.id)]?.groupId === group.groupId;
                                                     const hasBalance = balance > 0;
 
                                                     return (
                                                       <tr key={subFee.id} style={{ backgroundColor: isSelected ? "#e7f3ff" : "white" }}>
                                                         <td>{subFee.element_name || "-"}</td>
-                                                        <td>₹{elementAmount.toFixed(2)}</td>
-                                                        <td>₹{paidAmount.toFixed(2)}</td>
-                                                        <td>₹{balance > 0 ? balance.toFixed(2) : "0.00"}</td>
+                                                        <td>Rs. {elementAmount.toFixed(2)}</td>
+                                                        <td>Rs. {paidAmount.toFixed(2)}</td>
+                                                        <td>Rs. {discountAmount.toFixed(2)}</td>
+                                                        <td>Rs. {balance.toFixed(2)}</td>
                                                         <td style={{ textAlign: "center" }}>
                                                           <Form.Check
                                                             type="checkbox"
@@ -825,7 +993,7 @@ const StdPayment = () => {
                             })
                           ) : (
                             <tr>
-                              <td colSpan="6" className="text-center">
+                              <td colSpan="7" className="text-center">
                                 No outstanding payments found.
                               </td>
                             </tr>
@@ -844,6 +1012,7 @@ const StdPayment = () => {
                     <table className="text-center table table-bordered" style={{ border: "1px solid #dee2e6", backgroundColor: "white" }}>
                       <thead>
                         <tr style={{ backgroundColor: "#007bff", color: "#fff" }}>
+                          <th style={{ width: "80px", minWidth: "80px", maxWidth: "80px" }}></th>
                           <th>Sr.No</th>
                           <th>Semester</th>
                           <th>Receipt Date</th>
@@ -855,59 +1024,127 @@ const StdPayment = () => {
                       </thead>
                       <tbody>
                         {receipts && receipts.length > 0 ? (
-                          receipts.map((receipt, index) => (
-                            <tr key={receipt.receipt_id || receipt.id || index} style={{ backgroundColor: "white" }}>
-                              <td>{index + 1}</td>
-                              <td>
-                                {formatPeriod(
-                                  receipt.semester ||
-                                  receipt.fee_applied_from,
-                                  receipt.receipt_date
+                          receipts.map((receipt, index) => {
+                            const receiptKey =
+                              receipt.receipt_no ||
+                              String(receipt.receipt_id || receipt.id || index);
+                            const isExpanded = expandedPaymentRows.has(receiptKey);
+                            const receiptBreakdown = paymentBreakdowns[receiptKey];
+                            const breakdownRows = receiptBreakdown?.breakdownRows || [];
+                            const isLoadingBreakdown = paymentBreakdownLoading[receiptKey];
+
+                            return (
+                              <React.Fragment key={receiptKey}>
+                                <tr style={{ backgroundColor: "white" }}>
+                                  <td style={{ width: "40px", minWidth: "40px", maxWidth: "40px", textAlign: "center", padding: "8px" }}>
+                                    <Button
+                                      variant="link"
+                                      size="sm"
+                                      onClick={() => togglePaymentRowExpansion(receipt)}
+                                      style={{
+                                        padding: "0",
+                                        minWidth: "22px",
+                                        width: "22px",
+                                        color: "#000",
+                                        textDecoration: "none",
+                                        fontSize: "18px",
+                                        fontWeight: "bold",
+                                      }}
+                                    >
+                                      {isExpanded ? "−" : "+"}
+                                    </Button>
+                                  </td>
+                                  <td>{index + 1}</td>
+                                  <td>
+                                    {formatPeriod(
+                                      receipt.semester ||
+                                      receipt.fee_applied_from,
+                                      receipt.receipt_date
+                                    )}
+                                  </td>
+                                  <td>{formatDate(receipt.receipt_date)}</td>
+                                  <td>
+                                    {parseFloat(
+                                      receipt.receipt_amount ||
+                                      receipt.payment_amount ||
+                                      0
+                                    ).toFixed(2)}
+                                  </td>
+                                  <td>
+                                    {parseFloat(
+                                      receipt.discount ||
+                                      receipt.discount_amount ||
+                                      0
+                                    ).toFixed(2)}
+                                  </td>
+                                  <td>
+                                    {receipt.payment_method ||
+                                      receipt.payment_method_name ||
+                                      "-"}
+                                  </td>
+                                  <td>
+                                    {receipt.receipt_id || receipt.id ? (
+                                      <Button
+                                        variant="link"
+                                        size="sm"
+                                        onClick={() => handleReceiptClick(receipt.receipt_no)}
+                                        style={{
+                                          color: "#007bff",
+                                          textDecoration: "underline",
+                                          padding: 0,
+                                        }}
+                                      >
+                                        View Receipt
+                                      </Button>
+                                    ) : (
+                                      "-"
+                                    )}
+                                  </td>
+                                </tr>
+                                {isExpanded && (
+                                  <tr>
+                                    <td colSpan="8" style={{ padding: "0", border: "none" }}>
+                                      <div style={{ margin: "10px", backgroundColor: "#f8f9fa" }}>
+                                        {isLoadingBreakdown ? (
+                                          <div className="text-center p-3">Loading fee details...</div>
+                                        ) : receiptBreakdown?.error ? (
+                                          <div className="text-center text-danger p-3">
+                                            {receiptBreakdown.error}
+                                          </div>
+                                        ) : breakdownRows.length > 0 ? (
+                                          <table className="table table-bordered table-sm" style={{ margin: "0 0 0 20px", backgroundColor: "white" }}>
+                                            <thead>
+                                              <tr style={{ backgroundColor: "#e9ecef" }}>
+                                                <th>Fee Element</th>
+                                                <th>Amount</th>
+                                                <th>Paid</th>
+                                                <th>Discount</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {breakdownRows.map((row) => (
+                                                <tr key={row.id}>
+                                                  <td>{row.element_name}</td>
+                                                  <td>{row.amount.toFixed(2)}</td>
+                                                  <td>{row.paid.toFixed(2)}</td>
+                                                  <td>{row.discount.toFixed(2)}</td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        ) : (
+                                          <div className="text-center p-3">No fee element details found.</div>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
                                 )}
-                              </td>
-                              <td>{formatDate(receipt.receipt_date)}</td>
-                              <td>
-                                {parseFloat(
-                                  receipt.receipt_amount ||
-                                  receipt.payment_amount ||
-                                  0
-                                ).toFixed(2)}
-                              </td>
-                              <td>
-                                {parseFloat(
-                                  receipt.discount ||
-                                  receipt.discount_amount ||
-                                  0
-                                ).toFixed(2)}
-                              </td>
-                              <td>
-                                {receipt.payment_method ||
-                                  receipt.payment_method_name ||
-                                  "-"}
-                              </td>
-                              <td>
-                                {receipt.receipt_id || receipt.id ? (
-                                  <Button
-                                    variant="link"
-                                    size="sm"
-                                    onClick={() => handleReceiptClick(receipt.receipt_no)}
-                                    style={{
-                                      color: "#007bff",
-                                      textDecoration: "underline",
-                                      padding: 0,
-                                    }}
-                                  >
-                                    View Receipt
-                                  </Button>
-                                ) : (
-                                  "-"
-                                )}
-                              </td>
-                            </tr>
-                          ))
+                              </React.Fragment>
+                            );
+                          })
                         ) : (
                           <tr>
-                            <td colSpan="7" className="text-center">
+                            <td colSpan="8" className="text-center">
                               No payment history found.
                             </td>
                           </tr>

@@ -29,6 +29,13 @@ const DesignComponent = ({
   const [error, setError] = useState(null);
   const [selectedClassId, setSelectedClassId] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const hasFeeGroupDependencies =
+    !!localStorage.getItem("selectedOrganizationId") &&
+    !!localStorage.getItem("selectedBatchId") &&
+    !!localStorage.getItem("selectedCourseId") &&
+    !!localStorage.getItem("selectedDepartmentId") &&
+    !!localStorage.getItem("selectedAcademicYearId") &&
+    !!localStorage.getItem("selectedSemesterId");
 
   // 🔄 Reset local transport state when parent formData is cleared
   useEffect(() => {
@@ -234,16 +241,47 @@ const DesignComponent = ({
     }));
   };
 
+  const findSemesterIdByHint = (semesterList, hint) => {
+    const normalizedHint = String(hint || "").toLowerCase();
+    const matchedSemester = semesterList.find((semester) =>
+      String(semester?.semester_description || "")
+        .toLowerCase()
+        .includes(normalizedHint)
+    );
+
+    return matchedSemester?.id || "";
+  };
+
   // 🔄 Auto-set feeappfrom based on admission_type when periods are loaded
   useEffect(() => {
-    if (!periods || periods.length === 0) return;
-    const admType = formData.admission_type;
-    if (admType === "Regular" && periods[0]) {
-      setFormData((prev) => ({ ...prev, feeappfrom: periods[0].id }));
-    } else if (admType === "Lateral" && periods[2]) {
-      setFormData((prev) => ({ ...prev, feeappfrom: periods[2].id }));
+    if (id || !Array.isArray(periods) || periods.length === 0) return;
+
+    const admissionType = String(formData.admission_type || "").toLowerCase();
+
+    if (!admissionType) {
+      return;
     }
-  }, [periods, formData.admission_type]);
+
+    let autoSelectedSemesterId = "";
+
+    if (admissionType === "regular") {
+      autoSelectedSemesterId =
+        findSemesterIdByHint(periods, "1st") || periods[0]?.id || "";
+    } else if (admissionType === "lateral") {
+      autoSelectedSemesterId =
+        findSemesterIdByHint(periods, "3rd") || periods[2]?.id || "";
+    }
+
+    if (!autoSelectedSemesterId) {
+      return;
+    }
+
+    setFormData((prev) =>
+      prev.feeappfrom === autoSelectedSemesterId
+        ? prev
+        : { ...prev, feeappfrom: autoSelectedSemesterId }
+    );
+  }, [id, periods, formData.admission_type, setFormData]);
 
   // 🔄 Watch category changes
   useEffect(() => {
@@ -297,11 +335,7 @@ const DesignComponent = ({
                           },
                         })
                       }
-                      isDisabled={
-                        isDisabled ||
-                        formData.admission_type === "Regular" ||
-                        formData.admission_type === "Lateral"
-                      }
+                      isDisabled={false}
                     />
                     {requiredErrors.feeappfrom && (
                       <small style={{ color: "red" }}>{requiredErrors.feeappfrom}</small>
@@ -318,27 +352,14 @@ const DesignComponent = ({
                       className="detail"
                       classNamePrefix="detail"
                       placeholder={
-                        // !localStorage.getItem("selectedOrganizationId")
-                        //   ? "Select Organization first"
-                        //   :
-                        !localStorage.getItem("selectedAcademicYearId")
-                          ? "Select Academic Year first"
-                          : !(
-                              localStorage.getItem("selectedCourseId") ||
-                              localStorage.getItem("selectedCategoryId")
-                            )
-                          ? "Select Course or Category first"
+                        !hasFeeGroupDependencies
+                          ? "Select Session, Course, Department, Academic Year and Semester first"
                           : feeLoading
                           ? "Loading Fee Groups..."
                           : "Select Fee Group"
                       }
                       isDisabled={
-                        !localStorage.getItem("selectedOrganizationId") ||
-                        !localStorage.getItem("selectedAcademicYearId") ||
-                        !(
-                          localStorage.getItem("selectedCourseId") ||
-                          localStorage.getItem("selectedCategoryId")
-                        ) ||
+                        !hasFeeGroupDependencies ||
                         feeLoading
                       }
                       isLoading={feeLoading}

@@ -21,10 +21,142 @@ import {
 } from "react-icons/fa";
 import useStudentDetails from "../../components/hooks/useStudentDetails";
 import useStudentCirculars from "../../components/hooks/useStudentCirculars";
-import useStudentFeeDue from "../../components/hooks/useStudentFeeDue";
+import useStudentFeeFilterData from "../../components/hooks/useStudentFeeFilterData";
 import useStudentAttendance from "../../components/hooks/useStudentAttendance";
 import StudentAttendanceChart from "../../components/StudentTabs/StudentAttendanceChart/StudentAttendanceChart";
 // import "./Dashboards.css";
+
+const toNumber = (value) => Number(value) || 0;
+
+const isDiscountLikeFee = (item) => {
+  const elementName = String(item?.element_name || "").toLowerCase();
+
+  return (
+    toNumber(item?.element_amount) < 0 ||
+    toNumber(item?.paid_amount) < 0 ||
+    /discount|scholarship|merit/.test(elementName)
+  );
+};
+
+const getDiscountValue = (item) => {
+  const elementAmount = toNumber(item?.element_amount);
+  const paidAmount = toNumber(item?.paid_amount);
+  const explicitDiscount = Math.max(
+    0,
+    toNumber(item?.discount || item?.element_discount_amount)
+  );
+  const elementName = String(item?.element_name || "").toLowerCase();
+  const isNamedDiscount = /discount|scholarship|merit/.test(elementName);
+
+  if (explicitDiscount > 0) {
+    return explicitDiscount;
+  }
+
+  if (!isDiscountLikeFee(item)) {
+    return 0;
+  }
+
+  if (isNamedDiscount) {
+    return Math.max(Math.abs(elementAmount), Math.abs(paidAmount));
+  }
+
+  return Math.max(
+    Math.abs(Math.min(elementAmount, 0)),
+    Math.abs(Math.min(paidAmount, 0))
+  );
+};
+
+const buildOutstandingSummary = (feedetails = []) => {
+  if (!Array.isArray(feedetails) || feedetails.length === 0) {
+    return null;
+  }
+
+  const semesterGroups = {};
+
+  feedetails.forEach((fee) => {
+    const semesterKey = `semester_${fee.semester_id || fee.semester || "default"}`;
+
+    if (!semesterGroups[semesterKey]) {
+      semesterGroups[semesterKey] = [];
+    }
+
+    semesterGroups[semesterKey].push(fee);
+  });
+
+  const semesterSummaries = Object.values(semesterGroups).map((subFees) => {
+    const aggregatedMap = {};
+
+    subFees.forEach((subFee) => {
+      const dedupeKey = [
+        subFee.semester_id ?? "",
+        subFee.academic_year_id ?? "",
+        String(subFee.element_name || "").trim().toUpperCase(),
+      ].join("|");
+
+      if (!aggregatedMap[dedupeKey]) {
+        aggregatedMap[dedupeKey] = {
+          ...subFee,
+          element_amount: toNumber(subFee.element_amount),
+          paid_amount: toNumber(subFee.paid_amount),
+          discount: getDiscountValue(subFee),
+        };
+        return;
+      }
+
+      aggregatedMap[dedupeKey].element_amount += toNumber(subFee.element_amount);
+      aggregatedMap[dedupeKey].paid_amount += toNumber(subFee.paid_amount);
+      aggregatedMap[dedupeKey].discount += getDiscountValue(subFee);
+    });
+
+    const normalizedSubFees = Object.values(aggregatedMap).filter((item) => {
+      const balance =
+        toNumber(item.element_amount) -
+        toNumber(item.paid_amount) -
+        toNumber(item.discount);
+
+      return (
+        toNumber(item.element_amount) !== 0 ||
+        toNumber(item.paid_amount) !== 0 ||
+        toNumber(item.discount) !== 0 ||
+        balance !== 0
+      );
+    });
+
+    const totals = normalizedSubFees.reduce(
+      (acc, subFee) => {
+        const elementAmount = toNumber(subFee.element_amount);
+        const paidAmount = toNumber(subFee.paid_amount);
+        const discountAmount = toNumber(subFee.discount);
+        const isDiscountEntry = isDiscountLikeFee(subFee);
+
+        return {
+          totalAmount: acc.totalAmount + (isDiscountEntry ? 0 : elementAmount),
+          totalPaid: acc.totalPaid + paidAmount,
+          totalDiscount: acc.totalDiscount + discountAmount,
+        };
+      },
+      { totalAmount: 0, totalPaid: 0, totalDiscount: 0 }
+    );
+
+    return {
+      ...totals,
+      totalDue: Math.max(
+        totals.totalAmount - totals.totalPaid - totals.totalDiscount,
+        0
+      ),
+    };
+  });
+
+  return semesterSummaries.reduce(
+    (acc, semester) => ({
+      totalAmount: acc.totalAmount + semester.totalAmount,
+      totalPaid: acc.totalPaid + semester.totalPaid,
+      totalDiscount: acc.totalDiscount + semester.totalDiscount,
+      balance: acc.balance + semester.totalDue,
+    }),
+    { totalAmount: 0, totalPaid: 0, totalDiscount: 0, balance: 0 }
+  );
+};
 
 function Dashboard() {
   // Get student ID from sessionStorage (consistent with other student components)
@@ -37,6 +169,11 @@ function Dashboard() {
 
   // Extract student basic details
   const basicDetails = studentDetails?.student_basic_details;
+  const collegeAdmissionNo =
+    basicDetails?.college_admission_no ||
+    basicDetails?.admission_no ||
+    sessionStorage.getItem("college_admission_no") ||
+    "";
 
   const [upcomingSemesters, setUpcomingSemesters] = useState([]);
 
@@ -134,16 +271,52 @@ function Dashboard() {
     ),
   });
 
-  // Fetch fee due amounts
   const {
-    feeDue,
-    loading: feeDueLoading,
-    error: feeDueError,
-  } = useStudentFeeDue({
-    student_id: studentId,
-    fee_applied_from: basicDetails?.semester_id,
-    enabled: !!studentId && !!basicDetails?.semester_id,
-  });
+    feedetails = [],
+    loading: feeFilterLoading,
+  } = useStudentFeeFilterData(collegeAdmissionNo);
+
+  const outstandingSummary = React.useMemo(
+    () => buildOutstandingSummary(feedetails),
+    [feedetails]
+  );
+
+  const dashboardDueAmount = Math.max(
+    toNumber(outstandingSummary?.balance),
+    0
+  );
+
+  const hasAssignedFees = !!outstandingSummary && (
+    outstandingSummary.totalAmount > 0 ||
+    outstandingSummary.totalDiscount > 0 ||
+    outstandingSummary.totalPaid > 0
+  );
+
+  const feeDueValue = feeFilterLoading
+    ? "..."
+    : hasAssignedFees
+      ? (dashboardDueAmount > 0 ? `Rs. ${dashboardDueAmount.toFixed(2)}` : "Paid")
+      : "N/A";
+
+  const feeDueColor = dashboardDueAmount > 0
+    ? "#dc3545"
+    : hasAssignedFees
+      ? "#28a745"
+      : "#6c757d";
+
+  const feeDueBgColor = dashboardDueAmount > 0
+    ? "#f8d7da"
+    : hasAssignedFees
+      ? "#d4edda"
+      : "#e2e3e5";
+
+  const feeDueSubtitle = feeFilterLoading
+    ? "Checking..."
+    : dashboardDueAmount > 0
+      ? "Due"
+      : hasAssignedFees
+        ? "All Clear"
+        : "No Info";
 
   // Format date for display
   const formatCircularDate = (dateString) => {
@@ -172,32 +345,10 @@ function Dashboard() {
     },
     {
       icon: <FaMoneyBillWave size={32} />,
-      value: feeDueLoading
-        ? "..."
-        : (feeDue
-          ? ((feeDue.total_assigned_fees > 0 || feeDue.grand_total_fees > 0) // Check if any fees were ever assigned OR if there's a due balance (fallback)
-            ? (feeDue.grand_total_fees > 0
-              ? `₹${feeDue.grand_total_fees}`
-              : "Paid")
-            : "N/A") // If explicit total_assigned_fees is 0 (or missing/undefined and grand_total_fees is 0), assume no info
-          : "N/A"),
-      color: feeDue?.grand_total_fees > 0
-        ? "#dc3545"
-        : (feeDue && (feeDue.total_assigned_fees > 0)
-          ? "#28a745" // Paid (Green)
-          : "#6c757d"), // N/A (Grey)
-      bgColor: feeDue?.grand_total_fees > 0
-        ? "#f8d7da"
-        : (feeDue && (feeDue.total_assigned_fees > 0)
-          ? "#d4edda" // Paid (Light Green)
-          : "#e2e3e5"), // N/A (Light Grey)
-      subtitle: feeDueLoading
-        ? "Checking..."
-        : (feeDue?.grand_total_fees > 0
-          ? "Due"
-          : (feeDue && (feeDue.total_assigned_fees > 0)
-            ? "All Clear"
-            : "No Info")),
+      value: feeDueValue,
+      color: feeDueColor,
+      bgColor: feeDueBgColor,
+      subtitle: feeDueSubtitle,
       link: "/student/payment-gateway",
     },
     {
