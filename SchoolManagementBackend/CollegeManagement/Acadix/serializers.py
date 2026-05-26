@@ -2877,7 +2877,9 @@ class studentsearchconfirmSerializer(serializers.Serializer):
     academic_year_id = serializers.IntegerField(allow_null=True, required=False)
     semester_id = serializers.IntegerField(allow_null=True, required=False)
     section_id = serializers.IntegerField(allow_null=True, required=False)
+    student_id = serializers.IntegerField(allow_null=True, required=False)
     studentId = serializers.IntegerField(allow_null=True, required=False)
+    status_data = serializers.CharField(allow_null=True, required=False)
     statusdata = serializers.CharField(allow_null=True, required=False)
     college_admission_no = serializers.CharField(allow_null=True, required=False)
     admission_no = serializers.CharField(allow_null=True, required=False)
@@ -2885,6 +2887,15 @@ class studentsearchconfirmSerializer(serializers.Serializer):
     student_name = serializers.CharField(allow_null=True, required=False)
     father_name = serializers.CharField(allow_null=True, required=False)
     mother_name = serializers.CharField(allow_null=True, required=False)
+
+    def validate(self, attrs):
+        if attrs.get('student_id') is None and attrs.get('studentId') is not None:
+            attrs['student_id'] = attrs.get('studentId')
+
+        if attrs.get('status_data') in (None, '') and attrs.get('statusdata') not in (None, ''):
+            attrs['status_data'] = attrs.get('statusdata')
+
+        return attrs
 
 
 class StudentFeeDueReceiptSerializer(serializers.Serializer):

@@ -21482,6 +21482,7 @@ class StudentCourseUpdateAPIView(UpdateAPIView):
             instance.updated_by = login_id
             instance.student_status = 'ACTIVE'
             instance.is_active = True
+            instance.is_promoted = False
             if house_id:
                 instance.house = house_instance
             instance.save()
@@ -23103,9 +23104,19 @@ class  StudentConfirmFilterListAPIView(ListAPIView):
 
             if organization_id and branch_id:
                 try:
-                    studentCourseConfirmList = StudentCourse.objects.filter(organization=organization_id,
-                                                                            branch=branch_id,student_status__iexact='PROMOTED',
-                                                                            is_active=False).order_by('-updated_at')
+                    studentCourseConfirmList = StudentCourse.objects.filter(
+                        organization=organization_id,
+                        branch=branch_id,
+                        student_status__iexact='PROMOTED',
+                        is_active=False,
+                        is_promoted=True,
+                    ).exclude(
+                        student_id__in=StudentCourse.objects.filter(
+                            organization=organization_id,
+                            branch=branch_id,
+                            is_active=True,
+                        ).values_list('student_id', flat=True)
+                    ).order_by('-updated_at')
                 except StudentCourse.DoesNotExist:
                     return Response({"message": "student course record not found !!!"},
                                     status=status.HTTP_404_NOT_FOUND)
