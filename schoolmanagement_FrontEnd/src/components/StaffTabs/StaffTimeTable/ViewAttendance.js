@@ -369,6 +369,27 @@ const ViewAttendance = () => {
     return daysOfWeek.findIndex((d) => d.toUpperCase() === day.toUpperCase());
   };
 
+  const getDisplayValue = (value) => value || "-";
+
+  const formatPeriod = (entry) => {
+    const periodName = entry?.lecture_period?.trim();
+    const description = entry?.lecture_period_description?.trim();
+    const timeRange =
+      entry?.lecture_time_from && entry?.lecture_time_to
+        ? `${entry.lecture_time_from}-${entry.lecture_time_to}`
+        : "";
+
+    if (periodName && timeRange) {
+      return `${periodName}(${timeRange})`;
+    }
+
+    if (description) {
+      return `${periodName || "Period"}(${description})`;
+    }
+
+    return periodName || "-";
+  };
+
   const daysOfWeek = [
     "SUNDAY",
     "MONDAY",
@@ -551,14 +572,15 @@ const ViewAttendance = () => {
                                         cell.dayOfWeek
                                     )
                                     .map((entry, index) => (
-                                      <div key={index} className="p-1 border mt-1 bg-light">
-                                        <strong>Course:</strong> {entry.course}<br />
-                                        <strong>Department:</strong> {entry.department}<br />
-                                        <strong>Section:</strong> {entry.section}<br />
-                                        <strong>Period:</strong> {entry.lecture_period}<br />
-                                        <strong>Subject:</strong> {entry.subject}<br />
-                                        <strong>Teacher:</strong> {entry.professor}<br />
-                                        <strong>Semester:</strong> {entry.semester}
+                                      <div key={index} className="p-2 border mt-1 bg-light text-start">
+                                        <strong>Teacher Name:</strong> {getDisplayValue(entry.professor)}<br />
+                                        <strong>Session:</strong> {getDisplayValue(entry.session || entry.batch)}<br />
+                                        <strong>Course:</strong> {getDisplayValue(entry.course)}<br />
+                                        <strong>Dept:</strong> {getDisplayValue(entry.department)}<br />
+                                        <strong>Sem:</strong> {getDisplayValue(entry.semester)}<br />
+                                        <strong>Sec:</strong> {getDisplayValue(entry.section)}<br />
+                                        <strong>Period:</strong> {formatPeriod(entry)}<br />
+                                        <strong>Sub:</strong> {getDisplayValue(entry.subject)}
                                       </div>
                                     ))}
                                 {cell && timeTableData.filter(

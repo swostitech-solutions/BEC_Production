@@ -241,6 +241,27 @@ const StudentTimeTable = () => {
     return null;
   };
 
+  const getDisplayValue = (value) => value || "-";
+
+  const formatPeriod = (entry) => {
+    const periodName = (entry?.lecture_period || entry?.lecture || entry?.class_period || entry?.period || "").trim();
+    const description = entry?.lecture_period_description?.trim();
+    const timeRange =
+      entry?.lecture_time_from && entry?.lecture_time_to
+        ? `${entry.lecture_time_from}-${entry.lecture_time_to}`
+        : "";
+
+    if (periodName && timeRange) {
+      return `${periodName}(${timeRange})`;
+    }
+
+    if (description) {
+      return `${periodName || "Period"}(${description})`;
+    }
+
+    return periodName || "-";
+  };
+
   const handleClose = () => {
     navigate("/student/dashboards"); // Go back to dashboard
   };
@@ -439,19 +460,15 @@ const StudentTimeTable = () => {
                       }}
                     >
                       {entry ? (
-                        <div style={{ fontSize: "11px" }}>
-                          <div style={{ fontWeight: "600", color: "#333" }}>
-                            {entry.subject_name || entry.subject || "-"}
-                          </div>
-                          <div style={{ color: "#555", marginTop: "2px" }}>
-                            {entry.lecture || entry.class_period || entry.period || "-"}
-                          </div>
-                          <div style={{ color: "#666", marginTop: "2px" }}>
-                            {entry.professor_name || entry.teacher_name || entry.faculty_name || "-"}
-                          </div>
-                          <div style={{ color: "#888", fontSize: "10px" }}>
-                            {entry.course || entry.course_name || "-"} - {entry.section || entry.section_name || "-"}
-                          </div>
+                        <div style={{ fontSize: "10px", textAlign: "left", lineHeight: "1.35" }}>
+                          <div><strong>Teacher Name:</strong> {getDisplayValue(entry.professor || entry.professor_name || entry.teacher_name || entry.faculty_name)}</div>
+                          <div><strong>Session:</strong> {getDisplayValue(entry.session || entry.batch)}</div>
+                          <div><strong>Course:</strong> {getDisplayValue(entry.course || entry.course_name)}</div>
+                          <div><strong>Dept:</strong> {getDisplayValue(entry.department || entry.department_name)}</div>
+                          <div><strong>Sem:</strong> {getDisplayValue(entry.semester || entry.semester_name)}</div>
+                          <div><strong>Sec:</strong> {getDisplayValue(entry.section || entry.section_name)}</div>
+                          <div><strong>Period:</strong> {formatPeriod(entry)}</div>
+                          <div><strong>Sub:</strong> {getDisplayValue(entry.subject_name || entry.subject || entry.subject_code)}</div>
                         </div>
                       ) : (
                         <span style={{ color: "#aaa", fontSize: "11px" }}>-</span>
