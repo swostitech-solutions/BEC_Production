@@ -258,8 +258,8 @@ function Sidebar({ state, setState }) {
               isChildAccessible("inventory.category") && { path: "/admin/inventory", text: "Inventory Category" },
               isChildAccessible("inventory.search") && { path: "/admin/inventory-search", text: "Inventory Search" },
             ].filter(Boolean))}
-            {isModuleAccessible("role") && createExpandableSection("Role", <PersonAddOutlinedIcon />, [
-              isChildAccessible("role.create_admin_user") && { path: "/admin/create-admin-user", text: "Create New Role" },
+            {isModuleAccessible("role") && createExpandableSection("Role and Change Password", <PersonAddOutlinedIcon />, [
+              isChildAccessible("role.create_admin_user") && { path: "/admin/create-admin-user", text: "Role" },
               isChildAccessible("role.change_password") && { path: "/admin/change-password", text: "Change Password" },
             ].filter(Boolean))}
           </>

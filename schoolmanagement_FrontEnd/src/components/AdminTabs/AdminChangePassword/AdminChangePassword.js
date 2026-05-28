@@ -193,17 +193,22 @@ const AdminChangePassword = () => {
                         <Form.Control
                           type="text"
                           value={username}
-                          disabled={true}
-                          readOnly
+                          onChange={(e) => {
+                            setUsername(e.target.value);
+                            if (errors.username) {
+                              setErrors((prev) => ({ ...prev, username: "" }));
+                            }
+                          }}
+                          disabled={loading}
+                          placeholder="Enter username"
                           autoComplete="off"
-                          style={{ backgroundColor: "#e9ecef", cursor: "not-allowed" }}
                           isInvalid={!!errors.username}
                         />
                         <Form.Control.Feedback type="invalid">
                           {errors.username}
                         </Form.Control.Feedback>
                         <Form.Text className="text-muted">
-                          Your username cannot be changed
+                          Default username is filled in, but you can edit it to change a student or staff password.
                         </Form.Text>
                       </div>
                     </Form.Group>

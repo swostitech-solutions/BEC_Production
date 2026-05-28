@@ -52,11 +52,12 @@ const ForgotPasswordModal = ({ show, onHide }) => {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to send OTP");
+        throw new Error(data.error || data.message || "Failed to send OTP");
       }
 
-      await response.json();
       setStep(2); // move to OTP verification step
     } catch (err) {
       setError(err.message || "Something went wrong");
@@ -103,11 +104,11 @@ const ForgotPasswordModal = ({ show, onHide }) => {
        }
      );
 
-     if (!response.ok) {
-       throw new Error("Invalid OTP");
-     }
+     const data = await response.json();
 
-     await response.json();
+     if (!response.ok) {
+       throw new Error(data.error || data.message || "Invalid OTP");
+     }
 
      // ✅ OTP VERIFIED → ENABLE PASSWORD FIELDS
      setStep(3);
@@ -151,11 +152,12 @@ const ForgotPasswordModal = ({ show, onHide }) => {
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Password change failed");
+        throw new Error(data.error || data.message || "Password change failed");
       }
 
-      const data = await response.json();
       console.log("Password changed:", data);
 
       alert("Password changed successfully");

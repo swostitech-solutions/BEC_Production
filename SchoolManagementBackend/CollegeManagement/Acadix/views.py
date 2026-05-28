@@ -27843,6 +27843,78 @@ class TermListAPIView(ListAPIView):
 
 
 class SendOTPView(APIView):
+    @staticmethod
+    def _is_email(value):
+        return bool(value and "@" in value)
+
+    def _resolve_user_and_email(self, organization_id, branch_id, username=None, email=None):
+        lookup_value = (email or username or "").strip()
+        if not lookup_value:
+            raise ValidationError("email or username is required")
+
+        try:
+            user_login = UserLogin.objects.get(
+                organization=organization_id,
+                branch=branch_id,
+                user_name__iexact=lookup_value,
+                is_active=True,
+            )
+        except UserLogin.DoesNotExist:
+            raise ValidationError("User not found.")
+
+        recipient_email = (email or "").strip()
+
+        if not recipient_email and self._is_email(user_login.user_name):
+            recipient_email = user_login.user_name.strip()
+
+        if not recipient_email and user_login.user_type_id == 2:
+            student = StudentRegistration.objects.filter(
+                organization=organization_id,
+                branch=branch_id,
+                is_active=True,
+            ).filter(
+                Q(id=user_login.reference_id) | Q(user_name__iexact=lookup_value)
+            ).first()
+            if student and student.email:
+                recipient_email = student.email.strip()
+
+        if not recipient_email and user_login.reference_id:
+            non_teaching_staff = NonTeachingStaffMaster.objects.filter(
+                organization=organization_id,
+                branch=branch_id,
+                nts_id=user_login.reference_id,
+                is_active=True,
+            ).first()
+            if non_teaching_staff:
+                recipient_email = (
+                    non_teaching_staff.official_email or non_teaching_staff.email or ""
+                ).strip()
+
+        if not recipient_email and user_login.reference_id:
+            employee_master = EmployeeMaster.objects.filter(
+                organization=organization_id,
+                branch=branch_id,
+                id=user_login.reference_id,
+                is_active=True,
+            ).first()
+            if employee_master:
+                recipient_email = (
+                    employee_master.office_email or employee_master.email or ""
+                ).strip()
+
+        if not recipient_email and user_login.reference_id:
+            employee = Employee.objects.filter(
+                id=user_login.reference_id,
+                is_active=True,
+            ).first()
+            if employee and employee.email:
+                recipient_email = employee.email.strip()
+
+        if not recipient_email:
+            raise ValidationError("No email address is configured for this user.")
+
+        return user_login, recipient_email
+
     def post(self, request):
         try:
             organization_id = request.data.get("organization_id")
@@ -27850,39 +27922,24 @@ class SendOTPView(APIView):
             email = request.data.get("email")
             username = request.data.get("username")
 
-            if username:
-                student_registration_instance = StudentRegistration.objects.get(organization=organization_id,
-                                                                                branch=branch_id,
-                                                                                user_name__iexact=username)
-                user_email = student_registration_instance.email
-                # user_email = 'bic.void@gmail.com'
-                try:
-                    user = UserLogin.objects.get(organization=organization_id, branch=branch_id,
-                                                 user_name__iexact=username)
-                except UserLogin.DoesNotExist:
-                    return Response({"error": "UserLogin record not found"}, status=404)
-
-                otp = generate_otp()
-                PasswordResetOTP.objects.create(user_login=user, otp=otp)
-                send_otp_email(user_email, otp)
-
-                return Response({"message": "OTP sent successfully"}, status=200)
-
-            if email:
-                try:
-                    user_login_instance = UserLogin.objects.get(organization=organization_id, branch=branch_id,
-                                                                user_name__iexact=email)
-                except UserLogin.DoesNotExist:
-                    return Response({"error": "UserLogin record not found"}, status=404)
-
-                otp = generate_otp()
-                PasswordResetOTP.objects.create(user_login=user_login_instance, otp=otp)
-                send_otp_email(email, otp)
-
-                return Response({"message": "OTP sent successfully"}, status=200)
-
             if not email and not username:
                 return Response({"error": "email or username is required"}, status=400)
+
+            user_login, recipient_email = self._resolve_user_and_email(
+                organization_id=organization_id,
+                branch_id=branch_id,
+                username=username,
+                email=email,
+            )
+
+            otp = generate_otp()
+            PasswordResetOTP.objects.create(user_login=user_login, otp=otp)
+            send_otp_email(recipient_email, otp)
+
+            return Response({"message": "OTP sent successfully"}, status=200)
+        except ValidationError as e:
+            detail = e.detail[0] if isinstance(e.detail, list) else e.detail
+            return Response({"error": str(detail)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             error_message = str(e)
             ExceptionTrack.objects.create(
