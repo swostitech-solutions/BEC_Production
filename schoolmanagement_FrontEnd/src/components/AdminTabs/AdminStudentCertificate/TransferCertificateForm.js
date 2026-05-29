@@ -153,8 +153,46 @@ const TransferCertificateForm = () => {
   };
 
   const [fieldErrors, setFieldErrors] = useState({});
+  const checkPendingDues = async () => {
+  try {
+    const studentId = localStorage.getItem(
+      "selectedCertificateStudentId"
+    );
+    const orgId = localStorage.getItem("orgId");
+    const branchId = localStorage.getItem("branchId");
 
-  const handleSave = async () => {
+    const response = await fetch(
+      `${ApiUrl.apiurl}FeeLedger/GetFeeLedgerBasedOnCondition/?organization_id=${orgId}&branch_id=${branchId}&student_id=${studentId}`
+    );
+
+    const result = await response.json();
+
+    if (
+      result?.data &&
+      Array.isArray(result.data) &&
+      result.data.length > 0
+    ) {
+      const hasPendingDues = result.data.some(
+        (record) => Number(record.remaining_fees || 0) > 0
+      );
+
+      return hasPendingDues;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error checking pending dues:", error);
+    return false;
+  }
+};
+  const handleSave = async () => {const hasPendingDues = await checkPendingDues();
+
+if (hasPendingDues) {
+  alert(
+    "To proceed with the Transfer Certificate, kindly clear all pending dues."
+  );
+  return;
+}
     const errors = validateFields();
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
