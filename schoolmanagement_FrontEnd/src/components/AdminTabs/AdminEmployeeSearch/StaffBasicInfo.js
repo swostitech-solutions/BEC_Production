@@ -441,7 +441,10 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
     }
   };
 
-
+const capitalizeFirstLetter = (value) => {
+  if (!value) return "";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+};
 
 
   return (
@@ -542,12 +545,12 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
                           placeholder="Enter First name"
                           value={formData.firstName}
                           onChange={(e) => {
-                            setFormData({
-                              ...formData,
-                              firstName: e.target.value,
-                            });
-                            clearRequiredError("firstName");
-                          }}
+  setFormData({
+    ...formData,
+    firstName: capitalizeFirstLetter(e.target.value),
+  });
+  clearRequiredError("firstName");
+}}
                         />
                         <input
                           type="text"
@@ -555,11 +558,11 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
                           placeholder="Enter middle name"
                           value={formData.middleName}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              middleName: e.target.value,
-                            })
-                          }
+  setFormData({
+    ...formData,
+    middleName: capitalizeFirstLetter(e.target.value),
+  })
+}
                         />
                         <input
                           type="text"
@@ -567,11 +570,11 @@ if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
                           placeholder="Enter last name"
                           value={formData.lastName}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              lastName: e.target.value,
-                            })
-                          }
+  setFormData({
+    ...formData,
+    lastName: capitalizeFirstLetter(e.target.value),
+  })
+}
                         />
                       </div>
                       {requiredErrors.firstName && (
