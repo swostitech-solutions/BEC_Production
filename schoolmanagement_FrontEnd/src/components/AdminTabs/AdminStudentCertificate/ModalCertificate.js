@@ -118,6 +118,8 @@ const handlePageClick = (event) => {
   };
 
 const handleSearch = async () => {
+  setStudentLoading(true);
+
   try {
     const orgId = sessionStorage.getItem("organization_id");
     const brId = sessionStorage.getItem("branch_id");
@@ -164,8 +166,10 @@ const handleSearch = async () => {
       setFullStudentData([]);
       console.warn("No student data found.");
     }
-  } catch (error) {
+    } catch (error) {
     console.error("API ERROR:", error);
+  } finally {
+    setStudentLoading(false);
   }
 };
   const handleSelectStudent = (student) => {
@@ -272,13 +276,14 @@ const handleSearch = async () => {
                       // style={{ border: "1px solid #ccc" }}
                     >
                       <button
-                        type="button"
-                        className="btn btn-primary me-2"
-                        style={{ width: "150px" }}
-                        onClick={handleSearch}
-                      >
-                        Search
-                      </button>
+  type="button"
+  className="btn btn-primary me-2"
+  style={{ width: "150px" }}
+  onClick={handleSearch}
+  disabled={studentLoading}
+>
+  {studentLoading ? "Loading..." : "Search"}
+</button>
                       <button
                         type="button"
                         className="btn btn-secondary me-2"
@@ -516,6 +521,21 @@ const handleSearch = async () => {
                       />
                     </div>
                   </div>
+                  {studentLoading && (
+  <div className="text-center my-4">
+    <div
+      className="spinner-border text-primary"
+      role="status"
+      style={{ width: "3rem", height: "3rem" }}
+    >
+      <span className="visually-hidden">Loading...</span>
+    </div>
+
+    <div className="mt-2 fw-bold">
+      Loading student data...
+    </div>
+  </div>
+)}
                   {/* Students Table */}
                   <div className="table-responsive mt-3">
                     <table className="table table-bordered table-striped">
