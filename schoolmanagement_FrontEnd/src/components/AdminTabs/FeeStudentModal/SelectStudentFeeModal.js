@@ -566,7 +566,9 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
   };
 
   const handleSearch = useCallback(async () => {
-    try {
+  setStudentLoading(true);
+
+  try {
       const organization_id = sessionStorage.getItem("organization_id");
       const branch_id = sessionStorage.getItem("branch_id");
       const token = localStorage.getItem("accessToken");
@@ -651,9 +653,12 @@ const SelectStudentModal = ({ show, handleClose, onSelectStudent }) => {
         setShowTable(true);
       }
     } catch (error) {
-      console.error("Error fetching student data:", error);
-      setShowTable(true);
-    }
+  console.error("Error fetching student data:", error);
+  setShowTable(true);
+}
+finally {
+  setStudentLoading(false);
+}
   }, [selectedSession, selectedCourse, selectedDepartment, selectedAcademicYear, selectedSemester, selectedSection, filters]);
 
   // Debounced search when student name input changes
@@ -815,13 +820,24 @@ const handleClearFilters = () => {
                   <div className="row mb-2">
                     <div className="col-12  d-flex flex-wrap gap-2">
                       <button
-                        type="button"
-                        className="btn btn-primary me-2"
-                        style={{ width: "150px" }}
-                        onClick={handleSearch}
-                      >
-                        Search
-                      </button>
+  type="button"
+  className="btn btn-primary me-2"
+  style={{ width: "150px" }}
+  onClick={handleSearch}
+  disabled={studentLoading}
+>
+  {studentLoading ? (
+    <>
+      <span
+        className="spinner-border spinner-border-sm me-2"
+        role="status"
+      />
+      Loading...
+    </>
+  ) : (
+    "Search"
+  )}
+</button>
                       <button
                         type="button"
                         className="btn btn-secondary me-2"

@@ -314,13 +314,14 @@ setCurrentPage(0);
                   <div className="row mb-2">
                     <div className="col-12 d-flex flex-wrap gap-2">
                       <button
-                        type="button"
-                        className="btn btn-primary me-2"
-                        style={{ width: "150px" }}
-                        onClick={handleSearch}
-                      >
-                        Search
-                      </button>
+  type="button"
+  className="btn btn-primary me-2"
+  style={{ width: "150px" }}
+  onClick={handleSearch}
+  disabled={studentLoading}
+>
+  {studentLoading ? "Loading..." : "Search"}
+</button>
                       <button
                         type="button"
                         className="btn btn-secondary me-2"
@@ -636,6 +637,22 @@ setCurrentPage(0);
                       />
                     </div>
                   </div>
+                  {studentLoading && (
+  <div className="text-center my-3">
+    <div
+      className="spinner-border text-primary"
+      role="status"
+    >
+      <span className="visually-hidden">
+        Loading...
+      </span>
+    </div>
+
+    <p className="mt-2">
+      Loading student data...
+    </p>
+  </div>
+)}
                   {/* Students Table */}
                   <div
                     className="table-responsive mt-3"
