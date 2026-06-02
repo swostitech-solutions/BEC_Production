@@ -133,7 +133,6 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
   // };
 
   const handleSearch = async () => {
-    console.log("SEARCH BUTTON CLICKED");
     try {
       const organization_id = sessionStorage.getItem("organization_id") || 1;
       const branch_id = sessionStorage.getItem("branch_id") || 1;
@@ -299,30 +298,17 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                     }}
                   >
                     STUDENT SEARCH
-                    
                   </p>
-                  
                   <div className="row mb-2">
                     <div className="col-12 d-flex flex-wrap gap-2">
                       <button
-  type="button"
-  className="btn btn-primary me-2"
-  style={{ width: "150px" }}
-  onClick={handleSearch}
-  disabled={studentLoading}
->
-  {studentLoading ? (
-    <>
-      <span
-        className="spinner-border spinner-border-sm me-2"
-        role="status"
-      />
-      Loading...
-    </>
-  ) : (
-    "Search"
-  )}
-</button>
+                        type="button"
+                        className="btn btn-primary me-2"
+                        style={{ width: "150px" }}
+                        onClick={handleSearch}
+                      >
+                        Search
+                      </button>
                       <button
                         type="button"
                         className="btn btn-secondary me-2"
@@ -629,29 +615,11 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                       />
                     </div>
                   </div>
-                
                   {/* Students Table */}
-                  
-  <div
-  className="table-responsive mt-3"
-  style={{ maxHeight: "300px", overflowY: "auto" }}
->
-  {studentLoading ? (
-    <div className="text-center p-5">
-      <div
-        className="spinner-border text-primary"
-        role="status"
-        style={{ width: "3rem", height: "3rem" }}
-      >
-        <span className="visually-hidden">Loading...</span>
-      </div>
-
-      <div className="mt-3 fw-bold">
-        Loading student data...
-      </div>
-    </div>
-  ) : (
-        
+                  <div
+                    className="table-responsive mt-3"
+                    style={{ maxHeight: "300px", overflowY: "auto" }}
+                  >
                     <table className="table table-bordered table-striped">
                       <thead>
                         <tr>
@@ -705,7 +673,7 @@ const SelectStudentModal = ({ show, onSelectStudent, handleClose }) => {
                         )}
                       </tbody>
                     </table>
-                    )}</div>
+                  </div>
                 </div>
               </div>
             </div>
