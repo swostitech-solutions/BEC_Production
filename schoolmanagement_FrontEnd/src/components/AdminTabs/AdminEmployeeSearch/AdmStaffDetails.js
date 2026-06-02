@@ -1222,9 +1222,21 @@ export default function BasicTabs() {
   };
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <div className="row">
-        <div className="col-12 d-flex justify-content-around">
+  <Box sx={{ width: "100%" }}>
+
+    <div
+      style={{
+        textAlign: "center",
+        fontSize: "27px",
+        fontWeight: "bold",
+        marginBottom: "17px",
+      }}
+    >
+      STAFF REGISTRATION
+    </div>
+
+    <div className="row">
+      <div className="col-12 d-flex justify-content-around">
           <button
             className="btn btn-primary me-2"
             style={{ width: "150px" }}
