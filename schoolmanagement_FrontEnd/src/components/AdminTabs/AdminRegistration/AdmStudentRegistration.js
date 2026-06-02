@@ -320,11 +320,31 @@ export default function BasicTabs() {
       newErrors.father_contact_number = "Father Contact Number is required";
     }
     if (!formData.mother_contact_number?.trim()) {
-      newErrors.mother_contact_number = "Mother Contact Number is required";
-        if (!formData.dob) {
-          newErrors.dob = "Date Of Birth is required";
-        }
-    }
+  newErrors.mother_contact_number =
+    "Mother Contact Number is required";
+}
+
+if (!formData.dob) {
+  newErrors.dob = "Date Of Birth is required";
+} else {
+  const dob = new Date(formData.dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - dob.getFullYear();
+
+  const monthDiff = today.getMonth() - dob.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < dob.getDate())
+  ) {
+    age--;
+  }
+
+  if (age < 16) {
+    newErrors.dob = "Student must be at least 16 years old";
+  }
+}
     if (!formData.present_address?.trim()) {
       newErrors.present_address = "Present Address is required";
     }
