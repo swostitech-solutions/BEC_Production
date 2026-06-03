@@ -141,7 +141,8 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
 
   //08202025
   const handleSearch = async () => {
-    try {
+  try {
+    setStudentLoading(true);
       const organizationId = sessionStorage.getItem("organization_id") || 1;
       const branchId = sessionStorage.getItem("branch_id") || 1;
       const token = localStorage.getItem("accessToken"); // ✅ TOKEN
@@ -193,8 +194,10 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
         setStudentData([]);
       }
     } catch (error) {
-      console.error("Error fetching confirmation data:", error);
-    }
+  console.error("Error fetching confirmation data:", error);
+} finally {
+  setStudentLoading(false);
+}
   };
 
   const handleSelectStudent = (student) => {
@@ -283,13 +286,25 @@ const ModalConfirm = ({ show, handleClose, onSelectStudent }) => {
                       // style={{ border: "1px solid #ccc" }}
                     >
                       <button
-                        type="button"
-                        className="btn btn-primary me-2"
-                        style={{ width: "150px" }}
-                        onClick={handleSearch}
-                      >
-                        Search
-                      </button>
+  type="button"
+  className="btn btn-primary me-2"
+  style={{ width: "150px" }}
+  onClick={handleSearch}
+  disabled={studentLoading}
+>
+  {studentLoading ? (
+    <>
+      <span
+        className="spinner-border spinner-border-sm me-2"
+        role="status"
+        aria-hidden="true"
+      ></span>
+      Loading...
+    </>
+  ) : (
+    "Search"
+  )}
+</button>
                       <button
                         type="button"
                         className="btn btn-primary me-2"
