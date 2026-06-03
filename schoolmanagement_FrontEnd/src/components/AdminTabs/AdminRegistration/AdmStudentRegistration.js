@@ -320,11 +320,31 @@ export default function BasicTabs() {
       newErrors.father_contact_number = "Father Contact Number is required";
     }
     if (!formData.mother_contact_number?.trim()) {
-      newErrors.mother_contact_number = "Mother Contact Number is required";
-        if (!formData.dob) {
-          newErrors.dob = "Date Of Birth is required";
-        }
-    }
+  newErrors.mother_contact_number =
+    "Mother Contact Number is required";
+}
+
+if (!formData.dob) {
+  newErrors.dob = "Date Of Birth is required";
+} else {
+  const dob = new Date(formData.dob);
+  const today = new Date();
+
+  let age = today.getFullYear() - dob.getFullYear();
+
+  const monthDiff = today.getMonth() - dob.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < dob.getDate())
+  ) {
+    age--;
+  }
+
+  if (age < 16) {
+    newErrors.dob = "Student must be at least 16 years old";
+  }
+}
     if (!formData.present_address?.trim()) {
       newErrors.present_address = "Present Address is required";
     }
@@ -359,6 +379,27 @@ export default function BasicTabs() {
     const emergencyContacts = Array.isArray(formData.emegencyContact)
       ? formData.emegencyContact
       : [];
+    const addressPhone = String(
+  formData.present_phone_number || ""
+).trim();
+
+const duplicateEmergencyIndex = emergencyContacts.findIndex(
+  (contact) =>
+    String(contact?.Mobile_Number || "").trim() === addressPhone
+);
+
+if (addressPhone && duplicateEmergencyIndex !== -1) {
+  if (!newErrors.emegencyContact) {
+    newErrors.emegencyContact = [];
+  }
+
+  newErrors.emegencyContact[duplicateEmergencyIndex] = {
+    ...(newErrors.emegencyContact[duplicateEmergencyIndex] || {}),
+    Mobile_Number:
+      "Emergency Contact Number must not match Address Phone Number",
+  };
+}
+
     const emergencyRequiredErrors = emergencyContacts.map((contact) => {
       const rowError = {};
       if (!contact?.name?.trim()) rowError.name = "Name is required";
@@ -371,9 +412,15 @@ export default function BasicTabs() {
       return rowError;
     });
     if (emergencyRequiredErrors.some((row) => Object.keys(row).length > 0)) {
-      newErrors.emegencyContact = emergencyRequiredErrors;
-    }
+  newErrors.emegencyContact = newErrors.emegencyContact || [];
 
+  emergencyRequiredErrors.forEach((row, index) => {
+    newErrors.emegencyContact[index] = {
+      ...(newErrors.emegencyContact[index] || {}),
+      ...row,
+    };
+  });
+}
     const localGuardians = Array.isArray(formData.authorizedpickup)
       ? formData.authorizedpickup
       : [];

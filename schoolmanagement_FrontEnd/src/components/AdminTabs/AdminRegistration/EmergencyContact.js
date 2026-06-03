@@ -8,7 +8,12 @@ import {
   validateEmail,
 } from "../../utils/validation";
 
-const AdmOtherDetails = ({ formData, setFormData, requiredErrors = {} }) => {
+const AdmOtherDetails = ({
+  formData,
+  setFormData,
+  requiredErrors = {},
+  addressPhoneNumber = "",
+}) => {
   const { id } = useParams();
   const [errors, setErrors] = useState([]);
 
@@ -179,18 +184,27 @@ const AdmOtherDetails = ({ formData, setFormData, requiredErrors = {} }) => {
 
     // Validation for Mobile_Number field
     if (field === "Mobile_Number") {
-      const updatedErrors = [...errors];
+  const updatedErrors = [...errors];
 
-      if (!validatePhoneNumber(value)) {
-        updatedErrors[index] = "Phone number must contain only numbers.";
-      } else if (value.length < 10) {
-        updatedErrors[index] = "Phone number must be exactly 10 digits.";
-      } else {
-        updatedErrors[index] = ""; // Clear error if valid
-      }
+  if (
+    addressPhoneNumber &&
+    value &&
+    value === addressPhoneNumber
+  ) {
+    updatedErrors[index] =
+      "Emergency Contact Number must not match Address Phone Number";
+  } else if (!validatePhoneNumber(value)) {
+    updatedErrors[index] =
+      "Phone number must contain only numbers.";
+  } else if (value.length < 10) {
+    updatedErrors[index] =
+      "Phone number must be exactly 10 digits.";
+  } else {
+    updatedErrors[index] = "";
+  }
 
-      setErrors(updatedErrors); // Update error state
-    }
+  setErrors(updatedErrors);
+}
 
     setFormData((prevData) => ({
       ...prevData,

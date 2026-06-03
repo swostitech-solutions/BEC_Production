@@ -422,6 +422,11 @@ const ParentDetailsForm = ({ formData, setFormData, requiredErrors = {} }) => {
                           Phone number must be 10 digits.
                         </small>
                       )}
+                      {requiredErrors.present_phone_number && (
+  <small style={{ color: "red", fontSize: "0.8em" }}>
+    {requiredErrors.present_phone_number}
+  </small>
+)}
                   </div>
 
                   <div className="col-6 mb-2">
