@@ -379,6 +379,27 @@ if (!formData.dob) {
     const emergencyContacts = Array.isArray(formData.emegencyContact)
       ? formData.emegencyContact
       : [];
+    const addressPhone = String(
+  formData.present_phone_number || ""
+).trim();
+
+const duplicateEmergencyIndex = emergencyContacts.findIndex(
+  (contact) =>
+    String(contact?.Mobile_Number || "").trim() === addressPhone
+);
+
+if (addressPhone && duplicateEmergencyIndex !== -1) {
+  if (!newErrors.emegencyContact) {
+    newErrors.emegencyContact = [];
+  }
+
+  newErrors.emegencyContact[duplicateEmergencyIndex] = {
+    ...(newErrors.emegencyContact[duplicateEmergencyIndex] || {}),
+    Mobile_Number:
+      "Emergency Contact Number must not match Address Phone Number",
+  };
+}
+
     const emergencyRequiredErrors = emergencyContacts.map((contact) => {
       const rowError = {};
       if (!contact?.name?.trim()) rowError.name = "Name is required";
@@ -391,9 +412,15 @@ if (!formData.dob) {
       return rowError;
     });
     if (emergencyRequiredErrors.some((row) => Object.keys(row).length > 0)) {
-      newErrors.emegencyContact = emergencyRequiredErrors;
-    }
+  newErrors.emegencyContact = newErrors.emegencyContact || [];
 
+  emergencyRequiredErrors.forEach((row, index) => {
+    newErrors.emegencyContact[index] = {
+      ...(newErrors.emegencyContact[index] || {}),
+      ...row,
+    };
+  });
+}
     const localGuardians = Array.isArray(formData.authorizedpickup)
       ? formData.authorizedpickup
       : [];
