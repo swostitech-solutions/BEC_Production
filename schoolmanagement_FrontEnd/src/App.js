@@ -38,6 +38,7 @@ import ClassWithSubjectAndClass from "./pages/StaffPannel/ClassWithSubjectAndCla
 import AttendanceEntry from "./pages/AdminPanel/AttendanceEntry";
 import AttendanceUpdate from "./pages/AdminPanel/AttendanceUpdate";
 import Registration from "./pages/AdminPanel/Registration";
+import Alumni from "./pages/AdminPanel/Alumni";
 import AdmStudentRegistration from "./components/AdminTabs/AdminRegistration/AdmStudentRegistration";
 import StudentLocationStatsPage from "./pages/AdminPanel/StudentLocationStatsPage";
 import BonafideCertificate from "./components/AdminTabs/AdminStudentCertificate/BonafideCertificate";
@@ -381,6 +382,7 @@ function App() {
                 element={<AttendanceUpdate />}
               />
               <Route path="/admin/registration" element={<Registration />} />
+              <Route path="/admin/alumini" element={<Alumni />} />
               <Route path="/admin/student-location-stats" element={<StudentLocationStatsPage />} />
               <Route
                 path="/admstudentregistration"

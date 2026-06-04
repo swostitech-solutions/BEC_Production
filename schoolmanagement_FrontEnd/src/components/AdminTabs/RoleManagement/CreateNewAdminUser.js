@@ -51,6 +51,7 @@ const CreateNewAdminUser = () => {
         { code: "student.message", label: "Student Message" },
         { code: "student.club", label: "Student Club" },
         { code: "student.circular", label: "Circulars" },
+        { code: "student.alumni", label: "Alumini" },
       ]
     },
     {

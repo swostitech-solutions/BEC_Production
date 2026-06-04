@@ -10916,6 +10916,80 @@ class AlumniPromotionCreateAPI(CreateAPIView):
         )
 
 
+class AlumniRegistrationListAPIView(ListAPIView):
+    queryset = AlumniRegistration.objects.all()
+    serializer_class = AlumniRegistrationListSerializer
+
+    def get_queryset(self):
+        queryset = AlumniRegistration.objects.filter(is_active=True).select_related(
+            'batch', 'course', 'department', 'academic_year', 'semester', 'section',
+            'gender', 'category'
+        ).order_by('-graduated_on', '-id')
+
+        organization_id = self.request.GET.get('organization_id')
+        branch_id = self.request.GET.get('branch_id')
+        batch_id = self.request.GET.get('batch_id')
+        course_id = self.request.GET.get('course_id')
+        department_id = self.request.GET.get('department_id')
+        academic_year_id = self.request.GET.get('academic_year_id')
+        semester_id = self.request.GET.get('semester_id')
+        section_id = self.request.GET.get('section_id')
+        student_name = (self.request.GET.get('student_name') or '').strip()
+        admission_no = (self.request.GET.get('admission_no') or '').strip()
+        registration_no = (self.request.GET.get('registration_no') or '').strip()
+        enrollment_no = (self.request.GET.get('enrollment_no') or '').strip()
+        contact_no = (self.request.GET.get('contact_no') or '').strip()
+
+        if organization_id:
+            queryset = queryset.filter(organization_id=organization_id)
+        if branch_id:
+            queryset = queryset.filter(branch_id=branch_id)
+        if batch_id:
+            queryset = queryset.filter(batch_id=batch_id)
+        if course_id:
+            queryset = queryset.filter(course_id=course_id)
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        if academic_year_id:
+            queryset = queryset.filter(academic_year_id=academic_year_id)
+        if semester_id:
+            queryset = queryset.filter(semester_id=semester_id)
+        if section_id:
+            queryset = queryset.filter(section_id=section_id)
+        if student_name:
+            queryset = queryset.filter(
+                Q(first_name__icontains=student_name)
+                | Q(middle_name__icontains=student_name)
+                | Q(last_name__icontains=student_name)
+            )
+        if admission_no:
+            queryset = queryset.filter(
+                Q(admission_no__icontains=admission_no)
+                | Q(college_admission_no__icontains=admission_no)
+            )
+        if registration_no:
+            queryset = queryset.filter(registration_no__icontains=registration_no)
+        if enrollment_no:
+            queryset = queryset.filter(enrollment_no__icontains=enrollment_no)
+        if contact_no:
+            queryset = queryset.filter(contact_no__icontains=contact_no)
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        if serializer.data:
+            return Response(
+                {"message": "Alumni data fetched successfully.", "data": serializer.data},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"message": "No Data Found!!", "data": []},
+            status=status.HTTP_200_OK,
+        )
+
+
 class UtilityGroupMixin:
     def _semester_order_value(self, semester_instance):
         if not semester_instance:

@@ -335,6 +335,8 @@ urlpatterns = [
          name='StudentPromotion'),
     path('api/StudentPromotion/PromoteStudentsToAlumni/', views.AlumniPromotionCreateAPI.as_view(),
          name='StudentPromotionToAlumni'),
+    path('api/AlumniRegistration/GetAllALUMNIList/', views.AlumniRegistrationListAPIView.as_view(),
+         name='AlumniRegistrationList'),
 
     path('api/FeeStructure/GetFeeStructureListByFilter/', views.GetFeeStructureMasterAndDetailsListAPIView.as_view(),
          name='feestructureDetailsList'),

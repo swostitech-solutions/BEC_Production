@@ -1488,6 +1488,62 @@ class AlumniPromotionSerializer(serializers.Serializer):
     )
 
 
+class AlumniRegistrationListSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    batch_description = serializers.CharField(source='batch.batch_description', read_only=True)
+    course_name = serializers.CharField(source='course.course_name', read_only=True)
+    department_description = serializers.CharField(source='department.department_description', read_only=True)
+    academic_year_description = serializers.CharField(source='academic_year.academic_year_description', read_only=True)
+    semester_description = serializers.CharField(source='semester.semester_description', read_only=True)
+    section_name = serializers.CharField(source='section.section_name', read_only=True)
+    gender_name = serializers.CharField(source='gender.gender_name', read_only=True, default="")
+    category_name = serializers.CharField(source='category.category_name', read_only=True, default="")
+
+    class Meta:
+        model = AlumniRegistration
+        fields = [
+            'id',
+            'source_student_id',
+            'student_name',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'college_admission_no',
+            'admission_no',
+            'registration_no',
+            'enrollment_no',
+            'batch',
+            'batch_description',
+            'course',
+            'course_name',
+            'department',
+            'department_description',
+            'academic_year',
+            'academic_year_description',
+            'semester',
+            'semester_description',
+            'section',
+            'section_name',
+            'father_name',
+            'mother_name',
+            'contact_no',
+            'email',
+            'present_city',
+            'present_state',
+            'gender_name',
+            'category_name',
+            'graduated_on',
+            'graduation_remarks',
+            'status',
+            'alumni_status',
+        ]
+
+    def get_student_name(self, obj):
+        return " ".join(
+            filter(None, [obj.first_name, obj.middle_name, obj.last_name])
+        ).strip()
+
+
 # class ADHOCELEMENTSERIALIZER(serializers.Serializer):
 #     elementId = serializers.IntegerField()
 #     amount = serializers.DecimalField(max_digits=10, decimal_places=2)

@@ -174,6 +174,7 @@ function Sidebar({ state, setState }) {
               isChildAccessible("student.message") && { path: "/admin/student-message", text: "Student Message" },
               isChildAccessible("student.club") && { path: "/admin/student-club", text: "Student Club" },
               isChildAccessible("student.circular") && { path: "/admin/circular-entry", text: "Circulars" },
+              isChildAccessible("student.alumni") && { path: "/admin/alumini", text: "Alumini" },
             ].filter(Boolean))}
             {/* {createExpandableSection("Others", <PersonAddOutlinedIcon />, [])} */}
             {isModuleAccessible("staff") && createExpandableSection("Staff", <PiChalkboardTeacherFill />, [
