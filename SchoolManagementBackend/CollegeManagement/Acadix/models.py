@@ -639,6 +639,126 @@ class StudentRegistration(models.Model):
         return f'{self.first_name}-{self.course}'
 
 
+class AlumniRegistration(models.Model):
+    source_student_id = models.PositiveIntegerField(db_index=True)
+    source_student_course_id = models.PositiveIntegerField(null=True, blank=True)
+    source_user_login_id = models.PositiveIntegerField(null=True, blank=True)
+
+    first_name = models.CharField(max_length=100, null=False)
+    middle_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
+    admission_type = models.CharField(max_length=50, null=False, default='Regular')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE)
+    date_of_admission = models.DateField(null=True, blank=True)
+    date_of_join = models.DateField(null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    college_admission_no = models.CharField(max_length=20, null=True, blank=True)
+    religion = models.ForeignKey(Religion, on_delete=models.CASCADE, null=True, blank=True)
+    gender = models.ForeignKey(Gender, on_delete=models.CASCADE, null=True, blank=True)
+    nationality = models.ForeignKey(Nationality, on_delete=models.CASCADE, null=True, blank=True)
+    house = models.ForeignKey(House, on_delete=models.CASCADE, null=True, blank=True, default=None)
+    contact_no = models.CharField(max_length=10, null=True)
+    blood = models.ForeignKey(Blood, on_delete=models.CASCADE, null=True, blank=True)
+    enrollment_no = models.CharField(max_length=20, null=True, blank=True)
+    barcode = models.CharField(max_length=20, null=True)
+    admission_no = models.CharField(max_length=20, null=True, blank=True)
+    registration_no = models.CharField(max_length=20, null=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True)
+    mother_tongue = models.ForeignKey(MotherTongue, on_delete=models.CASCADE, null=True, blank=True)
+    status = models.CharField(max_length=20, default='ALUMNI', null=False, blank=False)
+    email = models.EmailField(unique=False, null=True, blank=True)
+    children_in_family = models.CharField(max_length=10, null=True)
+    student_aadhaar_no = models.CharField(max_length=12, null=True)
+    user_name = models.CharField(max_length=100, null=True)
+    remarks = models.CharField(max_length=50, null=True)
+    referred_by = models.CharField(max_length=200, null=True, blank=True)
+    father_name = models.CharField(max_length=200, null=True, blank=True)
+    mother_name = models.CharField(max_length=200, null=True, blank=True)
+    mother_aadhaar_no = models.CharField(max_length=12, null=True, blank=True, validators=[
+        RegexValidator(regex=r'^\d{12}$', message='Aadhaar number must be exactly 12 digits.',
+                       code='invalid_aadhaar_no'
+                       )
+    ])
+    mother_profession = models.CharField(max_length=50, null=True, blank=True)
+    mother_contact_number = models.CharField(max_length=12, null=True, blank=True, validators=[
+        RegexValidator(
+            regex=r'^\d{10}$',
+            message="father contact number must be exactly 10 digits."
+        )
+    ])
+    mother_email = models.EmailField(max_length=244, null=True, blank=True)
+    father_aadhaar_no = models.CharField(max_length=12, null=True, blank=True, validators=[
+        RegexValidator(regex=r'^\d{12}$', message='Aadhaar number must be exactly 12 digits.',
+                       code='invalid_aadhaar_no'
+                       )
+    ])
+    father_profession = models.CharField(max_length=50, null=True, blank=True)
+    father_contact_number = models.CharField(max_length=10, null=True, blank=True, validators=[
+        RegexValidator(
+            regex=r'^\d{10}$',
+            message="father contact number must be exactly 10 digits."
+        )
+    ])
+    father_email = models.EmailField(max_length=244, null=True, blank=True)
+    primary_guardian = models.CharField(max_length=255, default="FATHER", null=True, blank=True)
+    profile_pic = models.FileField(upload_to='profile_pic/', null=True, blank=True)
+
+    fee_group = models.ForeignKey('FeeStructureMaster', on_delete=models.SET_NULL, null=True, blank=True)
+    fee_applied_from = models.ForeignKey(
+        Semester,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='alumni_fee_applied_from'
+    )
+    hostel_availed = models.BooleanField(default=False)
+    hostel_choice_semester = models.CharField(max_length=250, null=True, blank=True)
+    transport_availed = models.BooleanField(null=True, blank=True)
+    choice_semester = models.CharField(max_length=250, null=True, blank=True)
+    route_id = models.IntegerField(null=True, blank=True)
+    student_status = models.CharField(max_length=100, default='ALUMNI', null=False, blank=False)
+
+    present_address = models.CharField(max_length=250, null=True, blank=True)
+    present_pincode = models.CharField(max_length=6, null=True, blank=True)
+    present_city = models.CharField(max_length=200, null=True, blank=True)
+    present_state = models.CharField(max_length=200, null=True, blank=True)
+    present_country = models.CharField(max_length=200, null=True, blank=True)
+    present_phone_number = models.CharField(max_length=10, null=True, blank=True)
+    permanent_address = models.CharField(max_length=250, null=True, blank=True)
+    permanent_pincode = models.CharField(max_length=6, null=True, blank=True)
+    permanent_city = models.CharField(max_length=200, null=True, blank=True)
+    permanent_state = models.CharField(max_length=200, null=True, blank=True)
+    permanent_country = models.CharField(max_length=200, null=True, blank=True)
+    permanent_phone_number = models.CharField(max_length=10, null=True, blank=True)
+
+    alumni_status = models.CharField(max_length=20, default='ALUMNI')
+    graduated_on = models.DateTimeField(default=timezone.now)
+    graduated_by = models.PositiveIntegerField(null=True, blank=True)
+    graduation_remarks = models.CharField(max_length=500, null=True, blank=True)
+    student_snapshot = models.JSONField(default=dict, blank=True)
+    student_course_snapshot = models.JSONField(default=dict, blank=True)
+    address_snapshot = models.JSONField(default=dict, blank=True)
+
+    is_active = models.BooleanField(default=True)
+    created_by = models.PositiveIntegerField()
+    updated_by = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "AlumniRegistration"
+
+    def __str__(self):
+        return f'{self.first_name}-{self.course}-ALUMNI'
+
+
 class Attendance(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE)

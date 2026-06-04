@@ -484,6 +484,70 @@ const StudentPromotion = () => {
     }
   };
 
+  const handlePromoteToAlumni = async () => {
+    const userId = sessionStorage.getItem("userId");
+    const token = localStorage.getItem("accessToken");
+
+    if (
+      !fromBatch ||
+      !fromCourse ||
+      !fromDepartment ||
+      !fromAcademicYear ||
+      !fromSemester ||
+      !fromSection
+    ) {
+      alert("Please select all 'From' fields before promoting students to alumni.");
+      return;
+    }
+
+    const studentIds = promotedStudents.map((student) => student.student_id);
+    if (studentIds.length === 0) {
+      alert("No students selected for alumni promotion.");
+      return;
+    }
+
+    const payload = {
+      organization_id: Number(organizationId),
+      branch_id: Number(branchId),
+      batch_id: Number(fromBatch),
+      course_id: Number(fromCourse),
+      department_id: Number(fromDepartment),
+      academic_year_id: Number(fromAcademicYear),
+      semester_id: Number(fromSemester),
+      section_id: Number(fromSection),
+      student_id: studentIds,
+      created_by: Number(userId) || 1,
+      graduation_remarks: "",
+    };
+
+    try {
+      const response = await fetch(
+        `${ApiUrl.apiurl}StudentPromotion/PromoteStudentsToAlumni/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok && result.message) {
+        alert(`✅ ${result.message}`);
+        setPromotedStudents([]);
+        setSelectedStudents([]);
+      } else {
+        alert(`⚠️ Error: ${result.message || result.error || "Alumni promotion failed"}`);
+      }
+    } catch (error) {
+      console.error("❌ Error during alumni promotion:", error);
+      alert("❌ Error promoting students to alumni");
+    }
+  };
+
   const fromClassRef = useRef();
   const fromSectionRef = useRef();
   const toClassRef = useRef();
@@ -774,7 +838,17 @@ const StudentPromotion = () => {
                       margin: "20px 0",
                     }}
                   >
-                    <h5 className="mb-3">To Details</h5>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5 className="mb-0">To Details</h5>
+                      <Button
+                        color="success"
+                        onClick={handlePromoteToAlumni}
+                        disabled={promotedStudents.length === 0}
+                        style={{ fontWeight: "600" }}
+                      >
+                        Promote to Alumni
+                      </Button>
+                    </div>
                     <Row>
                       <Col xs={12} sm={6} className="mb-3">
                         <Label htmlFor="from-class" className="form-label">

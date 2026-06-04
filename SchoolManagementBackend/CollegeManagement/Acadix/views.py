@@ -49,7 +49,7 @@ from Swostitech_Acadix import settings
 from Transport.models import RouteDetail, RouteMaster, PickupPoint
 from .models import UserType, ExceptionTrack, Employee, Login, AcademicYear, Course, Section, \
     SiblingDetail, StudentEmergencyContact, AuthorisedPickup, \
-    StudentDocument, StudentPreviousEducation, Organization, Department, StudentRegistration, Parent, StudentCourse, \
+    StudentDocument, StudentPreviousEducation, Organization, Department, StudentRegistration, AlumniRegistration, Parent, StudentCourse, \
     UserLogin, FeeStructureMaster, FeeStructureDetail, Period, FeeFrequency, StudentFeeDetail, Address, \
     FeeElementType, House, Religion, Category, Nationality, Country, \
     State, City, Profession, Document, Language, MotherTongue, Blood, \
@@ -10652,6 +10652,266 @@ class StudentPromotionCreateAPI(CreateAPIView):
         ExceptionTrack.objects.create(
             request=str(request),
             process_name='StudentPromotion',
+            message=error_message,
+        )
+
+
+class AlumniPromotionCreateAPI(CreateAPIView):
+    queryset = AlumniRegistration.objects.all()
+    serializer_class = AlumniPromotionSerializer
+
+    def _serialize_value(self, value):
+        if isinstance(value, (datetime, date, time)):
+            return value.isoformat()
+        if isinstance(value, Decimal):
+            return str(value)
+        if hasattr(value, 'name'):
+            return str(value.name) if value else ""
+        return value
+
+    def _model_snapshot(self, instance):
+        if not instance:
+            return {}
+
+        snapshot = {}
+        for field in instance._meta.fields:
+            key = field.attname if field.is_relation else field.name
+            snapshot[key] = self._serialize_value(getattr(instance, key))
+        return snapshot
+
+    def create(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                serializer = self.get_serializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
+
+                organization_id = serializer.validated_data.get('organization_id')
+                branch_id = serializer.validated_data.get('branch_id')
+                batch_id = serializer.validated_data.get('batch_id')
+                course_id = serializer.validated_data.get('course_id')
+                department_id = serializer.validated_data.get('department_id')
+                academic_year_id = serializer.validated_data.get('academic_year_id')
+                semester_id = serializer.validated_data.get('semester_id')
+                section_id = serializer.validated_data.get('section_id')
+                student_ids = serializer.validated_data.get('student_id')
+                created_by = serializer.validated_data.get('created_by')
+                graduation_remarks = serializer.validated_data.get('graduation_remarks') or ''
+
+                organization_instance = Organization.objects.get(id=organization_id, is_active=True)
+                branch_instance = Branch.objects.get(id=branch_id, is_active=True)
+                batch_instance = Batch.objects.get(id=batch_id, is_active=True)
+                course_instance = Course.objects.get(id=course_id, is_active=True)
+                department_instance = Department.objects.get(id=department_id, is_active=True)
+                academic_year_instance = AcademicYear.objects.get(id=academic_year_id, is_active=True)
+                semester_instance = Semester.objects.get(id=semester_id, is_active=True)
+                section_instance = Section.objects.get(id=section_id, is_active=True)
+
+                last_semester_instance = Semester.objects.filter(
+                    organization=organization_instance,
+                    branch=branch_instance,
+                    batch=batch_instance,
+                    course=course_instance,
+                    department=department_instance,
+                    is_active=True
+                ).order_by('display_order', 'id').last()
+
+                if not last_semester_instance:
+                    return Response(
+                        {'message': 'Unable to determine the final semester for the selected course.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if semester_instance.id != last_semester_instance.id:
+                    return Response(
+                        {
+                            'message': (
+                                f"Selected From Semester '{semester_instance.semester_description}' is not the last semester. "
+                                f"Only final semester students can be promoted to alumni. "
+                                f"Last semester is '{last_semester_instance.semester_description}'."
+                            )
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                students_to_archive = []
+                validation_errors = []
+
+                for stu_id in student_ids:
+                    try:
+                        student_instance = StudentRegistration.objects.get(
+                            id=stu_id,
+                            organization=organization_instance,
+                            branch=branch_instance,
+                            is_active=True
+                        )
+                    except StudentRegistration.DoesNotExist:
+                        validation_errors.append(f"Student record not found or already inactive for ID {stu_id}.")
+                        continue
+
+                    student_course_instance = StudentCourse.objects.filter(
+                        student=student_instance,
+                        organization=organization_instance,
+                        branch=branch_instance,
+                        batch=batch_instance,
+                        course=course_instance,
+                        department=department_instance,
+                        academic_year=academic_year_instance,
+                        semester=semester_instance,
+                        section=section_instance,
+                        is_active=True
+                    ).select_related(
+                        'fee_group', 'fee_applied_from', 'house'
+                    ).first()
+
+                    if not student_course_instance:
+                        student_name = " ".join(filter(None, [
+                            student_instance.first_name,
+                            student_instance.middle_name,
+                            student_instance.last_name
+                        ])).strip()
+                        validation_errors.append(
+                            f"Student '{student_name}' does not belong to the selected active From Details."
+                        )
+                        continue
+
+                    already_archived = AlumniRegistration.objects.filter(
+                        source_student_id=student_instance.id
+                    ).exists()
+                    if already_archived:
+                        student_name = " ".join(filter(None, [
+                            student_instance.first_name,
+                            student_instance.middle_name,
+                            student_instance.last_name
+                        ])).strip()
+                        validation_errors.append(
+                            f"Student '{student_name}' is already archived in alumni."
+                        )
+                        continue
+
+                    user_login_instance = UserLogin.objects.filter(
+                        reference_id=student_instance.id
+                    ).order_by('-id').first()
+
+                    address_instance = Address.objects.filter(
+                        reference_id=student_instance.id,
+                        usertype__iexact='STUDENT',
+                        is_active=True
+                    ).order_by('-id').first()
+
+                    students_to_archive.append(
+                        (student_instance, student_course_instance, user_login_instance, address_instance)
+                    )
+
+                if validation_errors:
+                    return Response(
+                        {'message': " ".join(validation_errors)},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                archived_students = []
+
+                for student_instance, student_course_instance, user_login_instance, address_instance in students_to_archive:
+                    alumni_payload = {}
+                    for field in StudentRegistration._meta.fields:
+                        if field.name in {'id', 'is_active', 'created_at', 'updated_at', 'status'}:
+                            continue
+                        alumni_payload[field.name] = getattr(student_instance, field.name)
+
+                    student_snapshot = self._model_snapshot(student_instance)
+                    if user_login_instance:
+                        student_snapshot['user_login'] = self._model_snapshot(user_login_instance)
+
+                    alumni_payload.update({
+                        'source_student_id': student_instance.id,
+                        'source_student_course_id': student_course_instance.id,
+                        'source_user_login_id': user_login_instance.id if user_login_instance else None,
+                        'organization': organization_instance,
+                        'branch': branch_instance,
+                        'batch': batch_instance,
+                        'course': course_instance,
+                        'department': department_instance,
+                        'academic_year': academic_year_instance,
+                        'semester': semester_instance,
+                        'section': section_instance,
+                        'enrollment_no': str(student_course_instance.enrollment_no) if student_course_instance.enrollment_no is not None else student_instance.enrollment_no,
+                        'house': student_course_instance.house or student_instance.house,
+                        'fee_group': student_course_instance.fee_group,
+                        'fee_applied_from': student_course_instance.fee_applied_from,
+                        'hostel_availed': student_course_instance.hostel_availed,
+                        'hostel_choice_semester': student_course_instance.hostel_choice_semester,
+                        'transport_availed': student_course_instance.transport_availed,
+                        'choice_semester': student_course_instance.choice_semester,
+                        'route_id': student_course_instance.route_id,
+                        'student_status': 'ALUMNI',
+                        'status': 'ALUMNI',
+                        'alumni_status': 'ALUMNI',
+                        'graduated_by': created_by,
+                        'graduation_remarks': graduation_remarks,
+                        'student_snapshot': student_snapshot,
+                        'student_course_snapshot': self._model_snapshot(student_course_instance),
+                        'address_snapshot': self._model_snapshot(address_instance),
+                        'created_by': created_by,
+                        'updated_by': created_by,
+                    })
+
+                    if address_instance:
+                        alumni_payload.update({
+                            'present_address': address_instance.present_address,
+                            'present_pincode': address_instance.present_pincode,
+                            'present_city': address_instance.present_city,
+                            'present_state': address_instance.present_state,
+                            'present_country': address_instance.present_country,
+                            'present_phone_number': address_instance.present_phone_number,
+                            'permanent_address': address_instance.permanent_address,
+                            'permanent_pincode': address_instance.permanent_pincode,
+                            'permanent_city': address_instance.permanent_city,
+                            'permanent_state': address_instance.permanent_state,
+                            'permanent_country': address_instance.permanent_country,
+                            'permanent_phone_number': address_instance.permanent_phone_number,
+                        })
+
+                    AlumniRegistration.objects.create(**alumni_payload)
+
+                    student_course_instance.student_status = 'ALUMNI'
+                    student_course_instance.is_active = False
+                    student_course_instance.is_promoted = False
+                    student_course_instance.updated_by = created_by
+                    student_course_instance.save()
+
+                    student_instance.status = 'ALUMNI'
+                    student_instance.is_active = False
+                    student_instance.updated_by = created_by
+                    student_instance.save()
+
+                    if user_login_instance and user_login_instance.is_active:
+                        user_login_instance.is_active = False
+                        user_login_instance.save(update_fields=['is_active'])
+
+                    archived_students.append(student_instance.id)
+
+                return Response(
+                    {
+                        'message': 'Students successfully promoted to alumni.',
+                        'archived_student_ids': archived_students
+                    },
+                    status=status.HTTP_200_OK
+                )
+
+        except ValidationError as e:
+            return Response({'error': e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            self.log_exception(request, str(e))
+            return Response({'error': 'A database error occurred: ' + str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            self.log_exception(request, str(e))
+            return Response({'error': 'An unexpected error occurred: ' + str(e)},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def log_exception(self, request, error_message):
+        ExceptionTrack.objects.create(
+            request=str(request),
+            process_name='StudentPromotionToAlumni',
             message=error_message,
         )
 

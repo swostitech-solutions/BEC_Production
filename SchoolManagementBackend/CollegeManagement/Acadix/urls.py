@@ -333,6 +333,8 @@ urlpatterns = [
 
     path('api/StudentPromotion/StudentCourseSemesterPromotion/', views.StudentPromotionCreateAPI.as_view(),
          name='StudentPromotion'),
+    path('api/StudentPromotion/PromoteStudentsToAlumni/', views.AlumniPromotionCreateAPI.as_view(),
+         name='StudentPromotionToAlumni'),
 
     path('api/FeeStructure/GetFeeStructureListByFilter/', views.GetFeeStructureMasterAndDetailsListAPIView.as_view(),
          name='feestructureDetailsList'),

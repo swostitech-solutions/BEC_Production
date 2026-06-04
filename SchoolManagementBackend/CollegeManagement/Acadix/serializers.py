@@ -16,6 +16,7 @@ from Acadix.models import UserType, Employee, Login, AcademicYear, Course, Secti
     StudentCircular, Bank, BankAccountDetail, StudentAssignment, \
     EmployeeMaster, EmployeeType, City, SiblingDetail, Lecture, EmployeeDetail, CourseSemesterSectionBind, Department, \
     Semester, Document, Branch, Gender, StudentTransferCertificate, StudentCharacterCertificate, \
+    AlumniRegistration, \
     StudentBonafideCertificate, StudentFeeCertificate
 
 
@@ -1467,6 +1468,24 @@ class StudentPromotionSerializer(serializers.Serializer):
     # student_details = serializers.ListSerializer(child=StudentPromotionDetailSerializer(), required=False)
     student_status = serializers.CharField(max_length=50, allow_null=False, allow_blank=False)
     created_by = serializers.IntegerField()
+
+
+class AlumniPromotionSerializer(serializers.Serializer):
+    organization_id = serializers.IntegerField(allow_null=False)
+    branch_id = serializers.IntegerField(allow_null=False)
+    batch_id = serializers.IntegerField(allow_null=False)
+    course_id = serializers.IntegerField(allow_null=False)
+    department_id = serializers.IntegerField(allow_null=False)
+    academic_year_id = serializers.IntegerField(allow_null=False)
+    semester_id = serializers.IntegerField(allow_null=False)
+    section_id = serializers.IntegerField(allow_null=False)
+    student_id = serializers.ListField(
+        child=serializers.IntegerField(), required=True
+    )
+    created_by = serializers.IntegerField()
+    graduation_remarks = serializers.CharField(
+        max_length=500, allow_null=True, allow_blank=True, required=False
+    )
 
 
 # class ADHOCELEMENTSERIALIZER(serializers.Serializer):
