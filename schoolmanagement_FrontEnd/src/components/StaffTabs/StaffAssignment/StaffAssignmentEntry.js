@@ -308,7 +308,10 @@ const StaffAssignmentEntry = () => {
       const result = await response.json();
 
       if (result.message === "Success" && Array.isArray(result.data)) {
-        setAssignments(result.data);
+        const staffAssignments = result.data.filter(
+          (assignment) => String(assignment.professor_id) === String(userId)
+        );
+        setAssignments(staffAssignments);
       } else {
         setAssignments([]);
         alert("No assignments found.");
@@ -1197,7 +1200,7 @@ const StaffAssignmentEntry = () => {
                           options={
                             LectureList?.map((lec) => ({
                               value: lec.id,
-                              label: lec.lecture_period_name,
+                              label: `${lec.lecture_period_name} (${lec.time_from} - ${lec.time_to})`,
                             })) || []
                           }
                           value={
@@ -1206,10 +1209,12 @@ const StaffAssignmentEntry = () => {
                             )
                               ? {
                                 value: formData.lectureId,
-                                label: LectureList.find(
-                                  (lec) =>
-                                    lec.id === Number(formData.lectureId)
-                                )?.lecture_period_name,
+                                label: (() => {
+                                  const lec = LectureList.find(
+                                    (l) => l.id === Number(formData.lectureId)
+                                  );
+                                  return lec ? `${lec.lecture_period_name} (${lec.time_from} - ${lec.time_to})` : "";
+                                })(),
                               }
                               : null
                           }

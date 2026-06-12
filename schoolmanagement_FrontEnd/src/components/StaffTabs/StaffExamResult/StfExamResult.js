@@ -374,15 +374,18 @@ const StudentSearch = () => {
             label: item.section_name || item.section_description || "Unnamed Section",
           }));
           setSections(sectionOptions);
+          if (sectionOptions.length > 0) setSelectedSection(sectionOptions[0]);
         } else if (result.message === "Success" && Array.isArray(result.data)) {
           const sectionOptions = result.data.map((item) => ({
             value: item.id || item.section_id,
             label: item.section_name || item.section_description || "Unnamed Section",
           }));
           setSections(sectionOptions);
+          if (sectionOptions.length > 0) setSelectedSection(sectionOptions[0]);
         } else {
           console.warn("Unexpected API format:", result);
           setSections([]);
+          setSelectedSection(null);
         }
       } catch (error) {
         console.error("Error fetching sections:", error);
